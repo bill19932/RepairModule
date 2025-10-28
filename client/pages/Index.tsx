@@ -491,7 +491,10 @@ export default function Index() {
                       <input type="text" name="customerAddress" value={formData.customerAddress} onChange={(e) => {
                         handleFormChange(e);
                         const addr = e.target.value;
-                        calculateDeliveryFee(addr);
+                        console.log('[ADDRESS-INPUT] Address entered:', addr);
+                        if (addr.trim()) {
+                          calculateDeliveryFee(addr.trim());
+                        }
                       }} placeholder="Client address" className="input-modern text-sm" />
                     </div>
                   </div>
