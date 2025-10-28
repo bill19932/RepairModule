@@ -509,6 +509,22 @@ export default function Index() {
                           )}
                         </div>
                       ))}
+                      {!formData.isGeorgesMusic && deliveryMiles !== null && (
+                        <div className="flex gap-2 items-end bg-blue-50 p-2 rounded border border-blue-200">
+                          <input
+                            type="text"
+                            disabled
+                            value={`Delivery Fee (${deliveryMiles} miles × 3 trips)`}
+                            className="input-modern text-sm flex-1 bg-blue-100 text-gray-700 cursor-not-allowed"
+                          />
+                          <input
+                            type="text"
+                            disabled
+                            value={`$${deliveryFee.toFixed(2)}`}
+                            className="input-modern text-sm w-24 bg-blue-100 text-gray-700 cursor-not-allowed font-semibold text-right"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 
