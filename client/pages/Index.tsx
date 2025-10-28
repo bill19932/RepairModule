@@ -163,7 +163,22 @@ export default function Index() {
     const subtotal = servicesTotal;
     const tax = subtotal * 0.06;
     const total = subtotal + tax;
-    return { servicesTotal, subtotal, tax, total };
+
+    // George's Music upcharge (1.54x)
+    const georgesUpcharge = formData.isGeorgesMusic ? 1.54 : 1;
+    const georgesSubtotal = subtotal * georgesUpcharge;
+    const georgesTax = georgesSubtotal * 0.06;
+    const georgesTotal = georgesSubtotal + georgesTax;
+
+    return {
+      servicesTotal,
+      subtotal,
+      tax,
+      total,
+      georgesSubtotal,
+      georgesTax,
+      georgesTotal,
+    };
   };
 
   const getFilteredInvoices = () => {
