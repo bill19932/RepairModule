@@ -21,7 +21,14 @@ export default function Records() {
     const load = () => setInvoices(getAllInvoicesFromLocalStorage());
     load();
     window.addEventListener('focus', load);
-    return () => window.removeEventListener('focus', load);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'delco-invoices') load();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('focus', load);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const filtered = useMemo(() => {
