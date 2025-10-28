@@ -11,7 +11,7 @@ export const generateCSVRow = (invoice: RepairInvoice): string => {
   const georgesTax = georgesSubtotal * 0.06;
   const georgesTotal = georgesSubtotal + georgesTax;
 
-  const instrumentsList = invoice.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join('; ');
+  const instrumentsList = invoice.instruments.map(i => `${i.type}${i.description ? ' (Instrument Model: ' + i.description + ')' : ''}`).join('; ');
 
   const fields = [
     invoice.invoiceNumber,
@@ -47,7 +47,7 @@ export const getCSVHeaders = (): string => {
     'Customer Email',
     'Instruments',
     'Repair Description',
-    'Services',
+    'Service or Material',
     'Services Total',
     'Subtotal',
     'Tax',
