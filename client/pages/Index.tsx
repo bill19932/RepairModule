@@ -233,6 +233,12 @@ export default function Index() {
     const tax = subtotal * 0.06;
     const total = subtotal + tax;
 
+    // Delivery fee (only for Delco Music Co)
+    const delivery = formData.isGeorgesMusic ? 0 : deliveryFee || 0;
+    const subtotalWithDelivery = subtotal + delivery;
+    const taxWithDelivery = subtotalWithDelivery * 0.06;
+    const totalWithDelivery = subtotalWithDelivery + taxWithDelivery;
+
     // George's Music upcharge (1.54x)
     const georgesUpcharge = formData.isGeorgesMusic ? 1.54 : 1;
     const georgesSubtotal = subtotal * georgesUpcharge;
@@ -242,8 +248,10 @@ export default function Index() {
     return {
       servicesTotal,
       subtotal,
-      tax,
-      total,
+      delivery,
+      subtotalWithDelivery,
+      tax: taxWithDelivery,
+      total: totalWithDelivery,
       georgesSubtotal,
       georgesTax,
       georgesTotal,
