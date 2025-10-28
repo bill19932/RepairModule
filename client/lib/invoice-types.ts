@@ -17,6 +17,8 @@ export interface RepairInvoice {
   customerPhone: string;
   customerEmail: string;
   customerAddress?: string;
+  deliveryMiles?: number;
+  deliveryFee?: number;
   instruments: Instrument[];
   repairDescription: string;
   materials: RepairMaterial[];
