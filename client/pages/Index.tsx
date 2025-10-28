@@ -407,9 +407,28 @@ export default function Index() {
                   <span className="font-semibold text-foreground">${totals.tax.toFixed(2)}</span>
                 </div>
                 <div className="border-t-2 border-primary pt-3 flex justify-between items-center font-bold">
-                  <span className="text-foreground">Total:</span>
+                  <span className="text-foreground">Your Total:</span>
                   <span className="text-xl text-primary">${totals.total.toFixed(2)}</span>
                 </div>
+
+                {/* George's Music Upcharge */}
+                {formData.isGeorgesMusic && (
+                  <div className="mt-4 pt-4 border-t-2 border-blue-300 space-y-2">
+                    <p className="text-xs font-semibold text-blue-900 bg-blue-50 p-2 rounded">George's Music Invoice (1.54x)</p>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground">Subtotal (1.54x):</span>
+                      <span className="font-semibold text-foreground">${totals.georgesSubtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground">Tax (6%):</span>
+                      <span className="font-semibold text-foreground">${totals.georgesTax.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-blue-300 pt-2 flex justify-between items-center font-bold">
+                      <span className="text-blue-900">George's Total:</span>
+                      <span className="text-lg text-blue-600">${totals.georgesTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {showForm && (
