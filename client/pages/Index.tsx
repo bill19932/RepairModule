@@ -91,44 +91,57 @@ export default function Index() {
       // Remove extra commas and spaces
       cleanAddr = cleanAddr.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
 
+      // Extract city and state from address if present
+      // Format: "street, city, state" or "street, city" or "street, state"
+      const addressParts = cleanAddr.split(',').map(p => p.trim());
+      let street = addressParts[0];
+      let city = '';
+      let state = 'PA';
+
+      if (addressParts.length >= 2) {
+        city = addressParts[1];
+        if (addressParts.length >= 3) {
+          state = addressParts[2].replace(/^\D*/, '').trim(); // Remove letters before state code
+        }
+      }
+
       // Try multiple address variations to handle different geocoding scenarios
       let customerCoords = null;
-      let attemptedAddr = '';
-
       const addressVariations = [];
 
-      // If address already has PA/Pennsylvania/zip, try as-is first
-      if (/\b(PA|Pennsylvania|19\d{3})\b/i.test(cleanAddr)) {
-        addressVariations.push(cleanAddr);
+      // 1. Try original address as-is
+      addressVariations.push(cleanAddr);
+
+      // 2. Try street + state
+      if (city && state !== 'PA') {
+        addressVariations.push(`${street}, ${state}`);
       }
 
-      // Then try adding PA if not present
-      if (!/\bPA\b/i.test(cleanAddr)) {
-        addressVariations.push(`${cleanAddr}, PA`);
+      // 3. Try city + state only (as fallback for hard-to-find streets)
+      if (city && state) {
+        addressVariations.push(`${city}, ${state}`);
       }
 
-      // Try with just street and state (remove zip if present)
-      const addrWithoutZip = cleanAddr.replace(/\s*\d{5}\s*$/, '').trim();
-      if (addrWithoutZip !== cleanAddr && !/\bPA\b/i.test(addrWithoutZip)) {
-        addressVariations.push(`${addrWithoutZip}, PA`);
+      // 4. Try with full state name
+      if (!cleanAddr.includes('Pennsylvania')) {
+        addressVariations.push(cleanAddr.replace(/,\s*PA\b/, ', Pennsylvania'));
       }
 
-      console.log(`[DELIVERY] Trying ${addressVariations.length} address variations for: "${cleanAddr}"`);
+      console.log(`[DELIVERY] Trying ${addressVariations.length} variations for: "${cleanAddr}"`);
 
       for (const variation of addressVariations) {
         console.log(`[DELIVERY] Attempting: "${variation}"`);
         setDeliveryDebug(`Geocoding: "${variation}"...`);
         customerCoords = await geocodeAddress(variation);
         if (customerCoords) {
-          attemptedAddr = variation;
-          console.log(`[DELIVERY] ✓ Success with variation: "${variation}"`);
+          console.log(`[DELIVERY] ✓ Success with: "${variation}"`);
           break;
         }
       }
 
       if (!customerCoords) {
         setDeliveryDebug(`❌ Geocoding failed for: "${cleanAddr}"`);
-        console.log(`[DELIVERY] All variations failed for: "${cleanAddr}"`);
+        console.log(`[DELIVERY] All ${addressVariations.length} variations failed`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
