@@ -288,29 +288,64 @@ export default function Index() {
                     </div>
                   </div>
 
-                  {/* Invoice & Date Row */}
+                  {/* Invoice # & Dates Row */}
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Invoice #</label>
-                      <input type="text" value={formData.invoiceNumber} readOnly className="input-modern bg-gray-50 text-sm" />
+                      <label className="block text-xs font-semibold text-foreground mb-1">Invoice # *</label>
+                      <input type="text" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleFormChange} placeholder="e.g., 337-001" className="input-modern text-sm" required />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Date</label>
+                      <label className="block text-xs font-semibold text-foreground mb-1">Date Received</label>
+                      <input type="date" name="dateReceived" value={formData.dateReceived} onChange={handleFormChange} className="input-modern text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground mb-1">Invoice Date</label>
                       <input type="date" name="date" value={formData.date} onChange={handleFormChange} className="input-modern text-sm" required />
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Instrument Type *</label>
-                      <select name="instrumentType" value={formData.instrumentType} onChange={handleFormChange} className="input-modern text-sm" required>
-                        <option value="">Select type</option>
-                        <option value="Guitar">Guitar</option>
-                        <option value="Bass">Bass</option>
-                        <option value="Violin">Violin</option>
-                        <option value="Cello">Cello</option>
-                        <option value="Keyboard">Keyboard</option>
-                        <option value="Drums">Drums</option>
-                        <option value="Wind">Wind</option>
-                        <option value="Other">Other</option>
-                      </select>
+                  </div>
+
+                  {/* Instruments */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-foreground">Instruments *</label>
+                      <button type="button" onClick={addInstrument} className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1">
+                        <Plus size={14} /> Add Instrument
+                      </button>
+                    </div>
+                    <div className="space-y-2 bg-gray-50 p-4 rounded-sm border border-gray-200">
+                      {instruments.map((instrument, index) => (
+                        <div key={index} className="grid grid-cols-2 gap-2 items-end">
+                          <select
+                            value={instrument.type}
+                            onChange={(e) => handleInstrumentChange(index, 'type', e.target.value)}
+                            className="input-modern text-sm"
+                          >
+                            <option value="">Select instrument</option>
+                            <option value="Guitar">Guitar</option>
+                            <option value="Bass">Bass</option>
+                            <option value="Violin">Violin</option>
+                            <option value="Cello">Cello</option>
+                            <option value="Keyboard">Keyboard</option>
+                            <option value="Drums">Drums</option>
+                            <option value="Wind">Wind</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          <div className="flex gap-2 items-end">
+                            <input
+                              type="text"
+                              value={instrument.description}
+                              onChange={(e) => handleInstrumentChange(index, 'description', e.target.value)}
+                              placeholder="Description (optional)"
+                              className="input-modern text-sm flex-1"
+                            />
+                            {instruments.length > 1 && (
+                              <button type="button" onClick={() => removeInstrument(index)} className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors">
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
