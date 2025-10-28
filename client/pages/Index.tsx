@@ -274,7 +274,6 @@ export default function Index() {
     setMaterials([{ description: '', quantity: 1, unitCost: 0 }]);
     setDeliveryMiles(null);
     setDeliveryFee(0);
-    setIsDeliveryInMaterials(false);
     alert.show('Invoice created and saved! PDF ready to print.', 'success');
   };
 
