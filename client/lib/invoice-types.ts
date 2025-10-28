@@ -17,6 +17,7 @@ export interface RepairInvoice {
   laborHours: number;
   hourlyRate: number;
   notes: string;
+  isGeorgesMusic: boolean;
 }
 
 export type RepairInvoiceFormData = Omit<RepairInvoice, 'materials'> & {
