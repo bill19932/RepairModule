@@ -77,12 +77,10 @@ export default function Index() {
     if (!address || !address.trim() || formData.isGeorgesMusic) {
       setDeliveryMiles(null);
       setDeliveryFee(0);
-      setDeliveryDebug('');
       return;
     }
 
     try {
-      setDeliveryDebug(`Trying to geocode...`);
 
       // Clean up address: remove Unit/Apt/Suite numbers for geocoding
       let cleanAddr = address.trim();
