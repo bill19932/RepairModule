@@ -112,7 +112,7 @@ export default function Index() {
 
       const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
       const roundedMiles = Math.round(miles);
-      const fee = roundedMiles * 3 * 0.85;
+      const fee = roundedMiles * 2 * 0.85;
       const finalFee = parseFloat(fee.toFixed(2));
 
       setDeliveryDebug(`✓ ${roundedMiles} miles = $${finalFee}`);
