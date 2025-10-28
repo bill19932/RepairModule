@@ -97,7 +97,7 @@ export default function Index() {
       }, 500);
     } catch (error) {
       console.error('OCR Error:', error);
-      alert('❌ Failed to extract invoice data. Please check the image quality and try again.');
+      alert.show('Failed to extract invoice data. Please check the image quality and try again.', 'error');
       setOcrProgress(0);
     } finally {
       setIsProcessingOCR(false);
