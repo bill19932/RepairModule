@@ -49,7 +49,11 @@ export const getCSVHeaders = (): string => {
     'Services Total',
     'Subtotal',
     'Tax',
-    'Total',
+    'Total (Your Charge)',
+    'Georges Music Repair',
+    'Georges Subtotal (1.54x)',
+    'Georges Tax',
+    'Georges Total',
     'Notes',
   ];
 
