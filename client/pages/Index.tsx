@@ -418,26 +418,7 @@ export default function Index() {
                       <input type="text" name="customerAddress" value={formData.customerAddress} onChange={async (e) => {
                         handleFormChange(e as any);
                         const addr = e.target.value;
-                        setDeliveryMiles(null);
-                        setDeliveryFee(0);
-                        if (addr && !formData.isGeorgesMusic) {
-                          try {
-                            const coords = await geocodeAddress(addr + ', Wynnewood, PA');
-                            if (coords) {
-                              // base address geocode (150 E Wynnewood Road)
-                              const base = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
-                              if (base) {
-                                const miles = haversineMiles(base.lat, base.lon, coords.lat, coords.lon);
-                                setDeliveryMiles(parseFloat(miles.toFixed(2)));
-                                // 0.85 per mile * multiplier 3
-                                const fee = miles * 0.85 * 3;
-                                setDeliveryFee(parseFloat(fee.toFixed(2)));
-                              }
-                            }
-                          } catch (err) {
-                            console.error('Geocode error', err);
-                          }
-                        }
+                        await calculateDeliveryFee(addr);
                       }} placeholder="Client address" className="input-modern text-sm" />
                     </div>
                   </div>
