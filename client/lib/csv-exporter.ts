@@ -86,7 +86,15 @@ export const addInvoiceToLocalStorage = (invoice: RepairInvoice) => {
 };
 
 export const getAllInvoicesFromLocalStorage = (): RepairInvoice[] => {
-  return JSON.parse(localStorage.getItem('delco-invoices') || '[]');
+  const invoices = JSON.parse(localStorage.getItem('delco-invoices') || '[]');
+
+  // Migration: ensure all invoices have required fields
+  return invoices.map((invoice: any) => ({
+    ...invoice,
+    dateReceived: invoice.dateReceived || invoice.date || new Date().toISOString().split('T')[0],
+    instruments: invoice.instruments || [{ type: invoice.instrumentType || 'Other', description: invoice.instrumentDescription || '' }],
+    invoiceHtml: invoice.invoiceHtml || '',
+  }));
 };
 
 export const exportAllInvoicesToCSV = () => {
