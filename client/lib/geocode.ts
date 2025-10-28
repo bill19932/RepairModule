@@ -45,40 +45,63 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; lo
     }
 
     // Fallback to direct Nominatim API
-    console.log('[GEOCODE] Using direct Nominatim API');
+    console.log(`[GEOCODE] Using direct Nominatim API for: "${address}"`);
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
 
+    console.log(`[GEOCODE] Request URL: ${nominatimUrl}`);
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      console.warn('[GEOCODE] Request timeout - aborting');
+    }, 8000);
 
-    const res = await fetch(nominatimUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'DelcoMusicCo-InvoiceApp/1.0'
-      },
-      // @ts-ignore
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      console.warn(`[GEOCODE] Nominatim API returned status ${res.status}`);
+    let res;
+    try {
+      res = await fetch(nominatimUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'DelcoMusicCo-InvoiceApp/1.0'
+        },
+        // @ts-ignore
+        signal: controller.signal
+      });
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      console.error('[GEOCODE] Fetch error:', fetchErr);
       return null;
     }
 
-    const json = await res.json();
+    clearTimeout(timeoutId);
+
+    console.log(`[GEOCODE] Response status: ${res.status}`);
+
+    if (!res.ok) {
+      console.warn(`[GEOCODE] Nominatim API returned status ${res.status}`);
+      const errorText = await res.text();
+      console.warn(`[GEOCODE] Response body: ${errorText}`);
+      return null;
+    }
+
+    let json;
+    try {
+      json = await res.json();
+      console.log(`[GEOCODE] Parsed response:`, json);
+    } catch (parseErr) {
+      console.error('[GEOCODE] Failed to parse JSON response:', parseErr);
+      return null;
+    }
 
     if (Array.isArray(json) && json.length > 0) {
       const result = {
         lat: parseFloat(json[0].lat),
         lon: parseFloat(json[0].lon)
       };
-      console.log(`[GEOCODE] Nominatim geocoded "${address}" to: ${result.lat}, ${result.lon}`);
+      console.log(`✓ [GEOCODE] Nominatim geocoded "${address}" to: ${result.lat}, ${result.lon}`);
       return result;
     }
 
-    console.warn(`[GEOCODE] No results found for address: "${address}"`);
+    console.warn(`[GEOCODE] No results found for address: "${address}" - response was:`, json);
     return null;
 
   } catch (err) {
