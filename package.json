@@ -25,10 +25,8 @@
     "format.fix": "prettier --write .",
     "typecheck": "tsc"
   },
-  "electron": {
-    "main": "dist/electron/main.js",
-    "preload": "dist/electron/preload.js"
-  },
+  "main": "dist/electron/main.js",
+  "homepage": "./",
   "dependencies": {
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
