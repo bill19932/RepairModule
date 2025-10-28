@@ -258,9 +258,12 @@ export default function Index() {
         <div className="h-1 bg-primary"></div>
         <header className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-primary">Delco Music Co</h1>
-              <p className="text-sm text-muted-foreground mt-1">Repair Invoice Manager</p>
+            <div className="flex items-center gap-3">
+              <img src="https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F9753a3ec93ee4d5dba7a86a75c0f457f?format=webp&width=800" alt="Delco Music Co" className="h-10 object-contain" />
+              <div>
+                <div className="text-xl font-bold text-primary">Delco Music Co</div>
+                <p className="text-sm text-muted-foreground mt-1">Repair Invoice Manager</p>
+              </div>
             </div>
             <div className="flex gap-3">
               <button
