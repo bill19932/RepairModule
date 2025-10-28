@@ -17,19 +17,20 @@ export default function Index() {
   });
 
   const [formData, setFormData] = useState({
-    invoiceNumber: `INV-${invoiceNumber}`,
+    invoiceNumber: '',
+    dateReceived: new Date().toISOString().split('T')[0],
     date: new Date().toISOString().split('T')[0],
     customerName: '',
     customerPhone: '',
     customerEmail: '',
-    instrumentType: '',
-    instrumentDescription: '',
     repairDescription: '',
     laborHours: 0,
     hourlyRate: 0,
     notes: '',
     isGeorgesMusic: false,
   });
+
+  const [instruments, setInstruments] = useState([{ type: '', description: '' }]);
 
   const [materials, setMaterials] = useState<RepairMaterial[]>([
     { description: '', quantity: 1, unitCost: 0 },
