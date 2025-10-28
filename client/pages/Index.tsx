@@ -540,6 +540,12 @@ export default function Index() {
                   <span className="text-muted-foreground">Subtotal:</span>
                   <span className="font-semibold text-foreground">${totals.subtotal.toFixed(2)}</span>
                 </div>
+                {!formData.isGeorgesMusic && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">Delivery Fee (${deliveryMiles ?? '—'} mi)</span>
+                    <span className="font-semibold text-foreground">${totals.delivery.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground">Tax (6%):</span>
                   <span className="font-semibold text-foreground">${totals.tax.toFixed(2)}</span>
