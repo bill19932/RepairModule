@@ -40,12 +40,12 @@ export const generateCSVRow = (invoice: RepairInvoice): string => {
 export const getCSVHeaders = (): string => {
   const headers = [
     'Invoice Number',
-    'Date',
+    'Date Received',
+    'Invoice Date',
     'Customer Name',
     'Customer Phone',
     'Customer Email',
-    'Instrument Type',
-    'Instrument Description',
+    'Instruments',
     'Repair Description',
     'Services',
     'Services Total',
