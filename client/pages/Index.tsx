@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RepairInvoice, RepairMaterial } from '@/lib/invoice-types';
-import { downloadInvoicePDF } from '@/lib/pdf-generator';
+import { generateInvoicePDF, downloadInvoicePDF } from '@/lib/pdf-generator';
 import { addInvoiceToLocalStorage, exportAllInvoicesToCSV, getAllInvoicesFromLocalStorage } from '@/lib/csv-exporter';
 import { extractInvoiceData } from '@/lib/ocr-utils';
 import { Download, Plus, Trash2, FileText, Upload, Loader, Search } from 'lucide-react';
