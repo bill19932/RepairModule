@@ -91,19 +91,44 @@ export default function Index() {
       // Remove extra commas and spaces
       cleanAddr = cleanAddr.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
 
-      // Always ensure PA is included
-      let addrWithState = cleanAddr;
-      if (!/\b(PA|Pennsylvania|19\d{3})\b/i.test(cleanAddr)) {
-        addrWithState = `${cleanAddr}, PA`;
+      // Try multiple address variations to handle different geocoding scenarios
+      let customerCoords = null;
+      let attemptedAddr = '';
+
+      const addressVariations = [];
+
+      // If address already has PA/Pennsylvania/zip, try as-is first
+      if (/\b(PA|Pennsylvania|19\d{3})\b/i.test(cleanAddr)) {
+        addressVariations.push(cleanAddr);
       }
 
-      console.log(`[DELIVERY] Geocoding: "${addrWithState}"`);
-      setDeliveryDebug(`Geocoding: "${addrWithState}"...`);
+      // Then try adding PA if not present
+      if (!/\bPA\b/i.test(cleanAddr)) {
+        addressVariations.push(`${cleanAddr}, PA`);
+      }
 
-      const customerCoords = await geocodeAddress(addrWithState);
+      // Try with just street and state (remove zip if present)
+      const addrWithoutZip = cleanAddr.replace(/\s*\d{5}\s*$/, '').trim();
+      if (addrWithoutZip !== cleanAddr && !/\bPA\b/i.test(addrWithoutZip)) {
+        addressVariations.push(`${addrWithoutZip}, PA`);
+      }
+
+      console.log(`[DELIVERY] Trying ${addressVariations.length} address variations for: "${cleanAddr}"`);
+
+      for (const variation of addressVariations) {
+        console.log(`[DELIVERY] Attempting: "${variation}"`);
+        setDeliveryDebug(`Geocoding: "${variation}"...`);
+        customerCoords = await geocodeAddress(variation);
+        if (customerCoords) {
+          attemptedAddr = variation;
+          console.log(`[DELIVERY] ✓ Success with variation: "${variation}"`);
+          break;
+        }
+      }
 
       if (!customerCoords) {
-        setDeliveryDebug(`❌ Geocoding failed for: "${addrWithState}"`);
+        setDeliveryDebug(`❌ Geocoding failed for: "${cleanAddr}"`);
+        console.log(`[DELIVERY] All variations failed for: "${cleanAddr}"`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
