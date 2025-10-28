@@ -92,7 +92,7 @@ export default function Index() {
 
       setOcrProgress(100);
       setTimeout(() => {
-        alert('✅ Invoice data extracted successfully! Please review and adjust as needed.');
+        alert.show('Invoice data extracted successfully! Please review and adjust as needed.', 'success');
         setOcrProgress(0);
       }, 500);
     } catch (error) {
