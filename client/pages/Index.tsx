@@ -29,7 +29,7 @@ export default function Index() {
     repairDescription: '' as string,
     laborHours: 0 as number,
     hourlyRate: 0 as number,
-    notes: '' as string,
+    // notes removed per request
     isGeorgesMusic: false as boolean,
   });
 
