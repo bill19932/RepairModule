@@ -268,13 +268,6 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
             <td style="text-align: right;">$${(material.quantity * material.unitCost).toFixed(2)}</td>
           </tr>
         `).join('')}
-        <tr>
-          <td colspan="2" style="text-align: left; font-size: 10px; border-top: 1px solid #ddd;">
-            ${invoice.laborHours > 0 ? `Labor: ${invoice.laborHours} hrs @ $${invoice.hourlyRate}/hr` : ''}
-          </td>
-          <td style="text-align: right; border-top: 1px solid #ddd;"></td>
-          <td style="text-align: right; border-top: 1px solid #ddd; font-weight: bold;">$${laborTotal.toFixed(2)}</td>
-        </tr>
       </tbody>
     </table>
     
