@@ -102,6 +102,7 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; lo
     }
 
     console.log(`[GEOCODE] No results for: "${address}"`);
+    console.log(`[GEOCODE] Full response:`, JSON.stringify(json));
     return null;
 
   } catch (err) {
