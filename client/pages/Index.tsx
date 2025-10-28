@@ -152,6 +152,7 @@ export default function Index() {
       laborHours: 0,
       hourlyRate: 0,
       notes: '',
+      isGeorgesMusic: false,
     });
 
     setMaterials([{ description: '', quantity: 1, unitCost: 0 }]);
