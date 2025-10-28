@@ -12,13 +12,19 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:electron": "vite build --config vite.config.electron.ts --watch && electron .",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts",
+    "build:electron": "npm run build:client && vite build --config vite.config.electron.ts && electron-builder",
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
     "typecheck": "tsc"
+  },
+  "electron": {
+    "main": "dist/electron/main.js",
+    "preload": "dist/electron/preload.js"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
