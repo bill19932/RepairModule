@@ -141,12 +141,12 @@ export default function Index() {
     e.preventDefault();
 
     if (!formData.invoiceNumber) {
-      alert('Please enter an Invoice Number');
+      alert.show('Please enter an Invoice Number', 'warning');
       return;
     }
 
     if (!formData.customerName || instruments.some(i => !i.type) || !formData.repairDescription) {
-      alert('Please fill in: Invoice #, Customer Name, Instrument Type(s), and Repair Description');
+      alert.show('Please fill in: Invoice #, Customer Name, Instrument Type(s), and Repair Description', 'warning');
       return;
     }
 
