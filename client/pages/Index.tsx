@@ -384,6 +384,7 @@ export default function Index() {
                   <div>Delivery Miles: {deliveryMiles ?? '(null)'}</div>
                   <div>Delivery Fee: ${deliveryFee.toFixed(2)}</div>
                   <div>George's Music: {formData.isGeorgesMusic ? 'YES' : 'NO'}</div>
+                  {deliveryDebug && <div className="mt-2 pt-2 border-t border-yellow-300"><strong>Geocoding:</strong> {deliveryDebug}</div>}
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
