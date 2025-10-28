@@ -213,7 +213,6 @@ export default function Index() {
       repairDescription: '',
       laborHours: 0,
       hourlyRate: 0,
-      notes: '',
       isGeorgesMusic: false,
     });
 
