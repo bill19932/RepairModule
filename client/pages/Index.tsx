@@ -136,22 +136,27 @@ export default function Index() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.customerName || !formData.instrumentType || !formData.repairDescription) {
-      alert('Please fill in: Customer Name, Instrument Type, and Repair Description');
+    if (!formData.invoiceNumber) {
+      alert('Please enter an Invoice Number');
       return;
     }
 
+    if (!formData.customerName || instruments.some(i => !i.type) || !formData.repairDescription) {
+      alert('Please fill in: Invoice #, Customer Name, Instrument Type(s), and Repair Description');
+      return;
+    }
+
+    const invoiceHtml = generateInvoicePDF(invoice);
+
     const invoice: RepairInvoice = {
       ...formData,
+      instruments: instruments.filter(i => i.type.trim()),
       materials: materials.filter(m => m.description.trim()),
+      invoiceHtml,
     };
 
     addInvoiceToLocalStorage(invoice);
     setSavedInvoices([...savedInvoices, invoice]);
-
-    const nextNumber = invoiceNumber + 1;
-    setInvoiceNumber(nextNumber);
-    localStorage.setItem('nextInvoiceNumber', nextNumber.toString());
 
     downloadInvoicePDF(invoice);
 
