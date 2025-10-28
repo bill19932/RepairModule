@@ -77,10 +77,12 @@ export default function Index() {
         customerName: extracted.customerName || prev.customerName,
         customerPhone: phone || prev.customerPhone,
         customerEmail: email || prev.customerEmail,
-        instrumentType: extracted.instrumentType || prev.instrumentType,
-        instrumentDescription: extracted.instrumentDescription || prev.instrumentDescription,
         repairDescription: extracted.repairDescription || prev.repairDescription,
       }));
+
+      if (extracted.instruments && extracted.instruments.length > 0) {
+        setInstruments(extracted.instruments);
+      }
 
       if (extracted.materials && extracted.materials.length > 0) {
         setMaterials(extracted.materials);
