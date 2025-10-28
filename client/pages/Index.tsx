@@ -3,7 +3,7 @@ import { RepairInvoice, RepairMaterial } from '@/lib/invoice-types';
 import { downloadInvoicePDF } from '@/lib/pdf-generator';
 import { addInvoiceToLocalStorage, exportAllInvoicesToCSV, getAllInvoicesFromLocalStorage } from '@/lib/csv-exporter';
 import { extractInvoiceData } from '@/lib/ocr-utils';
-import { Download, Plus, Trash2, Eye, EyeOff, FileText, Upload, Loader } from 'lucide-react';
+import { Download, Plus, Trash2, FileText, Upload, Loader, Search } from 'lucide-react';
 
 const BILL_PHONE_NUMBERS = ['610-505-6096', '6105056096', '(610) 505-6096'];
 const BILL_EMAILS = ['bill@delcomusicco.com', 'billbaraldi@gmail.com'];
@@ -58,7 +58,6 @@ export default function Index() {
       const extracted = await extractInvoiceData(file);
       setOcrProgress(80);
 
-      // Filter out Bill's contact info from OCR
       let phone = extracted.customerPhone || '';
       let email = extracted.customerEmail || '';
 
@@ -70,7 +69,6 @@ export default function Index() {
         email = '';
       }
 
-      // Update form with extracted data
       setFormData(prev => ({
         ...prev,
         customerName: extracted.customerName || prev.customerName,
@@ -81,7 +79,6 @@ export default function Index() {
         repairDescription: extracted.repairDescription || prev.repairDescription,
       }));
 
-      // Update materials if extracted
       if (extracted.materials && extracted.materials.length > 0) {
         setMaterials(extracted.materials);
       }
@@ -169,9 +166,9 @@ export default function Index() {
 
   const getFilteredInvoices = () => {
     if (!searchQuery.trim()) return savedInvoices;
-
+    
     const query = searchQuery.toLowerCase();
-    return savedInvoices.filter(invoice =>
+    return savedInvoices.filter(invoice => 
       invoice.invoiceNumber.toLowerCase().includes(query) ||
       invoice.customerName.toLowerCase().includes(query) ||
       invoice.customerPhone.toLowerCase().includes(query) ||
@@ -187,51 +184,48 @@ export default function Index() {
   const filteredInvoices = getFilteredInvoices();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-amber-100/50 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with Blue Bar */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="h-1 bg-primary"></div>
+        <header className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🎸</span>
-              <div>
-                <h1 className="text-xl font-display font-bold text-primary">Delco Music Co</h1>
-                <p className="text-xs text-muted-foreground">Repair Invoices</p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-primary">Delco Music Co</h1>
+              <p className="text-sm text-muted-foreground mt-1">Repair Invoice Manager</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowForm(!showForm)}
-                className="btn-primary flex items-center gap-2 text-sm"
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-foreground font-semibold rounded-sm transition-colors text-sm"
               >
-                {showForm ? <EyeOff size={16} /> : <Eye size={16} />}
-                {showForm ? 'Hide' : 'Show'}
+                {showForm ? 'Hide Form' : 'Show Form'}
               </button>
               <button
                 onClick={() => setShowInvoices(!showInvoices)}
-                className="btn-secondary flex items-center gap-2 text-sm"
+                className="btn-primary flex items-center gap-2"
               >
                 <FileText size={16} />
                 Records ({savedInvoices.length})
               </button>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
+      </div>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section */}
           {showForm && (
             <div className="lg:col-span-2">
-              <div className="card-modern p-6">
-                <h2 className="text-2xl font-display font-bold text-foreground mb-6">New Invoice</h2>
+              <div className="card-modern p-8">
+                <h2 className="text-2xl font-bold text-foreground mb-6">New Invoice</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Image Upload for OCR */}
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-2">📸 Auto-Fill from Image</label>
-                    <div className="relative border-2 border-dashed border-primary/30 rounded-lg p-4 bg-primary/5 hover:border-primary/50 transition-colors cursor-pointer group">
+                    <div className="relative border-2 border-dashed border-primary/30 rounded-sm p-6 bg-blue-50 hover:border-primary/50 transition-colors cursor-pointer group">
                       <input
                         type="file"
                         accept="image/*"
@@ -259,7 +253,7 @@ export default function Index() {
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">Invoice #</label>
-                      <input type="text" value={formData.invoiceNumber} readOnly className="input-modern bg-muted/50 text-sm" />
+                      <input type="text" value={formData.invoiceNumber} readOnly className="input-modern bg-gray-50 text-sm" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">Date</label>
@@ -317,7 +311,7 @@ export default function Index() {
                         <Plus size={14} /> Add Service
                       </button>
                     </div>
-                    <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <div className="space-y-2 bg-gray-50 p-4 rounded-sm border border-gray-200">
                       {materials.map((material, index) => (
                         <div key={index} className="flex gap-2 items-end">
                           <input
@@ -353,7 +347,7 @@ export default function Index() {
                   </div>
 
                   {/* Submit Button */}
-                  <button type="submit" className="w-full bg-gradient-to-r from-primary to-accent text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+                  <button type="submit" className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2">
                     <Download size={18} />
                     Create Invoice & Download PDF
                   </button>
@@ -364,11 +358,11 @@ export default function Index() {
 
           {/* Summary Panel */}
           <div className="lg:col-span-1">
-            <div className="card-modern p-6 sticky top-24">
-              <h3 className="text-lg font-display font-bold text-foreground mb-4">Totals</h3>
+            <div className="card-modern p-6 sticky top-6">
+              <h3 className="text-lg font-bold text-foreground mb-4">Totals</h3>
 
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center text-sm">
+              <div className="space-y-3 mb-6 text-sm">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Services:</span>
                   <span className="font-semibold text-foreground">${totals.servicesTotal.toFixed(2)}</span>
                 </div>
@@ -376,25 +370,25 @@ export default function Index() {
                   <span className="text-muted-foreground">Subtotal:</span>
                   <span className="font-semibold text-foreground">${totals.subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground">Tax (6%):</span>
                   <span className="font-semibold text-foreground">${totals.tax.toFixed(2)}</span>
                 </div>
-                <div className="border-t border-border pt-3 flex justify-between items-center">
-                  <span className="text-lg font-semibold text-foreground">Total:</span>
-                  <span className="text-2xl font-bold text-primary">${totals.total.toFixed(2)}</span>
+                <div className="border-t-2 border-primary pt-3 flex justify-between items-center font-bold">
+                  <span className="text-foreground">Total:</span>
+                  <span className="text-xl text-primary">${totals.total.toFixed(2)}</span>
                 </div>
               </div>
 
               {showForm && (
                 <>
-                  <button onClick={() => exportAllInvoicesToCSV()} className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-colors mb-3 flex items-center justify-center gap-2 text-sm">
+                  <button onClick={() => exportAllInvoicesToCSV()} className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-sm transition-colors mb-3 flex items-center justify-center gap-2 text-sm">
                     <Download size={16} />
                     Export All to CSV
                   </button>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs">
-                    <p className="font-semibold text-amber-900 mb-1">💾 Saved</p>
-                    <p className="text-amber-800">{savedInvoices.length} invoice(s)</p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 text-xs">
+                    <p className="font-semibold text-blue-900 mb-1">💾 Saved</p>
+                    <p className="text-blue-800">{savedInvoices.length} invoice(s)</p>
                   </div>
                 </>
               )}
@@ -404,19 +398,22 @@ export default function Index() {
 
         {/* Saved Invoices Section */}
         {showInvoices && savedInvoices.length > 0 && (
-          <div className="mt-8">
+          <div className="mt-12">
             <div className="card-modern p-6">
-              <h2 className="text-2xl font-display font-bold text-foreground mb-4">📋 All Repairs</h2>
-
+              <h2 className="text-2xl font-bold text-foreground mb-4">📋 All Repairs</h2>
+              
               {/* Search Box */}
               <div className="mb-4">
-                <input
-                  type="text"
-                  placeholder="Search by customer, invoice #, phone, instrument, or repair description..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input-modern w-full text-sm"
-                />
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search by customer, invoice #, phone, instrument..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="input-modern w-full text-sm pl-9"
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   Found {filteredInvoices.length} of {savedInvoices.length} repairs
                 </p>
@@ -430,14 +427,14 @@ export default function Index() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b-2 border-primary">
-                        <th className="text-left py-2 px-3 font-semibold text-foreground">Invoice</th>
-                        <th className="text-left py-2 px-3 font-semibold text-foreground">Date</th>
-                        <th className="text-left py-2 px-3 font-semibold text-foreground">Customer</th>
-                        <th className="text-left py-2 px-3 font-semibold text-foreground">Phone</th>
-                        <th className="text-left py-2 px-3 font-semibold text-foreground">Instrument</th>
-                        <th className="text-left py-2 px-3 font-semibold text-foreground">Repair Work</th>
-                        <th className="text-right py-2 px-3 font-semibold text-foreground">Total</th>
+                      <tr className="border-b-2 border-primary bg-gray-50">
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Invoice</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Date</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Customer</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Phone</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Instrument</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Repair Work</th>
+                        <th className="text-right py-3 px-3 font-semibold text-foreground">Total</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -445,14 +442,14 @@ export default function Index() {
                         const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
                         const total = (servicesTotal) * 1.06;
                         return (
-                          <tr key={idx} className="border-b border-border hover:bg-muted/50 transition-colors">
-                            <td className="py-2 px-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
-                            <td className="py-2 px-3 text-muted-foreground">{new Date(invoice.date).toLocaleDateString()}</td>
-                            <td className="py-2 px-3 text-foreground">{invoice.customerName}</td>
-                            <td className="py-2 px-3 text-foreground text-xs">{invoice.customerPhone || '—'}</td>
-                            <td className="py-2 px-3 text-foreground">{invoice.instrumentType}</td>
-                            <td className="py-2 px-3 text-foreground text-xs">{invoice.repairDescription.substring(0, 40)}{invoice.repairDescription.length > 40 ? '...' : ''}</td>
-                            <td className="py-2 px-3 text-right font-bold text-primary">${total.toFixed(2)}</td>
+                          <tr key={idx} className="border-b border-border hover:bg-gray-50 transition-colors">
+                            <td className="py-3 px-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
+                            <td className="py-3 px-3 text-muted-foreground">{new Date(invoice.date).toLocaleDateString()}</td>
+                            <td className="py-3 px-3 text-foreground">{invoice.customerName}</td>
+                            <td className="py-3 px-3 text-foreground text-xs">{invoice.customerPhone || '—'}</td>
+                            <td className="py-3 px-3 text-foreground">{invoice.instrumentType}</td>
+                            <td className="py-3 px-3 text-foreground text-xs">{invoice.repairDescription.substring(0, 40)}{invoice.repairDescription.length > 40 ? '...' : ''}</td>
+                            <td className="py-3 px-3 text-right font-bold text-primary">${total.toFixed(2)}</td>
                           </tr>
                         );
                       })}
