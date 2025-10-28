@@ -44,6 +44,14 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const alert = useAlert();
 
+  // Keep saved invoices in sync when returning to this page
+  useEffect(() => {
+    const refresh = () => setSavedInvoices(getAllInvoicesFromLocalStorage());
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, []);
+
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
