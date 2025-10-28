@@ -129,7 +129,6 @@ export default function Index() {
 
       for (const variation of addressVariations) {
         console.log(`[DELIVERY] Attempting: "${variation}"`);
-        setDeliveryDebug(`Geocoding: "${variation}"...`);
         customerCoords = await geocodeAddress(variation);
         if (customerCoords) {
           successfulAddr = variation;
@@ -139,14 +138,11 @@ export default function Index() {
       }
 
       if (!customerCoords) {
-        setDeliveryDebug(`❌ Geocoding failed for: "${cleanAddr}"`);
         console.log(`[DELIVERY] All ${addressVariations.length} variations failed`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
       }
-
-      setDeliveryDebug(`✓ Geocoded: "${successfulAddr}"`);
 
       const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
       if (!baseCoords) {
