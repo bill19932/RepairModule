@@ -241,12 +241,12 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
       <tr>
         <th>Number</th>
         <td>${invoice.customerPhone}</td>
-        <th>Service</th>
-        <td>${invoice.repairDescription.substring(0, 40)}${invoice.repairDescription.length > 40 ? '...' : ''}</td>
+        <th>Date Received</th>
+        <td>${new Date(invoice.dateReceived).toLocaleDateString('en-US')}</td>
       </tr>
       <tr>
-        <th>Address</th>
-        <td colspan="3">${invoice.instrumentDescription || 'N/A'}</td>
+        <th>Instruments</th>
+        <td colspan="3">${invoice.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join(', ')}</td>
       </tr>
     </table>
     
