@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RepairInvoice, RepairMaterial } from '@/lib/invoice-types';
 import { generateInvoicePDF, downloadInvoicePDF } from '@/lib/pdf-generator';
 import { addInvoiceToLocalStorage, exportAllInvoicesToCSV, getAllInvoicesFromLocalStorage } from '@/lib/csv-exporter';
@@ -11,7 +12,7 @@ const BILL_EMAILS = ['bill@delcomusicco.com', 'billbaraldi@gmail.com'];
 
 export default function Index() {
   const [showForm, setShowForm] = useState(true);
-  const [showInvoices, setShowInvoices] = useState(false);
+  const navigate = useNavigate();
   const [invoiceNumber, setInvoiceNumber] = useState(() => {
     const stored = localStorage.getItem('nextInvoiceNumber');
     return stored ? parseInt(stored) : 1001;
@@ -254,11 +255,11 @@ export default function Index() {
                 {showForm ? 'Hide Form' : 'Show Form'}
               </button>
               <button
-                onClick={() => setShowInvoices(!showInvoices)}
+                onClick={() => navigate('/records')}
                 className="btn-primary flex items-center gap-2"
               >
                 <FileText size={16} />
-                Records ({savedInvoices.length})
+                Records
               </button>
             </div>
           </div>
@@ -500,10 +501,6 @@ export default function Index() {
                     <Download size={16} />
                     Export All to CSV
                   </button>
-                  <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 text-xs">
-                    <p className="font-semibold text-blue-900 mb-1">💾 Saved</p>
-                    <p className="text-blue-800">{savedInvoices.length} invoice(s)</p>
-                  </div>
                 </>
               )}
             </div>
@@ -511,85 +508,7 @@ export default function Index() {
         </div>
 
         {/* Saved Invoices Section */}
-        {showInvoices && savedInvoices.length > 0 && (
-          <div className="mt-12">
-            <div className="card-modern p-6">
-              <h2 className="text-2xl font-bold text-foreground mb-4">📋 All Repairs</h2>
-              
-              {/* Search Box */}
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search by customer, invoice #, phone, instrument..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="input-modern w-full text-sm pl-9"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Found {filteredInvoices.length} of {savedInvoices.length} repairs
-                </p>
-              </div>
-
-              {filteredInvoices.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No repairs found matching your search.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-primary bg-gray-50">
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Invoice</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Date Received</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Invoice Date</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Customer</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Phone</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Instruments</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Repair Work</th>
-                        <th className="text-center py-3 px-3 font-semibold text-foreground">George's</th>
-                        <th className="text-right py-3 px-3 font-semibold text-foreground">Total</th>
-                        <th className="text-center py-3 px-3 font-semibold text-foreground">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredInvoices.map((invoice, idx) => {
-                        const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
-                        const yourTotal = (servicesTotal) * 1.06;
-                        const georgesTotal = (servicesTotal * 1.54) * 1.06;
-                        const displayTotal = invoice.isGeorgesMusic ? georgesTotal : yourTotal;
-
-                        return (
-                          <tr key={idx} className={`border-b border-border hover:bg-gray-50 transition-colors ${invoice.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
-                            <td className="py-3 px-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
-                            <td className="py-3 px-3 text-muted-foreground">{new Date(invoice.dateReceived).toLocaleDateString()}</td>
-                            <td className="py-3 px-3 text-muted-foreground">{new Date(invoice.date).toLocaleDateString()}</td>
-                            <td className="py-3 px-3 text-foreground">{invoice.customerName}</td>
-                            <td className="py-3 px-3 text-foreground text-xs">{invoice.customerPhone || '—'}</td>
-                            <td className="py-3 px-3 text-foreground">{invoice.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join(', ')}</td>
-                            <td className="py-3 px-3 text-foreground text-xs">{invoice.repairDescription.substring(0, 40)}{invoice.repairDescription.length > 40 ? '...' : ''}</td>
-                            <td className="py-3 px-3 text-center text-xs font-semibold">
-                              {invoice.isGeorgesMusic ? <span className="bg-blue-200 text-blue-900 px-2 py-1 rounded">Yes</span> : <span className="text-muted-foreground">—</span>}
-                            </td>
-                            <td className="py-3 px-3 text-right font-bold text-primary">${displayTotal.toFixed(2)}</td>
-                            <td className="py-3 px-3 text-center">
-                              <button onClick={() => handleDeleteInvoice(invoice.invoiceNumber)} className="text-destructive hover:text-destructive/80 transition-colors">
-                                <Trash2 size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
+              </main>
 
       <AlertDialog
         title=""
