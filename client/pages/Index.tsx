@@ -555,47 +555,42 @@ export default function Index() {
                       </button>
                     </div>
                     <div className="space-y-2 bg-gray-50 p-4 rounded-sm border border-gray-200">
-                      {materials.map((material, index) => (
-                        <div key={index} className="flex gap-2 items-end">
-                          <input
-                            type="text"
-                            value={material.description}
-                            onChange={(e) => handleMaterialChange(index, 'description', e.target.value)}
-                            placeholder="Service or Material"
-                            className="input-modern text-sm flex-1"
-                          />
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={material.unitCost}
-                            onChange={(e) => handleMaterialChange(index, 'unitCost', e.target.value)}
-                            placeholder="Price"
-                            className="input-modern text-sm w-24"
-                          />
-                          {materials.length > 1 && (
-                            <button type="button" onClick={() => removeMaterial(index)} className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors">
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {!formData.isGeorgesMusic && deliveryMiles !== null && (
-                        <div className="flex gap-2 items-end bg-blue-50 p-2 rounded border border-blue-200">
-                          <input
-                            type="text"
-                            disabled
-                            value={`Delivery Fee (${deliveryMiles} miles × 3 trips)`}
-                            className="input-modern text-sm flex-1 bg-blue-100 text-gray-700 cursor-not-allowed"
-                          />
-                          <input
-                            type="text"
-                            disabled
-                            value={`$${deliveryFee.toFixed(2)}`}
-                            className="input-modern text-sm w-24 bg-blue-100 text-gray-700 cursor-not-allowed font-semibold text-right"
-                          />
-                        </div>
-                      )}
+                      {materials.map((material, index) => {
+                        const isDeliveryFee = material.description.startsWith('Delivery Fee (');
+                        return (
+                          <div
+                            key={index}
+                            className={`flex gap-2 items-end ${isDeliveryFee ? 'bg-blue-50 p-2 rounded border border-blue-200' : ''}`}
+                          >
+                            <input
+                              type="text"
+                              disabled={isDeliveryFee}
+                              value={material.description}
+                              onChange={(e) => handleMaterialChange(index, 'description', e.target.value)}
+                              placeholder="Service or Material"
+                              className={`input-modern text-sm flex-1 ${isDeliveryFee ? 'bg-blue-100 text-gray-700 cursor-not-allowed' : ''}`}
+                            />
+                            <input
+                              type="number"
+                              disabled={isDeliveryFee}
+                              min="0"
+                              step="0.01"
+                              value={material.unitCost}
+                              onChange={(e) => handleMaterialChange(index, 'unitCost', e.target.value)}
+                              placeholder="Price"
+                              className={`input-modern text-sm w-24 ${isDeliveryFee ? 'bg-blue-100 text-gray-700 cursor-not-allowed font-semibold text-right' : ''}`}
+                            />
+                            {materials.length > 1 && !isDeliveryFee && (
+                              <button type="button" onClick={() => removeMaterial(index)} className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors">
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                            {isDeliveryFee && materials.length > 1 && (
+                              <div className="w-10"></div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
