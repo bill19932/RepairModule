@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { RepairInvoice, RepairMaterial } from '@/lib/invoice-types';
 import { downloadInvoicePDF } from '@/lib/pdf-generator';
 import { addInvoiceToLocalStorage, exportAllInvoicesToCSV, getAllInvoicesFromLocalStorage } from '@/lib/csv-exporter';
-import { Download, Plus, Trash2, Eye, EyeOff, FileText } from 'lucide-react';
+import { extractInvoiceData } from '@/lib/ocr-utils';
+import { Download, Plus, Trash2, Eye, EyeOff, FileText, Upload, Loader } from 'lucide-react';
 
 export default function Index() {
   const [showForm, setShowForm] = useState(true);
