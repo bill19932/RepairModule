@@ -180,7 +180,7 @@ export default function Records() {
                   const displayTotal = inv.isGeorgesMusic ? georgesTotal : yourTotal;
 
                   return (
-                    <tr key={inv.invoiceNumber} className={`border-b border-border hover:bg-gray-50 transition-colors ${inv.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
+                    <tr key={`${inv.invoiceNumber}-${inv.dateReceived}`} className={`border-b border-border hover:bg-gray-50 transition-colors ${inv.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
                       <td className="py-3 px-3"><input type="checkbox" checked={selected.includes(inv.invoiceNumber)} onChange={() => toggleSelect(inv.invoiceNumber)} /></td>
                       <td className="py-3 px-3 font-semibold text-primary">
                         <button onClick={() => {
