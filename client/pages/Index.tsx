@@ -42,6 +42,11 @@ export default function Index() {
 
   const [isDeliveryInMaterials, setIsDeliveryInMaterials] = useState(false);
 
+  // Debug effect: log materials whenever they change
+  useEffect(() => {
+    console.log('[MATERIALS-DEBUG] Current materials:', materials.map(m => ({ desc: m.description, cost: m.unitCost })));
+  }, [materials]);
+
   const [savedInvoices, setSavedInvoices] = useState<RepairInvoice[]>(getAllInvoicesFromLocalStorage());
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
