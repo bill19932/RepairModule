@@ -1,53 +1,42 @@
-// Rate limiting to avoid hitting Nominatim API limits (1 request/second)
-let lastGeocodingTime = 0;
-const GEOCODING_DELAY = 1200; // 1.2 seconds between requests
-
 export const geocodeAddress = async (address: string): Promise<{ lat: number; lon: number } | null> => {
-  if (!address) return null;
+  if (!address) {
+    console.warn('[GEOCODE] No address provided');
+    return null;
+  }
 
   try {
-    // Implement rate limiting
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastGeocodingTime;
-    if (timeSinceLastRequest < GEOCODING_DELAY) {
-      await new Promise(resolve => setTimeout(resolve, GEOCODING_DELAY - timeSinceLastRequest));
-    }
-    lastGeocodingTime = Date.now();
+    console.log(`[GEOCODE] Requesting geocoding for: "${address}"`);
 
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const url = new URL('/api/geocode', window.location.origin);
+    url.searchParams.set('address', address);
 
-    const res = await fetch(url, {
+    const res = await fetch(url.toString(), {
+      method: 'GET',
       headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'DelcoMusicCo-InvoiceApp/1.0'
-      },
-      signal: controller.signal
+        'Accept': 'application/json'
+      }
     });
 
-    clearTimeout(timeoutId);
-
     if (!res.ok) {
-      console.warn(`Geocoding API returned status ${res.status} for address: ${address}`);
+      console.warn(`[GEOCODE] API request failed with status ${res.status}`);
       return null;
     }
 
     const json = await res.json();
-    if (Array.isArray(json) && json.length > 0) {
-      const result = { lat: parseFloat(json[0].lat), lon: parseFloat(json[0].lon) };
-      console.log(`Geocoded "${address}" to: ${result.lat}, ${result.lon}`);
-      return result;
+
+    if (json.success && json.data) {
+      console.log(`[GEOCODE] Successfully geocoded "${address}" to: ${json.data.lat}, ${json.data.lon}`);
+      return {
+        lat: json.data.lat,
+        lon: json.data.lon
+      };
     }
 
-    console.warn(`No geocoding results found for address: ${address}`);
+    console.warn(`[GEOCODE] Geocoding failed: ${json.error || 'Unknown error'}`);
     return null;
+
   } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') {
-      console.error(`Geocoding timeout for address: ${address}`);
-    } else {
-      console.error(`Geocode error for address "${address}":`, err);
-    }
+    console.error(`[GEOCODE] Exception while geocoding "${address}":`, err);
     return null;
   }
 };
