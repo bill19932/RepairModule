@@ -97,11 +97,11 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; lo
         lat: parseFloat(json[0].lat),
         lon: parseFloat(json[0].lon)
       };
-      console.log(`✓ [GEOCODE] Nominatim geocoded "${address}" to: ${result.lat}, ${result.lon}`);
+      console.log(`✓ [GEOCODE] SUCCESS: "${address}" → ${result.lat}, ${result.lon}`);
       return result;
     }
 
-    console.warn(`[GEOCODE] No results found for address: "${address}" - response was:`, json);
+    console.log(`[GEOCODE] No results for: "${address}"`);
     return null;
 
   } catch (err) {
