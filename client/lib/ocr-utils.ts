@@ -4,8 +4,7 @@ export interface ExtractedInvoiceData {
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
-  instrumentType?: string;
-  instrumentDescription?: string;
+  instruments?: Array<{ type: string; description: string }>;
   repairDescription?: string;
   materials?: Array<{ description: string; quantity: number; unitCost: number }>;
   laborHours?: number;
