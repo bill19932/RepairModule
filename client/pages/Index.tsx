@@ -175,13 +175,27 @@ export default function Index() {
       invoiceHtml: '', // Will be populated after PDF generation
     };
 
-    const invoiceHtml = generateInvoicePDF(invoice);
-    invoice.invoiceHtml = invoiceHtml;
+    let invoiceHtml = '';
+    try {
+      if (typeof generateInvoicePDF === 'function') {
+        invoiceHtml = generateInvoicePDF(invoice);
+        invoice.invoiceHtml = invoiceHtml;
+      } else {
+        invoice.invoiceHtml = '';
+      }
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      invoice.invoiceHtml = '';
+    }
 
     addInvoiceToLocalStorage(invoice);
-    setSavedInvoices([...savedInvoices, invoice]);
+    setSavedInvoices(prev => [...prev, invoice]);
 
-    downloadInvoicePDF(invoice);
+    try {
+      downloadInvoicePDF(invoice);
+    } catch (err) {
+      console.error('Download/print error:', err);
+    }
 
     setFormData({
       invoiceNumber: '',
