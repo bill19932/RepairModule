@@ -146,14 +146,15 @@ export default function Index() {
       return;
     }
 
-    const invoiceHtml = generateInvoicePDF(invoice);
-
     const invoice: RepairInvoice = {
       ...formData,
       instruments: instruments.filter(i => i.type.trim()),
       materials: materials.filter(m => m.description.trim()),
-      invoiceHtml,
+      invoiceHtml: '', // Will be populated after PDF generation
     };
+
+    const invoiceHtml = generateInvoicePDF(invoice);
+    invoice.invoiceHtml = invoiceHtml;
 
     addInvoiceToLocalStorage(invoice);
     setSavedInvoices([...savedInvoices, invoice]);
