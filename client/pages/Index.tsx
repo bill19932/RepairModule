@@ -350,6 +350,22 @@ export default function Index() {
                     </div>
                   </div>
 
+                  {/* Customer Info Row */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground mb-1">Customer Name *</label>
+                      <input type="text" name="customerName" value={formData.customerName} onChange={handleFormChange} placeholder="Name" className="input-modern text-sm" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground mb-1">Phone</label>
+                      <input type="tel" name="customerPhone" value={formData.customerPhone} onChange={handleFormChange} placeholder="Phone" className="input-modern text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground mb-1">Email</label>
+                      <input type="email" name="customerEmail" value={formData.customerEmail} onChange={handleFormChange} placeholder="Email" className="input-modern text-sm" />
+                    </div>
+                  </div>
+
                   {/* Instruments */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -392,22 +408,6 @@ export default function Index() {
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-
-                  {/* Customer Info Row */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Customer Name *</label>
-                      <input type="text" name="customerName" value={formData.customerName} onChange={handleFormChange} placeholder="Name" className="input-modern text-sm" required />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Phone</label>
-                      <input type="tel" name="customerPhone" value={formData.customerPhone} onChange={handleFormChange} placeholder="Phone" className="input-modern text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Email</label>
-                      <input type="email" name="customerEmail" value={formData.customerEmail} onChange={handleFormChange} placeholder="Email" className="input-modern text-sm" />
                     </div>
                   </div>
 
