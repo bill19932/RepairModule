@@ -49,15 +49,22 @@ export default function Records() {
       }
 
       if (!q) return true;
-      return (
-        inv.invoiceNumber.toLowerCase().includes(q) ||
-        inv.customerName.toLowerCase().includes(q) ||
-        (inv.customerPhone || '').toLowerCase().includes(q) ||
-        (inv.customerEmail || '').toLowerCase().includes(q) ||
-        inv.instruments.map(i => `${i.type} ${i.description}`).join(' ').toLowerCase().includes(q) ||
-        inv.repairDescription.toLowerCase().includes(q) ||
-        inv.date.toLowerCase().includes(q)
-      );
+      // universal text search across all invoice fields
+      const hay = [
+        inv.invoiceNumber,
+        inv.customerName,
+        inv.customerPhone || '',
+        inv.customerEmail || '',
+        inv.instruments.map(i => `${i.type} ${i.description}`).join(' '),
+        inv.repairDescription,
+        inv.notes || '',
+        inv.materials.map(m => `${m.description} ${m.quantity} ${m.unitCost}`).join(' '),
+        inv.date,
+        inv.dateReceived,
+      ].join(' ').toLowerCase();
+
+      // match all terms typed (split by whitespace)
+      return q.split(/\s+/).every(term => hay.includes(term));
     });
   }, [invoices, searchQuery, dateFrom, dateTo, ownerFilter]);
 
@@ -122,7 +129,7 @@ export default function Records() {
             <h2 className="text-2xl font-bold text-foreground">📋 All Repairs</h2>
             <div className="flex items-center gap-3">
               <button onClick={handleExportSelected} className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-sm flex items-center gap-2">
-                <Download size={14} /> Export Selected to CSV
+                <Download size={14} /> Export to Spreadsheet
               </button>
             </div>
           </div>
@@ -130,7 +137,7 @@ export default function Records() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
             <div className="md:col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by customer, invoice #, phone, instrument..." className="input-modern w-full text-sm pl-9" />
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search" className="input-modern w-full text-sm pl-9 border-2 border-gray-300 rounded" />
             </div>
             <div>
               <label className="text-xs text-muted-foreground">From</label>
@@ -141,8 +148,8 @@ export default function Records() {
               <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="input-modern text-sm" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Owner</label>
-              <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value as any)} className="input-modern text-sm">
+              <label className="text-xs text-muted-foreground">Repair Location</label>
+              <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value as any)} className="input-modern text-sm border-2 border-gray-300 rounded">
                 <option value="all">All</option>
                 <option value="dmc">Delco Music Co (Your Repair)</option>
                 <option value="georges">George's Music</option>
