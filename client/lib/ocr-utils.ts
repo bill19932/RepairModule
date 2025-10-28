@@ -1,7 +1,5 @@
 import Tesseract from 'tesseract.js';
 
-import Tesseract from 'tesseract.js';
-
 export interface ExtractedInvoiceData {
   customerName?: string;
   customerPhone?: string;
