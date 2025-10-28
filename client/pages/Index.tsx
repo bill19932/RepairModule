@@ -80,20 +80,33 @@ export default function Index() {
     }
 
     try {
-      const customerCoords = await geocodeAddress(address + ', Wynnewood, PA');
-      if (customerCoords) {
-        const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
-        if (baseCoords) {
-          const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
-          const roundedMiles = Math.round(miles);
-          setDeliveryMiles(roundedMiles);
-          // roundedMiles × 3 trips × $0.85 per mile
-          const fee = roundedMiles * 3 * 0.85;
-          setDeliveryFee(parseFloat(fee.toFixed(2)));
-        }
+      const customerCoords = await geocodeAddress(address + ', PA');
+      if (!customerCoords) {
+        console.warn('Could not geocode customer address:', address);
+        setDeliveryMiles(null);
+        setDeliveryFee(0);
+        return;
       }
+
+      const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
+      if (!baseCoords) {
+        console.warn('Could not geocode base address');
+        setDeliveryMiles(null);
+        setDeliveryFee(0);
+        return;
+      }
+
+      const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
+      const roundedMiles = Math.round(miles);
+      setDeliveryMiles(roundedMiles);
+      // roundedMiles × 3 trips × $0.85 per mile
+      const fee = roundedMiles * 3 * 0.85;
+      setDeliveryFee(parseFloat(fee.toFixed(2)));
+      console.log(`Delivery fee calculated: ${roundedMiles} miles = $${fee.toFixed(2)}`);
     } catch (err) {
       console.error('Geocode error', err);
+      setDeliveryMiles(null);
+      setDeliveryFee(0);
     }
   };
 
