@@ -485,22 +485,29 @@ export default function Index() {
                         <th className="text-left py-3 px-3 font-semibold text-foreground">Phone</th>
                         <th className="text-left py-3 px-3 font-semibold text-foreground">Instrument</th>
                         <th className="text-left py-3 px-3 font-semibold text-foreground">Repair Work</th>
+                        <th className="text-center py-3 px-3 font-semibold text-foreground">George's</th>
                         <th className="text-right py-3 px-3 font-semibold text-foreground">Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredInvoices.map((invoice, idx) => {
                         const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
-                        const total = (servicesTotal) * 1.06;
+                        const yourTotal = (servicesTotal) * 1.06;
+                        const georgesTotal = (servicesTotal * 1.54) * 1.06;
+                        const displayTotal = invoice.isGeorgesMusic ? georgesTotal : yourTotal;
+
                         return (
-                          <tr key={idx} className="border-b border-border hover:bg-gray-50 transition-colors">
+                          <tr key={idx} className={`border-b border-border hover:bg-gray-50 transition-colors ${invoice.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
                             <td className="py-3 px-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
                             <td className="py-3 px-3 text-muted-foreground">{new Date(invoice.date).toLocaleDateString()}</td>
                             <td className="py-3 px-3 text-foreground">{invoice.customerName}</td>
                             <td className="py-3 px-3 text-foreground text-xs">{invoice.customerPhone || '—'}</td>
                             <td className="py-3 px-3 text-foreground">{invoice.instrumentType}</td>
                             <td className="py-3 px-3 text-foreground text-xs">{invoice.repairDescription.substring(0, 40)}{invoice.repairDescription.length > 40 ? '...' : ''}</td>
-                            <td className="py-3 px-3 text-right font-bold text-primary">${total.toFixed(2)}</td>
+                            <td className="py-3 px-3 text-center text-xs font-semibold">
+                              {invoice.isGeorgesMusic ? <span className="bg-blue-200 text-blue-900 px-2 py-1 rounded">Yes</span> : <span className="text-muted-foreground">—</span>}
+                            </td>
+                            <td className="py-3 px-3 text-right font-bold text-primary">${displayTotal.toFixed(2)}</td>
                           </tr>
                         );
                       })}
