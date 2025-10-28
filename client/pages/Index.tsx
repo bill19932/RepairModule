@@ -79,6 +79,11 @@ export default function Index() {
       console.log('calculateDeliveryFee: No address provided');
       setDeliveryMiles(null);
       setDeliveryFee(0);
+      // Remove delivery fee from materials if it exists
+      if (isDeliveryInMaterials) {
+        setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
+        setIsDeliveryInMaterials(false);
+      }
       return;
     }
 
@@ -86,6 +91,11 @@ export default function Index() {
       console.log('calculateDeliveryFee: George\'s Music selected, skipping delivery fee');
       setDeliveryMiles(null);
       setDeliveryFee(0);
+      // Remove delivery fee from materials if it exists
+      if (isDeliveryInMaterials) {
+        setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
+        setIsDeliveryInMaterials(false);
+      }
       return;
     }
 
@@ -100,6 +110,11 @@ export default function Index() {
         console.warn(`calculateDeliveryFee: Could not geocode customer address: "${fullCustomerAddress}"`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
+        // Remove delivery fee from materials if it exists
+        if (isDeliveryInMaterials) {
+          setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
+          setIsDeliveryInMaterials(false);
+        }
         return;
       }
 
@@ -110,6 +125,11 @@ export default function Index() {
         console.warn('calculateDeliveryFee: Could not geocode base address');
         setDeliveryMiles(null);
         setDeliveryFee(0);
+        // Remove delivery fee from materials if it exists
+        if (isDeliveryInMaterials) {
+          setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
+          setIsDeliveryInMaterials(false);
+        }
         return;
       }
 
@@ -124,11 +144,26 @@ export default function Index() {
       const finalFee = parseFloat(fee.toFixed(2));
       setDeliveryFee(finalFee);
 
+      // Add delivery fee as a material line item
+      const deliveryDescription = `Delivery Fee (${roundedMiles} miles × 3 trips)`;
+      setMaterials(prev => {
+        // Remove existing delivery fee if any
+        const filtered = prev.filter(m => !m.description.startsWith('Delivery Fee ('));
+        // Add new delivery fee
+        return [...filtered, { description: deliveryDescription, quantity: 1, unitCost: finalFee }];
+      });
+      setIsDeliveryInMaterials(true);
+
       console.log(`✓ Delivery fee calculated: ${roundedMiles} miles = $${finalFee}`);
     } catch (err) {
       console.error('calculateDeliveryFee: Exception occurred:', err);
       setDeliveryMiles(null);
       setDeliveryFee(0);
+      // Remove delivery fee from materials if it exists
+      if (isDeliveryInMaterials) {
+        setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
+        setIsDeliveryInMaterials(false);
+      }
     }
   };
 
