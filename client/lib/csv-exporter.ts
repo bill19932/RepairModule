@@ -1,10 +1,9 @@
 import { RepairInvoice } from './invoice-types';
 
 export const generateCSVRow = (invoice: RepairInvoice): string => {
-  const materialsTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
-  const laborTotal = invoice.laborHours * invoice.hourlyRate;
-  const subtotal = materialsTotal + laborTotal;
-  const tax = subtotal * 0.08;
+  const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
+  const subtotal = servicesTotal;
+  const tax = subtotal * 0.06;
   const total = subtotal + tax;
 
   const fields = [
