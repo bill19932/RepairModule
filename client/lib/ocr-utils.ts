@@ -4,6 +4,7 @@ export interface ExtractedInvoiceData {
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
+  customerAddress?: string;
   instruments?: Array<{ type: string; description: string }>;
   repairDescription?: string;
   materials?: Array<{ description: string; quantity: number; unitCost: number }>;
@@ -25,18 +26,15 @@ const readFileAsDataURL = (file: File): Promise<string> => {
 
 export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvoiceData> => {
   try {
-    // Convert file to data URL to ensure tesseract can read it in all environments
     const dataUrl = await readFileAsDataURL(imageFile);
 
-    // Ensure the dataUrl is a loadable image, draw to canvas to normalize format/size
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve();
-      img.onerror = (e) => reject(new Error('Image failed to load'));
+      img.onerror = () => reject(new Error('Image failed to load'));
       img.src = dataUrl;
     });
 
-    // draw to canvas to normalize and avoid tesseract reading issues
     const normalizedDataUrl = await new Promise<string>((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -60,110 +58,153 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
       img.src = dataUrl;
     });
 
-    // Use tesseract to recognize text; provide simple logger
     let ocrResult;
     try {
       ocrResult = await Tesseract.recognize(normalizedDataUrl, 'eng', {
-        logger: m => {
-          // optional: can forward progress to UI
-        }
+        logger: () => {}
       });
     } catch (err) {
       console.error('Tesseract failed:', err);
       throw err;
     }
 
-    const data = ocrResult?.data || {};
-    const text = data?.text || '';
-
+    const text = ocrResult?.data?.text || '';
     const extracted: ExtractedInvoiceData = {};
 
-    // Enhanced parsing: invoice number, name, phone, email, address, description, items
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    // Extract from structured table format: Look for field labels followed by values
+    // Pattern: "FieldLabel" followed by value on same line or next content block
 
-    // Invoice number
-    const invMatch = text.match(/Invoice\s*(?:#|Number)?\s*[:#]?\s*(\d{3,10})/i) || text.match(/\bInvoice\s*#?\s*(\d{3,10})\b/i);
-    if (invMatch) (extracted as any).invoiceNumber = invMatch[1];
+    // Invoice Number - look for "Invoice #" or "Invoice Number"
+    const invMatch = text.match(/Invoice\s*#\s*(\d+)/i);
+    if (invMatch) {
+      (extracted as any).invoiceNumber = invMatch[1];
+    }
 
-    // Name
-    const nameMatch = text.match(/(?:Attention|Bill To|To:)\s*[:\-]?\s*([^\n\r]+)/i);
-    if (nameMatch) extracted.customerName = nameMatch[1].trim();
-
-    // Phone
-    const phoneMatch = text.match(/(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/);
-    if (phoneMatch) extracted.customerPhone = `(${phoneMatch[1]}) ${phoneMatch[2]}-${phoneMatch[3]}`;
+    // Attention (Customer Name)
+    const attentionMatch = text.match(/Attention\s+([^\n\r]+?)(?:\n|Email|$)/i);
+    if (attentionMatch) {
+      extracted.customerName = attentionMatch[1].trim();
+    }
 
     // Email
-    const emailMatch = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-    if (emailMatch) extracted.customerEmail = emailMatch[1];
+    const emailMatch = text.match(/Email\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+    if (emailMatch) {
+      extracted.customerEmail = emailMatch[1].trim();
+    }
 
-    // Address
-    const addrRegex = /\d{1,5}\s+[\w\d\.\-\s]{2,80}\b(?:St|St\.|Street|Ave|Avenue|Rd|Road|Blvd|Lane|Ln|Way|Drive|Dr|Court|Ct|Unit|Suite|Ste|Apt)\b[\w\s,]*/i;
-    const addrMatch = text.match(addrRegex);
-    if (addrMatch) extracted.customerAddress = addrMatch[0].trim();
-
-    // Find table header index for items
-    const headerIndex = lines.findIndex(l => /Description\s+Quantity\s+Unit Cost|Description\s+Qty|Quantity\s+Unit Cost|Unit Cost\s+Cost/i.test(l));
-
-    // Try to detect a long description above the table
-    let possibleDesc = '';
-    if (headerIndex > 0) {
-      for (let i = 0; i < headerIndex; i++) {
-        if (lines[i].length > 60) { possibleDesc = lines[i]; break; }
+    // Phone Number - look for "Number" label followed by digits
+    const phoneMatch = text.match(/Number\s+(\d{10,})/i) || 
+                      text.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
+    if (phoneMatch) {
+      let phone = phoneMatch[1];
+      // Format as (XXX) XXX-XXXX if not already formatted
+      if (phone.match(/^\d{10}$/)) {
+        phone = `(${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
       }
+      extracted.customerPhone = phone;
     }
-    if (!possibleDesc) {
-      const longLine = lines.find(l => l.length > 60);
-      if (longLine) possibleDesc = longLine;
-    }
-    if (possibleDesc) extracted.repairDescription = possibleDesc;
 
-    // Parse materials/items
+    // Address - look for "Address" label followed by value
+    const addressMatch = text.match(/Address\s+([^\n\r]+?)(?:\n|Service|$)/i);
+    if (addressMatch) {
+      extracted.customerAddress = addressMatch[1].trim();
+    }
+
+    // Service Description - look for "Service" label followed by value
+    const serviceMatch = text.match(/Service\s+([^\n\r]+?)(?:\n|Invoice|$)/i);
+    if (serviceMatch) {
+      extracted.repairDescription = serviceMatch[1].trim();
+    }
+
+    // Parse work items table
+    // Look for "Description" header which marks the start of the items table
+    const descHeaderIndex = text.indexOf('Description');
     const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
-    if (headerIndex >= 0) {
-      for (let i = headerIndex + 1; i < lines.length; i++) {
+
+    if (descHeaderIndex !== -1) {
+      // Extract text from after "Description" header until we hit summary lines (Subtotal, Tax, Total)
+      const tableText = text.substring(descHeaderIndex);
+      const summaryStart = tableText.search(/Subtotal|Material|George/i);
+      const tableContent = summaryStart > 0 ? tableText.substring(0, summaryStart) : tableText;
+
+      // Split by newlines and process each potential line
+      const lines = tableContent.split('\n').map(l => l.trim()).filter(Boolean);
+
+      // Skip the "Description", "Quantity", "Unit Cost", "Cost" header lines
+      let inItemsSection = false;
+      
+      for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (/subtotal|total|tax/i.test(line)) break;
-        const cols = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
-        if (cols.length >= 3) {
-          const desc = cols[0];
-          const qty = parseFloat(cols[1]) || 1;
-          let unitCost = parseFloat(cols[2].replace(/[^0-9\.]/g, '')) || 0;
-          if (cols.length >= 4) unitCost = parseFloat(cols[3].replace(/[^0-9\.]/g, '')) || unitCost;
-          if (desc && unitCost > 0) materials.push({ description: desc, quantity: qty, unitCost });
-        } else {
-          const costMatch = line.match(/(\d{1,3}(?:,\d{3})*(?:\.\d{2}))/);
-          if (costMatch) {
-            const cost = parseFloat(costMatch[1].replace(/,/g, ''));
-            const qtyMatch = line.match(/\b(\d+)\b/);
-            const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+
+        // Skip header row and common separator words
+        if (/Description|Quantity|Unit Cost|Cost|^-+$/i.test(line)) {
+          inItemsSection = true;
+          continue;
+        }
+
+        if (!inItemsSection) continue;
+
+        // Skip "Materials" and "Delivery Fee" rows as they're handled separately
+        if (/^Materials$|^Delivery Fee/i.test(line)) continue;
+
+        // Try to find cost patterns in the line: dollar amounts or numbers
+        // Pattern: description text, then numbers for quantity, unit cost, and total
+        const costMatch = line.match(/(\d+(?:\.\d{2})?)\s*$/);
+        const quantityMatch = line.match(/\b(\d+)\s+(\d+(?:\.\d{2})?)\s+(\d+(?:\.\d{2})?)\s*$/);
+
+        if (costMatch) {
+          // This line has a cost at the end
+          const cost = parseFloat(costMatch[1]);
+
+          if (quantityMatch) {
+            // Has quantity, unit cost, and total cost
+            const qty = parseFloat(quantityMatch[1]);
+            const unitCost = parseFloat(quantityMatch[2]);
+            const description = line.replace(quantityMatch[0], '').trim();
+
+            if (description && description.length > 2 && unitCost > 0) {
+              materials.push({ description, quantity: qty, unitCost });
+            }
+          } else {
+            // Just has a cost, try to infer from line structure
             const description = line.replace(costMatch[0], '').trim();
-            if (description && cost > 0) materials.push({ description, quantity: qty, unitCost: cost });
+            
+            // Try to find quantity in the description
+            const qtyInDesc = description.match(/\s(\d+)\s+(\d+(?:\.\d{2})?)\s*$/);
+            if (qtyInDesc) {
+              const qty = parseFloat(qtyInDesc[1]);
+              const unitCost = parseFloat(qtyInDesc[2]);
+              const cleanDesc = description.replace(qtyInDesc[0], '').trim();
+              if (cleanDesc && cleanDesc.length > 2) {
+                materials.push({ description: cleanDesc, quantity: qty, unitCost });
+              }
+            } else if (description && description.length > 10) {
+              // Long description with just a cost - assume qty 1
+              materials.push({ description, quantity: 1, unitCost: cost });
+            }
           }
         }
       }
-    } else {
-      for (const line of lines) {
-        const costMatch = line.match(/(\d{1,3}(?:,\d{3})*(?:\.\d{2}))/);
-        if (costMatch) {
-          const cost = parseFloat(costMatch[1].replace(/,/g, ''));
-          const qtyMatch = line.match(/\b(\d+)\b/);
-          const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
-          const description = line.replace(costMatch[0], '').trim();
-          if (description && cost > 0) materials.push({ description, quantity: qty, unitCost: cost });
-        }
-      }
     }
 
-    if (materials.length) extracted.materials = materials;
+    if (materials.length > 0) {
+      extracted.materials = materials;
+    }
 
-    // Infer instrument type
-    if (!extracted.instruments) {
-      if (extracted.repairDescription) {
-        const d = extracted.repairDescription.toLowerCase();
-        if (d.includes('guitar')) extracted.instruments = [{ type: 'Guitar', description: '' }];
-        else if (d.includes('bass')) extracted.instruments = [{ type: 'Bass', description: '' }];
-        else if (d.includes('violin')) extracted.instruments = [{ type: 'Violin', description: '' }];
+    // Infer instrument from repair description
+    if (extracted.repairDescription) {
+      const d = extracted.repairDescription.toLowerCase();
+      let instrumentType = '';
+      
+      if (d.includes('guitar')) instrumentType = 'Guitar';
+      else if (d.includes('bass')) instrumentType = 'Bass';
+      else if (d.includes('violin')) instrumentType = 'Violin';
+      else if (d.includes('cello')) instrumentType = 'Cello';
+      else if (d.includes('setup')) instrumentType = 'Guitar'; // Default for "setup"
+      else instrumentType = 'Guitar'; // Safe default
+
+      if (instrumentType) {
+        extracted.instruments = [{ type: instrumentType, description: extracted.repairDescription }];
       }
     }
 
