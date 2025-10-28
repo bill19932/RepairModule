@@ -43,6 +43,8 @@ export default function Index() {
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deliveryMiles, setDeliveryMiles] = useState<number | null>(null);
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const alert = useAlert();
 
   // Keep saved invoices in sync when returning to this page and across tabs
