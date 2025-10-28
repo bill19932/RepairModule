@@ -47,6 +47,14 @@ export default function Index() {
     console.log('[MATERIALS-DEBUG] Current materials:', materials.map(m => ({ desc: m.description, cost: m.unitCost })));
   }, [materials]);
 
+  // Effect to recalculate delivery fee whenever address changes
+  useEffect(() => {
+    if (formData.customerAddress && !isDeliveryInMaterials) {
+      console.log('[ADDRESS-EFFECT] Address changed, recalculating delivery fee');
+      calculateDeliveryFee(formData.customerAddress);
+    }
+  }, [formData.customerAddress]);
+
   const [savedInvoices, setSavedInvoices] = useState<RepairInvoice[]>(getAllInvoicesFromLocalStorage());
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
