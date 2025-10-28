@@ -196,6 +196,34 @@ export default function Index() {
         email = '';
       }
 
+      // First, calculate delivery fee BEFORE updating materials to avoid state timing issues
+      let deliveryFeeMaterial = null;
+      if (extracted.customerAddress) {
+        console.log('[OCR] Extracted address, calculating delivery fee:', extracted.customerAddress);
+
+        // Call geocoding directly to get delivery fee
+        const fullAddr = extracted.customerAddress.includes(',') ? extracted.customerAddress : `${extracted.customerAddress}, Wynnewood, PA`;
+        const customerCoords = await geocodeAddress(fullAddr);
+
+        if (customerCoords) {
+          const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
+          if (baseCoords) {
+            const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
+            const roundedMiles = Math.round(miles);
+            const fee = roundedMiles * 3 * 0.85;
+            const finalFee = parseFloat(fee.toFixed(2));
+
+            deliveryFeeMaterial = {
+              description: `Delivery Fee (${roundedMiles} miles × 3 trips)`,
+              quantity: 1,
+              unitCost: finalFee
+            };
+
+            console.log('[OCR] Delivery fee calculated:', deliveryFeeMaterial);
+          }
+        }
+      }
+
       setFormData(prev => ({
         ...prev,
         invoiceNumber: extracted.invoiceNumber || prev.invoiceNumber,
@@ -210,13 +238,21 @@ export default function Index() {
         setInstruments(extracted.instruments);
       }
 
+      // Now handle materials: combine extracted materials with delivery fee
+      const newMaterials: RepairMaterial[] = [];
       if (extracted.materials && extracted.materials.length > 0) {
-        setMaterials(extracted.materials);
+        newMaterials.push(...extracted.materials);
+      }
+      if (deliveryFeeMaterial) {
+        newMaterials.push(deliveryFeeMaterial);
       }
 
-      // Calculate delivery fee if address was extracted
-      if (extracted.customerAddress) {
-        await calculateDeliveryFee(extracted.customerAddress);
+      if (newMaterials.length > 0) {
+        console.log('[OCR] Setting materials:', newMaterials);
+        setMaterials(newMaterials);
+        setDeliveryMiles(deliveryFeeMaterial ? Math.round(parseInt(deliveryFeeMaterial.description.match(/\d+/)?.[0] || '0')) : null);
+        setDeliveryFee(deliveryFeeMaterial?.unitCost ?? 0);
+        setIsDeliveryInMaterials(!!deliveryFeeMaterial);
       }
 
       setOcrProgress(100);
