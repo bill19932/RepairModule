@@ -75,11 +75,10 @@ export default function Index() {
   };
 
   const calculateDeliveryFee = async (address: string) => {
-    if (!address) {
+    if (!address || !address.trim()) {
       console.log('calculateDeliveryFee: No address provided');
       setDeliveryMiles(null);
       setDeliveryFee(0);
-      // Remove delivery fee from materials if it exists
       if (isDeliveryInMaterials) {
         setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
         setIsDeliveryInMaterials(false);
@@ -91,7 +90,6 @@ export default function Index() {
       console.log('calculateDeliveryFee: George\'s Music selected, skipping delivery fee');
       setDeliveryMiles(null);
       setDeliveryFee(0);
-      // Remove delivery fee from materials if it exists
       if (isDeliveryInMaterials) {
         setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
         setIsDeliveryInMaterials(false);
@@ -100,17 +98,21 @@ export default function Index() {
     }
 
     try {
-      console.log(`calculateDeliveryFee: Starting calculation for address: "${address}"`);
+      console.log(`[DELIVERY-FEE] Starting calculation for address: "${address}"`);
 
-      const fullCustomerAddress = address.includes(',') ? address : `${address}, PA`;
-      console.log(`calculateDeliveryFee: Geocoding customer address: "${fullCustomerAddress}"`);
+      // Build full address with PA if not already included
+      let fullCustomerAddress = address.trim();
+      if (!fullCustomerAddress.toUpperCase().includes('PA')) {
+        fullCustomerAddress = `${fullCustomerAddress}, Wynnewood, PA`;
+      }
+
+      console.log(`[DELIVERY-FEE] Attempting to geocode: "${fullCustomerAddress}"`);
 
       const customerCoords = await geocodeAddress(fullCustomerAddress);
       if (!customerCoords) {
-        console.warn(`calculateDeliveryFee: Could not geocode customer address: "${fullCustomerAddress}"`);
+        console.warn(`[DELIVERY-FEE] ✗ Could not geocode customer address`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
-        // Remove delivery fee from materials if it exists
         if (isDeliveryInMaterials) {
           setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
           setIsDeliveryInMaterials(false);
@@ -118,14 +120,13 @@ export default function Index() {
         return;
       }
 
-      console.log(`calculateDeliveryFee: Customer coords: ${customerCoords.lat}, ${customerCoords.lon}`);
+      console.log(`[DELIVERY-FEE] Customer location: ${customerCoords.lat.toFixed(4)}, ${customerCoords.lon.toFixed(4)}`);
 
       const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
       if (!baseCoords) {
-        console.warn('calculateDeliveryFee: Could not geocode base address');
+        console.warn('[DELIVERY-FEE] ✗ Could not geocode base address');
         setDeliveryMiles(null);
         setDeliveryFee(0);
-        // Remove delivery fee from materials if it exists
         if (isDeliveryInMaterials) {
           setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
           setIsDeliveryInMaterials(false);
@@ -133,33 +134,32 @@ export default function Index() {
         return;
       }
 
-      console.log(`calculateDeliveryFee: Base coords: ${baseCoords.lat}, ${baseCoords.lon}`);
+      console.log(`[DELIVERY-FEE] Base location: ${baseCoords.lat.toFixed(4)}, ${baseCoords.lon.toFixed(4)}`);
 
       const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
       const roundedMiles = Math.round(miles);
-      setDeliveryMiles(roundedMiles);
 
-      // roundedMiles × 3 trips × $0.85 per mile
       const fee = roundedMiles * 3 * 0.85;
       const finalFee = parseFloat(fee.toFixed(2));
+
+      console.log(`[DELIVERY-FEE] ✓ Calculated: ${roundedMiles} miles = ${roundedMiles} × 3 trips × $0.85 = $${finalFee}`);
+
+      setDeliveryMiles(roundedMiles);
       setDeliveryFee(finalFee);
 
       // Add delivery fee as a material line item
       const deliveryDescription = `Delivery Fee (${roundedMiles} miles × 3 trips)`;
       setMaterials(prev => {
-        // Remove existing delivery fee if any
         const filtered = prev.filter(m => !m.description.startsWith('Delivery Fee ('));
-        // Add new delivery fee
+        console.log(`[DELIVERY-FEE] Adding material: "${deliveryDescription}" for $${finalFee}`);
         return [...filtered, { description: deliveryDescription, quantity: 1, unitCost: finalFee }];
       });
       setIsDeliveryInMaterials(true);
 
-      console.log(`✓ Delivery fee calculated: ${roundedMiles} miles = $${finalFee}`);
     } catch (err) {
-      console.error('calculateDeliveryFee: Exception occurred:', err);
+      console.error('[DELIVERY-FEE] Exception:', err);
       setDeliveryMiles(null);
       setDeliveryFee(0);
-      // Remove delivery fee from materials if it exists
       if (isDeliveryInMaterials) {
         setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
         setIsDeliveryInMaterials(false);
