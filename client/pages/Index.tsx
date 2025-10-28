@@ -17,17 +17,17 @@ export default function Index() {
   });
 
   const [formData, setFormData] = useState({
-    invoiceNumber: '',
-    dateReceived: new Date().toISOString().split('T')[0],
-    date: new Date().toISOString().split('T')[0],
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-    repairDescription: '',
-    laborHours: 0,
-    hourlyRate: 0,
-    notes: '',
-    isGeorgesMusic: false,
+    invoiceNumber: '' as string,
+    dateReceived: new Date().toISOString().split('T')[0] as string,
+    date: new Date().toISOString().split('T')[0] as string,
+    customerName: '' as string,
+    customerPhone: '' as string,
+    customerEmail: '' as string,
+    repairDescription: '' as string,
+    laborHours: 0 as number,
+    hourlyRate: 0 as number,
+    notes: '' as string,
+    isGeorgesMusic: false as boolean,
   });
 
   const [instruments, setInstruments] = useState([{ type: '', description: '' }]);
