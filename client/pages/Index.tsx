@@ -93,10 +93,10 @@ export default function Index() {
 
       // Try multiple address format variations
       const addressVariations = [
-        cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, Wynnewood, PA`,
-        cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, PA`,
+        cleanAddr, // Try original cleaned address as-is first
         cleanAddr.includes('PA') || cleanAddr.includes('Pennsylvania') ? cleanAddr : `${cleanAddr}, PA`,
-        cleanAddr, // Try original cleaned address without state
+        cleanAddr.includes('PA') || cleanAddr.includes('Pennsylvania') ? cleanAddr : `${cleanAddr}, Pennsylvania`,
+        cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, Wynnewood, PA`, // Only add Wynnewood if no comma (no city specified)
       ];
 
       let customerCoords = null;
