@@ -76,6 +76,8 @@ export default function Index() {
     if (!address || formData.isGeorgesMusic) {
       setDeliveryMiles(null);
       setDeliveryFee(0);
+      // Remove delivery fee from materials if it exists
+      setMaterials(prev => prev.filter(m => !m.description.includes('Delivery Fee')));
       return;
     }
 
@@ -89,7 +91,17 @@ export default function Index() {
           setDeliveryMiles(roundedMiles);
           // roundedMiles × 3 trips × $0.85 per mile
           const fee = roundedMiles * 3 * 0.85;
-          setDeliveryFee(parseFloat(fee.toFixed(2)));
+          const roundedFee = parseFloat(fee.toFixed(2));
+          setDeliveryFee(roundedFee);
+
+          // Add delivery fee as a line item in materials
+          const deliveryDescription = `Delivery Fee (${roundedMiles} miles × 3 trips)`;
+          setMaterials(prev => {
+            // Remove existing delivery fee line if present
+            const filtered = prev.filter(m => !m.description.includes('Delivery Fee'));
+            // Add new delivery fee line
+            return [...filtered, { description: deliveryDescription, quantity: 1, unitCost: roundedFee }];
+          });
         }
       }
     } catch (err) {
