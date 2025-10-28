@@ -28,102 +28,121 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    @page { size: 8.5in 11in; margin: 0.5in; }
+    /* Portrait 8.5x11 */
+    @page { size: 8.5in 11in; margin: 0.4in; }
     html,body { height: 100%; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-      color: #222;
+      color: #111;
       background: white;
       padding: 0;
       margin: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .page {
       width: 100%;
       height: 100%;
       box-sizing: border-box;
-      padding: 18px 28px;
+      padding: 20px 28px;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      gap: 12px;
+      align-items: center;
+      gap: 14px;
+      color-adjust: exact;
     }
     .brand {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 8px;
+      text-align: center;
     }
     .brand img.logo {
-      height: 60px;
+      height: 68px;
       width: auto;
       object-fit: contain;
     }
     .brand .title {
-      color: #0066cc;
-      font-weight: 700;
-      font-size: 20px;
+      color: #0b64b3;
+      font-weight: 800;
+      font-size: 22px;
       letter-spacing: 1px;
     }
-    .meta {
-      margin-left: auto;
-      text-align: right;
-      font-size: 12px;
-    }
+    .brand .subtitle { color: #6b7280; font-size: 12px; }
+
+    .meta { text-align: center; font-size: 12px; color: #374151; }
+
     .info {
+      width: 100%;
+      max-width: 760px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 14px;
       font-size: 12px;
     }
     .info .left, .info .right { display: block; }
-    .info .label { font-weight: 700; color: #444; font-size: 11px; margin-bottom: 4px; }
+    .info .label { font-weight: 700; color: #374151; font-size: 12px; margin-bottom: 6px; }
     .info .value { color: #111; }
 
     .items {
       width: 100%;
+      max-width: 760px;
       border-collapse: collapse;
       font-size: 12px;
       margin-top: 6px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+      border-radius: 6px;
+      overflow: hidden;
     }
-    .items th {
-      background: #0066cc;
+    .items thead th {
+      background: linear-gradient(180deg,#0b64b3,#0a58a5);
       color: white;
-      padding: 8px 10px;
+      padding: 10px 12px;
       text-align: left;
       font-size: 12px;
+      font-weight: 700;
     }
     .items td {
-      padding: 8px 10px;
-      border-bottom: 1px solid #e6e6e6;
+      padding: 10px 12px;
+      border-bottom: 1px solid #eef2f7;
+      background: white;
     }
+
     .totals {
+      width: 100%;
+      max-width: 760px;
       margin-top: 8px;
       display: flex;
       justify-content: flex-end;
-      gap: 12px;
     }
-    .totals .block { width: 260px; }
-    .totals .row { display:flex; justify-content:space-between; padding:6px 0; font-size:13px; }
-    .totals .row.total { font-weight:700; font-size:15px; border-top:1px solid #ddd; padding-top:10px; }
+    .totals .block { width: 300px; }
+    .totals .row { display:flex; justify-content:space-between; padding:8px 0; font-size:13px; }
+    .totals .row.total { font-weight:800; font-size:16px; border-top:1px solid #e6eef7; padding-top:10px; }
 
-    .notes { margin-top: 10px; font-size:12px; background:#f6f9ff; padding:8px; border-left:4px solid #0066cc; }
+    .notes { margin-top: 10px; font-size:12px; background:#f8fbff; padding:10px; border-left:4px solid #0b64b3; max-width:760px; }
 
     .footer {
-      margin-top: auto;
+      width: 100%;
+      max-width: 760px;
+      margin-top: 18px;
       display:flex;
-      justify-content:space-between;
+      flex-direction:column;
       align-items:center;
       gap:12px;
       padding-top:12px;
-      border-top:1px solid #eee;
+      border-top:1px solid #f0f4f8;
     }
-    .qr-grid { display:flex; gap:12px; align-items:center; }
-    .qr-grid img { width:68px; height:68px; object-fit:cover; border:1px solid #eee; background:white; }
-    .footer .msg { font-size:11px; color:#444; text-align:left; }
+    .qr-grid { display:flex; gap:26px; align-items:center; justify-content:center; }
+    .qr-item { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .qr-grid img { width:86px; height:86px; object-fit:cover; border:1px solid #eee; background:white; padding:6px; border-radius:6px; }
+    .qr-label { font-size:11px; color:#374151; font-weight:600; }
+    .footer .msg { font-size:13px; color:#374151; text-align:center; line-height:1.4; max-width:560px; }
 
-    /* ensure it prints nicely */
+    /* ensure it prints nicely and colors remain */
     @media print {
-      body { -webkit-print-color-adjust: exact; }
-      .page { padding: 12px 18px; }
+      body { -webkit-print-color-adjust: exact; color-adjust: exact; }
+      .page { padding: 12px 16px; }
     }
   </style>
 </head>
