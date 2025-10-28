@@ -95,6 +95,9 @@ export const getAllInvoicesFromLocalStorage = (): RepairInvoice[] => {
   return invoices.map((invoice: any) => ({
     ...invoice,
     dateReceived: invoice.dateReceived || invoice.date || new Date().toISOString().split('T')[0],
+    customerAddress: invoice.customerAddress || invoice.address || '',
+    deliveryMiles: typeof invoice.deliveryMiles === 'number' ? invoice.deliveryMiles : (invoice.delivery_miles || null),
+    deliveryFee: typeof invoice.deliveryFee === 'number' ? invoice.deliveryFee : (invoice.delivery_fee || 0),
     instruments: invoice.instruments || [{ type: invoice.instrumentType || 'Other', description: invoice.instrumentDescription || '' }],
     invoiceHtml: invoice.invoiceHtml || '',
   }));
