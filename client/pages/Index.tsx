@@ -74,95 +74,46 @@ export default function Index() {
   };
 
   const calculateDeliveryFee = async (address: string) => {
-    if (!address || !address.trim()) {
-      console.log('calculateDeliveryFee: No address provided');
+    if (!address || !address.trim() || formData.isGeorgesMusic) {
       setDeliveryMiles(null);
       setDeliveryFee(0);
-      if (isDeliveryInMaterials) {
-        setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
-        setIsDeliveryInMaterials(false);
-      }
-      return;
-    }
-
-    if (formData.isGeorgesMusic) {
-      console.log('calculateDeliveryFee: George\'s Music selected, skipping delivery fee');
-      setDeliveryMiles(null);
-      setDeliveryFee(0);
-      if (isDeliveryInMaterials) {
-        setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
-        setIsDeliveryInMaterials(false);
-      }
       return;
     }
 
     try {
-      console.log(`[DELIVERY-FEE] Starting calculation for address: "${address}"`);
+      console.log(`[DELIVERY] Geocoding address: "${address}"`);
 
-      // Build full address with PA if not already included
-      let fullCustomerAddress = address.trim();
-      if (!fullCustomerAddress.toUpperCase().includes('PA')) {
-        fullCustomerAddress = `${fullCustomerAddress}, Wynnewood, PA`;
-      }
-
-      console.log(`[DELIVERY-FEE] Attempting to geocode: "${fullCustomerAddress}"`);
-
-      const customerCoords = await geocodeAddress(fullCustomerAddress);
+      const fullAddr = address.trim().includes(',') ? address.trim() : `${address.trim()}, PA`;
+      const customerCoords = await geocodeAddress(fullAddr);
       if (!customerCoords) {
-        console.warn(`[DELIVERY-FEE] ✗ Could not geocode customer address`);
+        console.warn('[DELIVERY] Failed to geocode customer address');
         setDeliveryMiles(null);
         setDeliveryFee(0);
-        if (isDeliveryInMaterials) {
-          setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
-          setIsDeliveryInMaterials(false);
-        }
         return;
       }
-
-      console.log(`[DELIVERY-FEE] Customer location: ${customerCoords.lat.toFixed(4)}, ${customerCoords.lon.toFixed(4)}`);
 
       const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
       if (!baseCoords) {
-        console.warn('[DELIVERY-FEE] ✗ Could not geocode base address');
+        console.warn('[DELIVERY] Failed to geocode base address');
         setDeliveryMiles(null);
         setDeliveryFee(0);
-        if (isDeliveryInMaterials) {
-          setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
-          setIsDeliveryInMaterials(false);
-        }
         return;
       }
 
-      console.log(`[DELIVERY-FEE] Base location: ${baseCoords.lat.toFixed(4)}, ${baseCoords.lon.toFixed(4)}`);
-
       const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
       const roundedMiles = Math.round(miles);
-
       const fee = roundedMiles * 3 * 0.85;
       const finalFee = parseFloat(fee.toFixed(2));
 
-      console.log(`[DELIVERY-FEE] ✓ Calculated: ${roundedMiles} miles = ${roundedMiles} × 3 trips × $0.85 = $${finalFee}`);
+      console.log(`[DELIVERY] ✓ ${roundedMiles} miles = $${finalFee}`);
 
       setDeliveryMiles(roundedMiles);
       setDeliveryFee(finalFee);
 
-      // Add delivery fee as a material line item
-      const deliveryDescription = `Delivery Fee (${roundedMiles} miles × 3 trips)`;
-      setMaterials(prev => {
-        const filtered = prev.filter(m => !m.description.startsWith('Delivery Fee ('));
-        console.log(`[DELIVERY-FEE] Adding material: "${deliveryDescription}" for $${finalFee}`);
-        return [...filtered, { description: deliveryDescription, quantity: 1, unitCost: finalFee }];
-      });
-      setIsDeliveryInMaterials(true);
-
     } catch (err) {
-      console.error('[DELIVERY-FEE] Exception:', err);
+      console.error('[DELIVERY] Error:', err);
       setDeliveryMiles(null);
       setDeliveryFee(0);
-      if (isDeliveryInMaterials) {
-        setMaterials(prev => prev.filter(m => !m.description.startsWith('Delivery Fee (')));
-        setIsDeliveryInMaterials(false);
-      }
     }
   };
 
@@ -458,7 +409,7 @@ export default function Index() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Image Upload for OCR */}
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-2">📸 Auto-Fill from Image</label>
+                    <label className="block text-sm font-semibold text-foreground mb-2">���� Auto-Fill from Image</label>
                     <div className="relative border-2 border-dashed border-primary/30 rounded-sm p-6 bg-blue-50 hover:border-primary/50 transition-colors cursor-pointer group">
                       <input
                         type="file"
