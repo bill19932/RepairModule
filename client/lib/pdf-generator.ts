@@ -216,8 +216,6 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
       </div>
     </div>
 
-    ${invoice.notes ? `<div class="notes"><strong>Notes:</strong><div style="margin-top:6px">${invoice.notes.split('\n').join('<br>')}</div></div>` : ''}
-
     <div class="footer">
       <div class="qr-grid">
         <div class="qr-item">
