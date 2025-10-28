@@ -101,6 +101,20 @@ export default function Index() {
     }
   };
 
+  const handleInstrumentChange = (index: number, field: 'type' | 'description', value: string) => {
+    const newInstruments = [...instruments];
+    newInstruments[index][field] = value;
+    setInstruments(newInstruments);
+  };
+
+  const addInstrument = () => {
+    setInstruments([...instruments, { type: '', description: '' }]);
+  };
+
+  const removeInstrument = (index: number) => {
+    setInstruments(instruments.filter((_, i) => i !== index));
+  };
+
   const handleMaterialChange = (index: number, field: keyof RepairMaterial, value: string | number) => {
     const newMaterials = [...materials];
     if (field === 'quantity' || field === 'unitCost') {
