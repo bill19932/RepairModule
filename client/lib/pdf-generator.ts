@@ -14,334 +14,201 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   const finalSubtotal = invoice.isGeorgesMusic ? georgesSubtotal : subtotal;
   const finalTax = invoice.isGeorgesMusic ? georgesTax : tax;
 
+  const logoUrl = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F9753a3ec93ee4d5dba7a86a75c0f457f?format=webp&width=800';
+  const qrGoogle = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F16d28bb1a7c144dca4fe83ccf654b8bf?format=webp&width=800';
+  const qrFacebook = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F3957d5a2405340f381789e3736f4ae23?format=webp&width=800';
+  const qrWebsite = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F3dab77482ef04753a6e15fd4bed20dac?format=webp&width=800';
+
   const html = `
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
+    @page { size: 8.5in 11in; margin: 0.5in; }
+    html,body { height: 100%; }
     body {
-      font-family: Arial, sans-serif;
-      color: #333;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      color: #222;
       background: white;
-      padding: 20px;
+      padding: 0;
+      margin: 0;
     }
-    
-    .invoice-container {
-      max-width: 850px;
-      margin: 0 auto;
-      background: white;
-    }
-    
-    .header-bar {
-      background: #0066cc;
-      height: 8px;
-      margin-bottom: 30px;
-    }
-    
-    .header-section {
+    .page {
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 18px 28px;
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 40px;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 12px;
     }
-    
-    .company-info {
-      flex: 1;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
-    
-    .logo {
-      display: inline-block;
-      background: #f0f0f0;
-      padding: 12px 10px;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      text-align: center;
-      border: 2px solid #0066cc;
+    .brand img.logo {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
     }
-    
-    .logo-text {
-      font-size: 9px;
-      font-weight: bold;
+    .brand .title {
       color: #0066cc;
+      font-weight: 700;
+      font-size: 20px;
       letter-spacing: 1px;
-      line-height: 1.2;
     }
-    
-    .invoice-label {
-      font-size: 16px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 8px;
-    }
-    
-    .contact-info {
-      font-size: 11px;
-      color: #0066cc;
-      margin: 3px 0;
-    }
-    
-    .services-list {
-      font-size: 10px;
-      color: #666;
-      margin-top: 10px;
-      line-height: 1.3;
-    }
-    
-    .invoice-details {
+    .meta {
+      margin-left: auto;
       text-align: right;
-      font-size: 11px;
+      font-size: 12px;
     }
-    
-    .invoice-details .number {
-      font-size: 14px;
-      font-weight: bold;
-      color: #0066cc;
-      margin: 5px 0;
+    .info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      font-size: 12px;
     }
-    
-    .invoice-details .date {
-      font-size: 10px;
-      margin-top: 10px;
-    }
-    
-    .info-table {
+    .info .left, .info .right { display: block; }
+    .info .label { font-weight: 700; color: #444; font-size: 11px; margin-bottom: 4px; }
+    .info .value { color: #111; }
+
+    .items {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 25px;
-      border: 1px solid #333;
+      font-size: 12px;
+      margin-top: 6px;
     }
-    
-    .info-table th {
-      background: #f0f0f0;
-      padding: 8px;
-      text-align: left;
-      font-weight: bold;
-      font-size: 11px;
-      border: 1px solid #333;
-    }
-    
-    .info-table td {
-      padding: 8px;
-      font-size: 11px;
-      border: 1px solid #333;
-    }
-    
-    .items-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 25px;
-    }
-    
-    .items-table th {
+    .items th {
       background: #0066cc;
       color: white;
-      padding: 10px;
-      text-align: left;
-      font-weight: bold;
-      font-size: 11px;
-    }
-    
-    .items-table td {
       padding: 8px 10px;
-      font-size: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    
-    .items-table tr:last-child td {
-      border-bottom: 1px solid #333;
-    }
-    
-    .text-right {
-      text-align: right;
-    }
-    
-    .totals-section {
-      margin-bottom: 30px;
-    }
-    
-    .totals-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      font-size: 11px;
-      border-bottom: 1px solid #ddd;
-    }
-    
-    .totals-row.subtotal {
-      border-bottom: 1px solid #333;
-    }
-    
-    .totals-row.total {
-      font-weight: bold;
-      border-bottom: 2px solid #333;
-      border-top: 1px solid #333;
-      padding-top: 8px;
-      padding-bottom: 8px;
-    }
-    
-    .footer-message {
-      font-size: 10px;
-      color: #333;
-      text-align: center;
-      margin-top: 25px;
-      line-height: 1.4;
-    }
-    
-    .thank-you {
-      text-align: center;
-      font-weight: bold;
+      text-align: left;
       font-size: 12px;
-      margin-top: 15px;
     }
-    
-    .qr-section {
-      text-align: center;
-      margin-top: 25px;
-      font-size: 9px;
+    .items td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e6e6e6;
     }
-    
-    .qr-placeholder {
-      display: inline-block;
-      width: 60px;
-      height: 60px;
-      margin: 0 15px;
-      border: 1px solid #ddd;
-      background: #f9f9f9;
-      line-height: 60px;
-      vertical-align: top;
+    .totals {
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
     }
-    
-    .notes-section {
-      background: #f5f5f5;
-      padding: 10px;
-      margin-top: 15px;
-      border-left: 3px solid #0066cc;
-      font-size: 10px;
+    .totals .block { width: 260px; }
+    .totals .row { display:flex; justify-content:space-between; padding:6px 0; font-size:13px; }
+    .totals .row.total { font-weight:700; font-size:15px; border-top:1px solid #ddd; padding-top:10px; }
+
+    .notes { margin-top: 10px; font-size:12px; background:#f6f9ff; padding:8px; border-left:4px solid #0066cc; }
+
+    .footer {
+      margin-top: auto;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding-top:12px;
+      border-top:1px solid #eee;
+    }
+    .qr-grid { display:flex; gap:12px; align-items:center; }
+    .qr-grid img { width:68px; height:68px; object-fit:cover; border:1px solid #eee; background:white; }
+    .footer .msg { font-size:11px; color:#444; text-align:left; }
+
+    /* ensure it prints nicely */
+    @media print {
+      body { -webkit-print-color-adjust: exact; }
+      .page { padding: 12px 18px; }
     }
   </style>
 </head>
 <body>
-  <div class="invoice-container">
-    <div class="header-bar"></div>
-    
-    <div class="header-section">
-      <div class="company-info">
-        <div class="logo">
-          <div class="logo-text">DELCO</div>
-          <div class="logo-text">MUSIC</div>
-          <div class="logo-text" style="font-size: 8px; color: #999;">COMPANY</div>
-        </div>
-        <div class="invoice-label">INVOICE</div>
-        <div class="contact-info">Bill@delcomusicco.com</div>
-        <div class="contact-info">610.505.6096</div>
-        <div class="services-list">
-          <div>Private Lessons</div>
-          <div>Instrument Repairs</div>
-          <div>Recording Services</div>
-        </div>
+  <div class="page">
+    <div class="brand">
+      <img class="logo" src="${logoUrl}" alt="Delco Music Co logo" />
+      <div>
+        <div class="title">Delco Music Co</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">Repair Invoice</div>
       </div>
-      <div class="invoice-details">
-        <div class="number">${invoice.invoiceNumber}</div>
-        <div class="date">${new Date(invoice.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+      <div class="meta">
+        <div style="font-weight:700; color:#0066cc; font-size:16px;">${invoice.invoiceNumber}</div>
+        <div style="margin-top:6px;">${new Date(invoice.date).toLocaleDateString('en-US')}</div>
       </div>
     </div>
-    
-    <table class="info-table">
-      <tr>
-        <th style="width: 20%;">Attention</th>
-        <td style="width: 30%;">${invoice.customerName}</td>
-        <th style="width: 20%;">Email</th>
-        <td>${invoice.customerEmail || 'na'}</td>
-      </tr>
-      <tr>
-        <th>Number</th>
-        <td>${invoice.customerPhone}</td>
-        <th>Date Received</th>
-        <td>${new Date(invoice.dateReceived).toLocaleDateString('en-US')}</td>
-      </tr>
-      <tr>
-        <th>Instruments</th>
-        <td colspan="3">${invoice.instruments.map(i => `${i.type}${i.description ? ' (Instrument Model: ' + i.description + ')' : ''}`).join(', ')}</td>
-      </tr>
-    </table>
-    
-    <table class="items-table">
+
+    <div class="info">
+      <div class="left">
+        <div class="label">Attention</div>
+        <div class="value">${invoice.customerName}</div>
+        <div style="height:8px"></div>
+        <div class="label">Phone</div>
+        <div class="value">${invoice.customerPhone || '—'}</div>
+        <div style="height:8px"></div>
+        <div class="label">Email</div>
+        <div class="value">${invoice.customerEmail || '—'}</div>
+      </div>
+      <div class="right">
+        <div class="label">Date Received</div>
+        <div class="value">${new Date(invoice.dateReceived).toLocaleDateString('en-US')}</div>
+        <div style="height:8px"></div>
+        <div class="label">Instruments</div>
+        <div class="value">${invoice.instruments.map(i => `${i.type}${i.description ? ' (Instrument Model: ' + i.description + ')' : ''}`).join(', ')}</div>
+        <div style="height:8px"></div>
+        <div class="label">Repair Work</div>
+        <div class="value">${invoice.repairDescription}</div>
+      </div>
+    </div>
+
+    <table class="items" role="table">
       <thead>
         <tr>
-          <th style="width: 50%;">Service or Material</th>
-          <th style="width: 15%; text-align: center;">Quantity</th>
-          <th style="width: 15%; text-align: right;">Unit Cost</th>
-          <th style="width: 20%; text-align: right;">Cost</th>
+          <th style="width:58%">Service or Material</th>
+          <th style="width:12%">Qty</th>
+          <th style="width:15%; text-align:right">Unit</th>
+          <th style="width:15%; text-align:right">Cost</th>
         </tr>
       </thead>
       <tbody>
-        ${invoice.materials.map(material => `
+        ${invoice.materials.map(m => `
           <tr>
-            <td>${material.description}</td>
-            <td style="text-align: center;">${material.quantity}</td>
-            <td style="text-align: right;">$${material.unitCost.toFixed(2)}</td>
-            <td style="text-align: right; font-weight: 600;">$${(material.quantity * material.unitCost).toFixed(2)}</td>
+            <td>${m.description}</td>
+            <td>${m.quantity}</td>
+            <td style="text-align:right">$${m.unitCost.toFixed(2)}</td>
+            <td style="text-align:right">$${(m.quantity * m.unitCost).toFixed(2)}</td>
           </tr>
         `).join('')}
       </tbody>
     </table>
-    
-    <div class="totals-section">
-      <div class="totals-row subtotal">
-        <span>Subtotal</span>
-        <span>$${finalSubtotal.toFixed(2)}</span>
-      </div>
-      <div class="totals-row">
-        <span>6% Tax</span>
-        <span>$${finalTax.toFixed(2)}</span>
-      </div>
-      <div class="totals-row total">
-        <span>DMC Total</span>
-        <span>$${finalSubtotal.toFixed(2)}</span>
-      </div>
-      <div class="totals-row total" style="border-top: none;">
-        <span>Customer Total</span>
-        <span>$${finalTotal.toFixed(2)}</span>
+
+    <div class="totals">
+      <div class="block">
+        <div class="row"><div>Services Total</div><div>$${(invoice.materials.reduce((s, m) => s + m.quantity * m.unitCost, 0)).toFixed(2)}</div></div>
+        <div class="row"><div>Subtotal</div><div>$${finalSubtotal.toFixed(2)}</div></div>
+        <div class="row"><div>6% Tax</div><div>$${finalTax.toFixed(2)}</div></div>
+        <div class="row total"><div>Customer Total</div><div>$${finalTotal.toFixed(2)}</div></div>
       </div>
     </div>
-    
-    ${invoice.notes ? `
-      <div class="notes-section">
-        <strong>Notes:</strong><br>
-        ${invoice.notes.split('\n').join('<br>')}
+
+    ${invoice.notes ? `<div class="notes"><strong>Notes:</strong><div style="margin-top:6px">${invoice.notes.split('\n').join('<br>')}</div></div>` : ''}
+
+    <div class="footer">
+      <div class="qr-grid">
+        <img src="${qrGoogle}" alt="Google QR" />
+        <img src="${qrFacebook}" alt="Facebook QR" />
+        <img src="${qrWebsite}" alt="Website QR" />
       </div>
-    ` : ''}
-    
-    <div class="footer-message">
-      <p>Thank you for your business! If you have a few minutes, a <strong>Google Review</strong></p>
-      <p>would be greatly appreciated and helps get our business out to more people!</p>
-      <p style="margin-top: 10px;">Sincerely yours,</p>
-      <p style="font-size: 12px; margin-top: 5px;"><strong>Delco Music Co.</strong></p>
-    </div>
-    
-    <div class="qr-section">
-      <div style="margin-top: 15px;">
-        <div class="qr-placeholder">[QR]</div>
-        <div class="qr-placeholder">[QR]</div>
-        <div class="qr-placeholder">[QR]</div>
-      </div>
-      <div style="margin-top: 8px;">
-        <div style="display: inline-block; margin: 0 15px; font-size: 9px;">Google Review</div>
-        <div style="display: inline-block; margin: 0 15px; font-size: 9px;">Facebook Review</div>
-        <div style="display: inline-block; margin: 0 15px; font-size: 9px;">Our Website</div>
+      <div class="msg">
+        <div style="font-weight:700; color:#0066cc;">Thank you for your business!</div>
+        <div style="font-size:12px; color:#444; margin-top:6px">Please consider leaving a review — it helps small businesses grow.</div>
       </div>
     </div>
   </div>
 </body>
 </html>
-  `;
+`;
 
   return html;
 };
