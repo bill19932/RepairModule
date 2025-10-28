@@ -381,16 +381,6 @@ export default function Index() {
               <div className="card-modern p-8">
                 <h2 className="text-2xl font-bold text-foreground mb-6">New Invoice</h2>
 
-                {/* DEBUG DISPLAY */}
-                <div className="bg-yellow-50 border border-yellow-300 p-3 rounded mb-4 text-xs font-mono">
-                  <div><strong>DEBUG:</strong></div>
-                  <div>Address: {formData.customerAddress || '(empty)'}</div>
-                  <div>Delivery Miles: {deliveryMiles ?? '(null)'}</div>
-                  <div>Delivery Fee: ${deliveryFee.toFixed(2)}</div>
-                  <div>George's Music: {formData.isGeorgesMusic ? 'YES' : 'NO'}</div>
-                  {deliveryDebug && <div className="mt-2 pt-2 border-t border-yellow-300"><strong>Geocoding:</strong> {deliveryDebug}</div>}
-                </div>
-
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Image Upload for OCR */}
                   <div>
