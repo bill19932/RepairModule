@@ -78,6 +78,97 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
 
     const extracted: ExtractedInvoiceData = {};
 
+    // Enhanced parsing: invoice number, name, phone, email, address, description, items
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // Invoice number
+    const invMatch = text.match(/Invoice\s*(?:#|Number)?\s*[:#]?\s*(\d{3,10})/i) || text.match(/\bInvoice\s*#?\s*(\d{3,10})\b/i);
+    if (invMatch) (extracted as any).invoiceNumber = invMatch[1];
+
+    // Name
+    const nameMatch = text.match(/(?:Attention|Bill To|To:)\s*[:\-]?\s*([^\n\r]+)/i);
+    if (nameMatch) extracted.customerName = nameMatch[1].trim();
+
+    // Phone
+    const phoneMatch = text.match(/(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/);
+    if (phoneMatch) extracted.customerPhone = `(${phoneMatch[1]}) ${phoneMatch[2]}-${phoneMatch[3]}`;
+
+    // Email
+    const emailMatch = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) extracted.customerEmail = emailMatch[1];
+
+    // Address
+    const addrRegex = /\d{1,5}\s+[\w\d\.\-\s]{2,80}\b(?:St|St\.|Street|Ave|Avenue|Rd|Road|Blvd|Lane|Ln|Way|Drive|Dr|Court|Ct|Unit|Suite|Ste|Apt)\b[\w\s,]*/i;
+    const addrMatch = text.match(addrRegex);
+    if (addrMatch) extracted.customerAddress = addrMatch[0].trim();
+
+    // Find table header index for items
+    const headerIndex = lines.findIndex(l => /Description\s+Quantity\s+Unit Cost|Description\s+Qty|Quantity\s+Unit Cost|Unit Cost\s+Cost/i.test(l));
+
+    // Try to detect a long description above the table
+    let possibleDesc = '';
+    if (headerIndex > 0) {
+      for (let i = 0; i < headerIndex; i++) {
+        if (lines[i].length > 60) { possibleDesc = lines[i]; break; }
+      }
+    }
+    if (!possibleDesc) {
+      const longLine = lines.find(l => l.length > 60);
+      if (longLine) possibleDesc = longLine;
+    }
+    if (possibleDesc) extracted.repairDescription = possibleDesc;
+
+    // Parse materials/items
+    const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
+    if (headerIndex >= 0) {
+      for (let i = headerIndex + 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (/subtotal|total|tax/i.test(line)) break;
+        const cols = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
+        if (cols.length >= 3) {
+          const desc = cols[0];
+          const qty = parseFloat(cols[1]) || 1;
+          let unitCost = parseFloat(cols[2].replace(/[^0-9\.]/g, '')) || 0;
+          if (cols.length >= 4) unitCost = parseFloat(cols[3].replace(/[^0-9\.]/g, '')) || unitCost;
+          if (desc && unitCost > 0) materials.push({ description: desc, quantity: qty, unitCost });
+        } else {
+          const costMatch = line.match(/(\d{1,3}(?:,\d{3})*(?:\.\d{2}))/);
+          if (costMatch) {
+            const cost = parseFloat(costMatch[1].replace(/,/g, ''));
+            const qtyMatch = line.match(/\b(\d+)\b/);
+            const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+            const description = line.replace(costMatch[0], '').trim();
+            if (description && cost > 0) materials.push({ description, quantity: qty, unitCost: cost });
+          }
+        }
+      }
+    } else {
+      for (const line of lines) {
+        const costMatch = line.match(/(\d{1,3}(?:,\d{3})*(?:\.\d{2}))/);
+        if (costMatch) {
+          const cost = parseFloat(costMatch[1].replace(/,/g, ''));
+          const qtyMatch = line.match(/\b(\d+)\b/);
+          const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+          const description = line.replace(costMatch[0], '').trim();
+          if (description && cost > 0) materials.push({ description, quantity: qty, unitCost: cost });
+        }
+      }
+    }
+
+    if (materials.length) extracted.materials = materials;
+
+    // Infer instrument type
+    if (!extracted.instruments) {
+      if (extracted.repairDescription) {
+        const d = extracted.repairDescription.toLowerCase();
+        if (d.includes('guitar')) extracted.instruments = [{ type: 'Guitar', description: '' }];
+        else if (d.includes('bass')) extracted.instruments = [{ type: 'Bass', description: '' }];
+        else if (d.includes('violin')) extracted.instruments = [{ type: 'Violin', description: '' }];
+      }
+    }
+
+    return extracted;
+
     // Extract customer name (look for "Attention:" or "Bill To" fields)
     const attentionMatch = text.match(/(?:Attention|Bill To|Bill To:)\s*:??\s*([^\n]+)/i) || text.match(/Attention\s*:?\s*([^\n]+)/i);
     if (attentionMatch) {
