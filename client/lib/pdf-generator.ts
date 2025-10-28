@@ -32,7 +32,16 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     /* Portrait 8.5x11 */
-    @page { size: 8.5in 11in; margin: 0.4in; }
+    @page {
+      size: 8.5in 11in;
+      margin: 0.5in 0.4in 0.5in 0.4in;
+      @bottom-center { content: ""; }
+      @top-center { content: ""; }
+      @top-left { content: ""; }
+      @top-right { content: ""; }
+      @bottom-left { content: ""; }
+      @bottom-right { content: ""; }
+    }
     html,body { height: 100%; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -40,8 +49,9 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
       background: white;
       padding: 0;
       margin: 0;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
     }
     .page {
       width: 100%;
