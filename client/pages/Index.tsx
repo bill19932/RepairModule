@@ -146,7 +146,6 @@ export default function Index() {
 
       const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
       if (!baseCoords) {
-        setDeliveryDebug(`❌ Failed to geocode base address`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
@@ -157,12 +156,11 @@ export default function Index() {
       const fee = roundedMiles * 2 * 0.85;
       const finalFee = parseFloat(fee.toFixed(2));
 
-      setDeliveryDebug(`✓ ${roundedMiles} miles = $${finalFee}`);
       setDeliveryMiles(roundedMiles);
       setDeliveryFee(finalFee);
 
     } catch (err) {
-      setDeliveryDebug(`❌ Error: ${err instanceof Error ? err.message : String(err)}`);
+      console.error('[DELIVERY] Error:', err);
       setDeliveryMiles(null);
       setDeliveryFee(0);
     }
