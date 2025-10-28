@@ -406,35 +406,60 @@ export default function Index() {
         {showInvoices && savedInvoices.length > 0 && (
           <div className="mt-8">
             <div className="card-modern p-6">
-              <h2 className="text-2xl font-display font-bold text-foreground mb-4">📋 Saved Invoices</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b-2 border-primary">
-                      <th className="text-left py-2 px-3 font-semibold text-foreground">Invoice</th>
-                      <th className="text-left py-2 px-3 font-semibold text-foreground">Date</th>
-                      <th className="text-left py-2 px-3 font-semibold text-foreground">Customer</th>
-                      <th className="text-left py-2 px-3 font-semibold text-foreground">Instrument</th>
-                      <th className="text-right py-2 px-3 font-semibold text-foreground">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {savedInvoices.map((invoice, idx) => {
-                      const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
-                      const total = (servicesTotal) * 1.06;
-                      return (
-                        <tr key={idx} className="border-b border-border hover:bg-muted/50 transition-colors">
-                          <td className="py-2 px-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
-                          <td className="py-2 px-3 text-muted-foreground">{new Date(invoice.date).toLocaleDateString()}</td>
-                          <td className="py-2 px-3 text-foreground">{invoice.customerName}</td>
-                          <td className="py-2 px-3 text-foreground">{invoice.instrumentType}</td>
-                          <td className="py-2 px-3 text-right font-bold text-primary">${total.toFixed(2)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <h2 className="text-2xl font-display font-bold text-foreground mb-4">📋 All Repairs</h2>
+
+              {/* Search Box */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Search by customer, invoice #, phone, instrument, or repair description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-modern w-full text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Found {filteredInvoices.length} of {savedInvoices.length} repairs
+                </p>
               </div>
+
+              {filteredInvoices.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No repairs found matching your search.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-primary">
+                        <th className="text-left py-2 px-3 font-semibold text-foreground">Invoice</th>
+                        <th className="text-left py-2 px-3 font-semibold text-foreground">Date</th>
+                        <th className="text-left py-2 px-3 font-semibold text-foreground">Customer</th>
+                        <th className="text-left py-2 px-3 font-semibold text-foreground">Phone</th>
+                        <th className="text-left py-2 px-3 font-semibold text-foreground">Instrument</th>
+                        <th className="text-left py-2 px-3 font-semibold text-foreground">Repair Work</th>
+                        <th className="text-right py-2 px-3 font-semibold text-foreground">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredInvoices.map((invoice, idx) => {
+                        const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
+                        const total = (servicesTotal) * 1.06;
+                        return (
+                          <tr key={idx} className="border-b border-border hover:bg-muted/50 transition-colors">
+                            <td className="py-2 px-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
+                            <td className="py-2 px-3 text-muted-foreground">{new Date(invoice.date).toLocaleDateString()}</td>
+                            <td className="py-2 px-3 text-foreground">{invoice.customerName}</td>
+                            <td className="py-2 px-3 text-foreground text-xs">{invoice.customerPhone || '—'}</td>
+                            <td className="py-2 px-3 text-foreground">{invoice.instrumentType}</td>
+                            <td className="py-2 px-3 text-foreground text-xs">{invoice.repairDescription.substring(0, 40)}{invoice.repairDescription.length > 40 ? '...' : ''}</td>
+                            <td className="py-2 px-3 text-right font-bold text-primary">${total.toFixed(2)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
