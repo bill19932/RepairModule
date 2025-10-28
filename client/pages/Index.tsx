@@ -210,19 +210,44 @@ export default function Index() {
         setInstruments(extracted.instruments);
       }
 
-      // Set extracted materials first
-      if (extracted.materials && extracted.materials.length > 0) {
-        console.log('[OCR] Setting extracted materials:', extracted.materials);
-        setMaterials(extracted.materials);
+      // Combine extracted materials with delivery fee
+      let newMaterials = [...(extracted.materials || [])];
+
+      // Calculate delivery fee if address was extracted
+      if (extracted.customerAddress) {
+        console.log('[OCR] Calculating delivery fee for:', extracted.customerAddress);
+
+        const fullAddr = extracted.customerAddress.includes(',') ? extracted.customerAddress : `${extracted.customerAddress}, Wynnewood, PA`;
+        const customerCoords = await geocodeAddress(fullAddr);
+
+        if (customerCoords) {
+          const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
+          if (baseCoords) {
+            const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
+            const roundedMiles = Math.round(miles);
+            const fee = roundedMiles * 3 * 0.85;
+            const finalFee = parseFloat(fee.toFixed(2));
+
+            const deliveryDescription = `Delivery Fee (${roundedMiles} miles × 3 trips)`;
+            newMaterials.push({
+              description: deliveryDescription,
+              quantity: 1,
+              unitCost: finalFee
+            });
+
+            setDeliveryMiles(roundedMiles);
+            setDeliveryFee(finalFee);
+            setIsDeliveryInMaterials(true);
+
+            console.log('[OCR] ✓ Delivery fee added:', deliveryDescription, '$' + finalFee);
+          }
+        }
       }
 
-      // Then calculate delivery fee which will add it to materials
-      if (extracted.customerAddress) {
-        console.log('[OCR] Calling calculateDeliveryFee with address:', extracted.customerAddress);
-        // Small delay to ensure materials state is updated
-        setTimeout(() => {
-          calculateDeliveryFee(extracted.customerAddress);
-        }, 100);
+      // Set all materials at once
+      if (newMaterials.length > 0) {
+        console.log('[OCR] Setting all materials:', newMaterials);
+        setMaterials(newMaterials);
       }
 
       setOcrProgress(100);
