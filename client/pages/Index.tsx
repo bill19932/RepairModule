@@ -473,7 +473,7 @@ export default function Index() {
                   </div>
 
                   {/* Submit Button */}
-                  <div className="flex justify-start">
+                  <div className="flex justify-center">
                     <button type="submit" className="bg-primary text-primary-foreground font-bold py-2 px-6 rounded-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
                       <Download size={16} />
                       Print
@@ -529,10 +529,12 @@ export default function Index() {
 
               {showForm && (
                 <>
-                  <button onClick={() => exportAllInvoicesToCSV()} className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-sm transition-colors mb-3 flex items-center justify-center gap-2 text-sm">
-                    <Download size={16} />
-                    Export All to CSV
-                  </button>
+                  <div className="flex justify-center">
+                    <button onClick={() => exportAllInvoicesToCSV()} className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-sm transition-colors flex items-center justify-center gap-2 text-sm">
+                      <Download size={16} />
+                      Export to Spreadsheet
+                    </button>
+                  </div>
                 </>
               )}
             </div>
