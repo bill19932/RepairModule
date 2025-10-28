@@ -1,0 +1,43 @@
+appId: com.delcomusic.invoiceapp
+productName: Delco Music Co
+
+directories:
+  buildResources: assets
+  output: dist/app
+
+files:
+  - dist/spa/**/*
+  - dist/electron/**/*
+  - node_modules/**/*
+  - package.json
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: Business
+  icon: assets/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+dmg:
+  icon: assets/icon.icns
+  iconSize: 100
+  window:
+    x: 100
+    y: 100
+    width: 500
+    height: 400
+  contents:
+    - x: 100
+      y: 100
+      type: file
+      path: /Applications
+      name: Applications
+    - x: 300
+      y: 100
+      type: link
+
+publish:
+  provider: generic
+  url: https://example.com/releases/
