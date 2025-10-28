@@ -11,14 +11,16 @@ export const generateCSVRow = (invoice: RepairInvoice): string => {
   const georgesTax = georgesSubtotal * 0.06;
   const georgesTotal = georgesSubtotal + georgesTax;
 
+  const instrumentsList = invoice.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join('; ');
+
   const fields = [
     invoice.invoiceNumber,
+    invoice.dateReceived,
     invoice.date,
     invoice.customerName,
     invoice.customerPhone,
     invoice.customerEmail,
-    invoice.instrumentType,
-    invoice.instrumentDescription,
+    instrumentsList,
     invoice.repairDescription.replace(/"/g, '""').replace(/\n/g, ' '),
     invoice.materials.map(m => `${m.description} ($${m.unitCost})`).join('; '),
     servicesTotal.toFixed(2),
