@@ -279,7 +279,7 @@ export default function Index() {
       instruments: instruments.filter(i => i.type.trim()),
       materials: materials.filter(m => m.description.trim()),
       deliveryMiles: deliveryMiles ?? 0,
-      deliveryFee: formData.isGeorgesMusic ? 0 : (deliveryFee || 0),
+      deliveryFee: deliveryMiles !== null ? (deliveryMiles * 3 * 0.85) : 0,
       invoiceHtml: '', // Will be populated after PDF generation
     };
 
