@@ -48,11 +48,11 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // Look for lines with Description, Quantity, and Cost patterns
       if (line.match(/\d+\s+\d+(\.\d{2})?/)) {
         const parts = line.split(/\s+/);
-        
+
         // Try to identify cost and quantity
         let cost = 0;
         let qty = 1;
@@ -86,12 +86,17 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
     }
 
     // Default instrument type if not found
-    if (!extracted.instrumentType && extracted.repairDescription) {
+    let instrumentType = '';
+    if (extracted.repairDescription) {
       if (extracted.repairDescription.toLowerCase().includes('guitar')) {
-        extracted.instrumentType = 'Guitar';
+        instrumentType = 'Guitar';
       } else if (extracted.repairDescription.toLowerCase().includes('amplifier')) {
-        extracted.instrumentType = 'Other';
+        instrumentType = 'Other';
       }
+    }
+
+    if (instrumentType) {
+      extracted.instruments = [{ type: instrumentType, description: '' }];
     }
 
     return extracted;
