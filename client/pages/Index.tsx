@@ -186,6 +186,13 @@ export default function Index() {
     alert.show('Invoice created and saved! PDF ready to print.', 'success');
   };
 
+  const handleDeleteInvoice = (invoiceNumber: string) => {
+    const updatedInvoices = savedInvoices.filter(inv => inv.invoiceNumber !== invoiceNumber);
+    setSavedInvoices(updatedInvoices);
+    localStorage.setItem('delco-invoices', JSON.stringify(updatedInvoices));
+    alert.show('Repair deleted successfully.', 'success');
+  };
+
   const calculateTotals = () => {
     const servicesTotal = materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
     const subtotal = servicesTotal;
@@ -326,7 +333,7 @@ export default function Index() {
                             onChange={(e) => handleInstrumentChange(index, 'type', e.target.value)}
                             className="input-modern text-sm"
                           >
-                            <option value="">Select instrument</option>
+                            <option value="">Select Instrument</option>
                             <option value="Guitar">Guitar</option>
                             <option value="Bass">Bass</option>
                             <option value="Violin">Violin</option>
@@ -341,7 +348,7 @@ export default function Index() {
                               type="text"
                               value={instrument.description}
                               onChange={(e) => handleInstrumentChange(index, 'description', e.target.value)}
-                              placeholder="Description (optional)"
+                              placeholder="Instrument Model"
                               className="input-modern text-sm flex-1"
                             />
                             {instruments.length > 1 && (
@@ -404,7 +411,7 @@ export default function Index() {
                             type="text"
                             value={material.description}
                             onChange={(e) => handleMaterialChange(index, 'description', e.target.value)}
-                            placeholder="Service description"
+                            placeholder="Service or Material"
                             className="input-modern text-sm flex-1"
                           />
                           <input
