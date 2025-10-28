@@ -5,15 +5,18 @@ import { RepairInvoice } from './invoice-types';
 export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
   const subtotal = servicesTotal;
-  const tax = subtotal * 0.06;
-  const customerTotal = subtotal + tax;
+  const delivery = invoice.isGeorgesMusic ? 0 : (invoice.deliveryFee || 0);
+  const subtotalWithDelivery = subtotal + delivery;
+  const tax = subtotalWithDelivery * 0.06;
+  const customerTotal = subtotalWithDelivery + tax;
+
   const georgesUpcharge = invoice.isGeorgesMusic ? 1.54 : 1;
   const georgesSubtotal = subtotal * georgesUpcharge;
   const georgesTax = georgesSubtotal * 0.06;
   const georgesCustomerTotal = georgesSubtotal + georgesTax;
 
   const finalTotal = invoice.isGeorgesMusic ? georgesCustomerTotal : customerTotal;
-  const finalSubtotal = invoice.isGeorgesMusic ? georgesSubtotal : subtotal;
+  const finalSubtotal = invoice.isGeorgesMusic ? georgesSubtotal : subtotalWithDelivery;
   const finalTax = invoice.isGeorgesMusic ? georgesTax : tax;
 
   const logoUrl = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F9753a3ec93ee4d5dba7a86a75c0f457f?format=webp&width=800';
