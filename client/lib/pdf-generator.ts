@@ -217,13 +217,23 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
 
     <div class="footer">
       <div class="qr-grid">
-        <img src="${qrGoogle}" alt="Google QR" />
-        <img src="${qrFacebook}" alt="Facebook QR" />
-        <img src="${qrWebsite}" alt="Website QR" />
+        <div class="qr-item">
+          <img src="${qrGoogle}" alt="Google QR" />
+          <div class="qr-label">Google Review</div>
+        </div>
+        <div class="qr-item">
+          <img src="${qrFacebook}" alt="Facebook QR" />
+          <div class="qr-label">Facebook Review</div>
+        </div>
+        <div class="qr-item">
+          <img src="${qrWebsite}" alt="Website QR" />
+          <div class="qr-label">Our Website</div>
+        </div>
       </div>
+
       <div class="msg">
-        <div style="font-weight:700; color:#0066cc;">Thank you for your business!</div>
-        <div style="font-size:12px; color:#444; margin-top:6px">Please consider leaving a review — it helps small businesses grow.</div>
+        <div style="font-weight:700; color:#0b64b3; font-size:15px; margin-bottom:6px;">We appreciate your business</div>
+        <div style="font-size:13px; color:#374151;">If you enjoyed our service, leaving a short review helps our small local business reach more musicians and keeps us doing what we love. Your thoughtful feedback truly makes a difference — thank you for your support.</div>
       </div>
     </div>
   </div>
