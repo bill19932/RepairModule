@@ -199,6 +199,44 @@ export default function Index() {
                 <h2 className="text-3xl font-display font-bold text-foreground mb-8">New Repair Invoice</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Image Upload for OCR */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                      📸 Auto-Fill from Invoice
+                    </h3>
+                    <div className="relative border-2 border-dashed border-primary/30 rounded-lg p-8 bg-primary/5 hover:border-primary/50 transition-colors cursor-pointer group">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleOCRUpload}
+                        disabled={isProcessingOCR}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="text-center">
+                        {isProcessingOCR ? (
+                          <>
+                            <Loader className="mx-auto mb-2 animate-spin text-primary" size={24} />
+                            <p className="font-semibold text-foreground">Processing image...</p>
+                            <p className="text-sm text-muted-foreground">{ocrProgress}%</p>
+                            <div className="w-full bg-muted rounded-full h-2 mt-3">
+                              <div
+                                className="bg-primary h-2 rounded-full transition-all"
+                                style={{ width: `${ocrProgress}%` }}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mx-auto mb-2 text-primary group-hover:scale-110 transition-transform" size={24} />
+                            <p className="font-semibold text-foreground">Upload invoice screenshot</p>
+                            <p className="text-sm text-muted-foreground">Drag and drop or click to select</p>
+                            <p className="text-xs text-muted-foreground mt-2">Supports PNG, JPG, and WebP formats</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Invoice & Date */}
                   <div className="grid grid-cols-2 gap-6">
                     <div>
