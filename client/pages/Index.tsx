@@ -463,19 +463,7 @@ export default function Index() {
                   {/* Services/Materials */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-4">
-                        <label className="text-xs font-semibold text-foreground">Services</label>
-                        <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
-                          <input
-                            type="checkbox"
-                            name="isGeorgesMusic"
-                            checked={formData.isGeorgesMusic}
-                            onChange={handleFormChange}
-                            className="w-4 h-4 cursor-pointer"
-                          />
-                          <span className="text-xs font-semibold text-foreground">George's Price</span>
-                        </label>
-                      </div>
+                      <label className="text-xs font-semibold text-foreground">Services</label>
                       <button type="button" onClick={addMaterial} className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1">
                         <Plus size={14} /> Add Service
                       </button>
@@ -510,7 +498,17 @@ export default function Index() {
                   </div>
 
                   {/* Submit Button */}
-                  <div className="flex justify-center">
+                  <div className="flex justify-center items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        name="isGeorgesMusic"
+                        checked={formData.isGeorgesMusic}
+                        onChange={handleFormChange}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-foreground">George's Price</span>
+                    </label>
                     <button type="submit" className="bg-primary text-primary-foreground font-bold py-2 px-6 rounded-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
                       <Download size={16} />
                       Print

@@ -136,7 +136,7 @@ export default function Records() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
             <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <Search className="absolute left-3 top-3 text-muted-foreground" size={16} />
               <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search" className="input-modern h-10 w-full text-sm pl-10 border-2 border-gray-300 rounded" />
             </div>
             <div className="flex flex-col items-center">
