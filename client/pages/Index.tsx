@@ -28,6 +28,7 @@ export default function Index() {
     laborHours: 0,
     hourlyRate: 0,
     notes: '',
+    isGeorgesMusic: false,
   });
 
   const [materials, setMaterials] = useState<RepairMaterial[]>([
