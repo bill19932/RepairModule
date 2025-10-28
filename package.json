@@ -1,5 +1,8 @@
 {
-  "name": "fusion-starter",
+  "name": "delco-music-invoices",
+  "version": "1.0.0",
+  "description": "Professional repair invoice manager for Delco Music Co",
+  "author": "Delco Music Co",
   "private": true,
   "type": "module",
   "pkg": {
