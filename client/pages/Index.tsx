@@ -335,30 +335,30 @@ export default function Index() {
   };
 
   const calculateTotals = () => {
+    // All materials including delivery fee (if present)
     const servicesTotal = materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
     const subtotal = servicesTotal;
     const tax = subtotal * 0.06;
     const total = subtotal + tax;
 
-    // Delivery fee (only for Delco Music Co)
-    const delivery = formData.isGeorgesMusic ? 0 : deliveryFee || 0;
-    const subtotalWithDelivery = subtotal + delivery;
-    const taxWithDelivery = subtotalWithDelivery * 0.06;
-    const totalWithDelivery = subtotalWithDelivery + taxWithDelivery;
+    // George's Music upcharge (1.54x) - only applies to non-delivery services
+    // Get only non-delivery materials for George's calculation
+    const nonDeliveryTotal = materials
+      .filter(m => !m.description.startsWith('Delivery Fee ('))
+      .reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
 
-    // George's Music upcharge (1.54x)
     const georgesUpcharge = formData.isGeorgesMusic ? 1.54 : 1;
-    const georgesSubtotal = subtotal * georgesUpcharge;
+    const georgesSubtotal = nonDeliveryTotal * georgesUpcharge;
     const georgesTax = georgesSubtotal * 0.06;
     const georgesTotal = georgesSubtotal + georgesTax;
 
     return {
       servicesTotal,
       subtotal,
-      delivery,
-      subtotalWithDelivery,
-      tax: taxWithDelivery,
-      total: totalWithDelivery,
+      delivery: 0, // delivery is now part of materials/subtotal
+      subtotalWithDelivery: subtotal,
+      tax,
+      total,
       georgesSubtotal,
       georgesTax,
       georgesTotal,
