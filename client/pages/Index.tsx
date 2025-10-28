@@ -107,6 +107,7 @@ export default function Index() {
 
       // Try multiple address variations to handle different geocoding scenarios
       let customerCoords = null;
+      let successfulAddr = '';
       const addressVariations = [];
 
       // 1. Try original address as-is
@@ -134,6 +135,7 @@ export default function Index() {
         setDeliveryDebug(`Geocoding: "${variation}"...`);
         customerCoords = await geocodeAddress(variation);
         if (customerCoords) {
+          successfulAddr = variation;
           console.log(`[DELIVERY] ✓ Success with: "${variation}"`);
           break;
         }
