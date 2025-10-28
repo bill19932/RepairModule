@@ -397,6 +397,16 @@ export default function Index() {
               <div className="card-modern p-8">
                 <h2 className="text-2xl font-bold text-foreground mb-6">New Invoice</h2>
 
+                {/* DEBUG DISPLAY */}
+                {(deliveryMiles !== null || deliveryDebug) && (
+                  <div className="bg-blue-50 border border-blue-300 p-3 rounded mb-4 text-xs font-mono">
+                    <div>Address: {formData.customerAddress || '(empty)'}</div>
+                    <div>Delivery Miles: {deliveryMiles ?? '(calculating...)'}</div>
+                    <div>Fee: ${deliveryFee.toFixed(2)}</div>
+                    {deliveryDebug && <div className="text-blue-700 mt-1">{deliveryDebug}</div>}
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Image Upload for OCR */}
                   <div>
