@@ -47,7 +47,6 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deliveryMiles, setDeliveryMiles] = useState<number | null>(null);
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
-  const [deliveryDebug, setDeliveryDebug] = useState<string>('');
   const alert = useAlert();
 
   // Keep saved invoices in sync when returning to this page and across tabs
