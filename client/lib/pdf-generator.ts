@@ -268,14 +268,14 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
       </tr>
       <tr>
         <th>Instruments</th>
-        <td colspan="3">${invoice.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join(', ')}</td>
+        <td colspan="3">${invoice.instruments.map(i => `${i.type}${i.description ? ' (Instrument Model: ' + i.description + ')' : ''}`).join(', ')}</td>
       </tr>
     </table>
     
     <table class="items-table">
       <thead>
         <tr>
-          <th style="width: 50%;">Description</th>
+          <th style="width: 50%;">Service or Material</th>
           <th style="width: 15%; text-align: center;">Quantity</th>
           <th style="width: 15%; text-align: right;">Unit Cost</th>
           <th style="width: 20%; text-align: right;">Cost</th>
