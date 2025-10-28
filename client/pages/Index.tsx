@@ -321,6 +321,20 @@ export default function Index() {
                     </div>
                   </div>
 
+                  {/* George's Music Toggle */}
+                  <div className="flex items-center gap-3 bg-blue-50 p-4 rounded-sm border border-blue-200">
+                    <label className="flex items-center gap-2 cursor-pointer flex-1">
+                      <input
+                        type="checkbox"
+                        name="isGeorgesMusic"
+                        checked={formData.isGeorgesMusic}
+                        onChange={handleFormChange}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                      <span className="text-sm font-semibold text-foreground">This repair is for George's Music (1.54x upcharge)</span>
+                    </label>
+                  </div>
+
                   {/* Services/Materials */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
