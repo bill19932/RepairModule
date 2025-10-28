@@ -6,6 +6,11 @@ export const generateCSVRow = (invoice: RepairInvoice): string => {
   const tax = subtotal * 0.06;
   const total = subtotal + tax;
 
+  // George's Music upcharge
+  const georgesSubtotal = invoice.isGeorgesMusic ? subtotal * 1.54 : subtotal;
+  const georgesTax = georgesSubtotal * 0.06;
+  const georgesTotal = georgesSubtotal + georgesTax;
+
   const fields = [
     invoice.invoiceNumber,
     invoice.date,
@@ -20,6 +25,10 @@ export const generateCSVRow = (invoice: RepairInvoice): string => {
     subtotal.toFixed(2),
     tax.toFixed(2),
     total.toFixed(2),
+    invoice.isGeorgesMusic ? 'Yes' : 'No',
+    georgesSubtotal.toFixed(2),
+    georgesTax.toFixed(2),
+    georgesTotal.toFixed(2),
     invoice.notes.replace(/"/g, '""').replace(/\n/g, ' '),
   ];
 
