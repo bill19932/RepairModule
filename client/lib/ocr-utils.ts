@@ -24,6 +24,67 @@ const readFileAsDataURL = (file: File): Promise<string> => {
   });
 };
 
+// Helper to find address patterns in text
+const extractAddressFromText = (text: string): string | undefined => {
+  // First try to find address after "Address" label
+  const labelMatch = text.match(/Address\s+([^\n\r]+?)(?:\n|Service|$)/i);
+  if (labelMatch) {
+    return labelMatch[1].trim();
+  }
+
+  // Full sweep: Look for standard US address patterns
+  // Pattern: number + street name + street type (Ave, St, Rd, etc.) + optional unit/apt + optional city/state
+  const addressRegex = /\b(\d{1,5}\s+[\w\s&,.'-]+?\s+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Place|Pl|Way|Circle|Way|Parkway|Pkwy|Highway|Hwy|Route|Rt|Terrace|Ter|Trail|Trl)\.?)\b[\w\s,#.'-]*(?:(?:Unit|Apt|Apartment|Suite|Ste|Floor|Fl|Bldg|Building)\s*[#A-Za-z0-9]+)?[\w\s,'-]*(?:(?:Wynnewood|Swarthmore|Glennolden|PA|Pennsylvania|01|02|03|04|05|06|07|08|09|10|11|12|13|14|15)[\w\s,'-]*)?/i;
+
+  const streetMatch = text.match(addressRegex);
+  if (streetMatch) {
+    return streetMatch[0].trim();
+  }
+
+  // Alternative: Look for lines with number + words that look like addresses
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Look for lines starting with a number followed by text (typical address format)
+    if (/^\d{1,5}\s+[A-Z]/.test(trimmed) && trimmed.length > 10 && trimmed.length < 100) {
+      // Make sure it's not a table row or other data
+      if (!/^\d+\s+\d+\s+\d+/.test(trimmed) && !/Quantity|Cost|Price|Description/i.test(trimmed)) {
+        return trimmed;
+      }
+    }
+  }
+
+  return undefined;
+};
+
+// Helper to find invoice number
+const extractInvoiceNumber = (text: string): string | undefined => {
+  // First try "Invoice #" or "Invoice Number" format
+  const labelMatch = text.match(/Invoice\s*#\s*(\d+)/i);
+  if (labelMatch) {
+    return labelMatch[1];
+  }
+
+  // Look for patterns like "33740", "33742", "336xx", "337xx", "338xx"
+  // These appear as standalone numbers in the 5-digit range
+  const numberMatch = text.match(/\bInvoice[^\d]*(\d{5})\b/i);
+  if (numberMatch) {
+    return numberMatch[1];
+  }
+
+  // Fallback: Look for any 5-digit number that appears isolated on its own line
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^\d{5}$/.test(trimmed)) {
+      // This could be an invoice number
+      return trimmed;
+    }
+  }
+
+  return undefined;
+};
+
 export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvoiceData> => {
   try {
     const dataUrl = await readFileAsDataURL(imageFile);
@@ -71,13 +132,10 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
     const text = ocrResult?.data?.text || '';
     const extracted: ExtractedInvoiceData = {};
 
-    // Extract from structured table format: Look for field labels followed by values
-    // Pattern: "FieldLabel" followed by value on same line or next content block
-
-    // Invoice Number - look for "Invoice #" or "Invoice Number"
-    const invMatch = text.match(/Invoice\s*#\s*(\d+)/i);
-    if (invMatch) {
-      (extracted as any).invoiceNumber = invMatch[1];
+    // Invoice Number - with full sweep logic
+    const invoiceNum = extractInvoiceNumber(text);
+    if (invoiceNum) {
+      (extracted as any).invoiceNumber = invoiceNum;
     }
 
     // Attention (Customer Name)
@@ -104,10 +162,10 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
       extracted.customerPhone = phone;
     }
 
-    // Address - look for "Address" label followed by value
-    const addressMatch = text.match(/Address\s+([^\n\r]+?)(?:\n|Service|$)/i);
-    if (addressMatch) {
-      extracted.customerAddress = addressMatch[1].trim();
+    // Address - with full sweep logic
+    const address = extractAddressFromText(text);
+    if (address) {
+      extracted.customerAddress = address;
     }
 
     // Service Description - look for "Service" label followed by value
@@ -124,7 +182,7 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
     if (descHeaderIndex !== -1) {
       // Extract text from after "Description" header until we hit summary lines (Subtotal, Tax, Total)
       const tableText = text.substring(descHeaderIndex);
-      const summaryStart = tableText.search(/Subtotal|Material|George/i);
+      const summaryStart = tableText.search(/Subtotal|Materials|George/i);
       const tableContent = summaryStart > 0 ? tableText.substring(0, summaryStart) : tableText;
 
       // Split by newlines and process each potential line
@@ -200,8 +258,8 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
       else if (d.includes('bass')) instrumentType = 'Bass';
       else if (d.includes('violin')) instrumentType = 'Violin';
       else if (d.includes('cello')) instrumentType = 'Cello';
-      else if (d.includes('setup')) instrumentType = 'Guitar'; // Default for "setup"
-      else instrumentType = 'Guitar'; // Safe default
+      else if (d.includes('setup')) instrumentType = 'Guitar';
+      else instrumentType = 'Guitar';
 
       if (instrumentType) {
         extracted.instruments = [{ type: instrumentType, description: extracted.repairDescription }];
