@@ -40,6 +40,8 @@ export default function Index() {
     { description: '', quantity: 1, unitCost: 0 },
   ]);
 
+  const [isDeliveryInMaterials, setIsDeliveryInMaterials] = useState(false);
+
   const [savedInvoices, setSavedInvoices] = useState<RepairInvoice[]>(getAllInvoicesFromLocalStorage());
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
