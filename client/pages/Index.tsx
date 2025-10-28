@@ -4,6 +4,7 @@ import { RepairInvoice, RepairMaterial } from '@/lib/invoice-types';
 import { generateInvoicePDF, downloadInvoicePDF } from '@/lib/pdf-generator';
 import { addInvoiceToLocalStorage, exportAllInvoicesToCSV, getAllInvoicesFromLocalStorage } from '@/lib/csv-exporter';
 import { extractInvoiceData } from '@/lib/ocr-utils';
+import { geocodeAddress, haversineMiles } from '@/lib/geocode';
 import { Download, Plus, Trash2, FileText, Upload, Loader, Search } from 'lucide-react';
 import { AlertDialog, useAlert } from '@/components/AlertDialog';
 
