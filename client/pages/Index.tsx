@@ -72,6 +72,31 @@ export default function Index() {
     }));
   };
 
+  const calculateDeliveryFee = async (address: string) => {
+    if (!address || formData.isGeorgesMusic) {
+      setDeliveryMiles(null);
+      setDeliveryFee(0);
+      return;
+    }
+
+    try {
+      const customerCoords = await geocodeAddress(address + ', Wynnewood, PA');
+      if (customerCoords) {
+        const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
+        if (baseCoords) {
+          const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
+          const roundedMiles = Math.round(miles);
+          setDeliveryMiles(roundedMiles);
+          // roundedMiles × 3 trips × $0.85 per mile
+          const fee = roundedMiles * 3 * 0.85;
+          setDeliveryFee(parseFloat(fee.toFixed(2)));
+        }
+      }
+    } catch (err) {
+      console.error('Geocode error', err);
+    }
+  };
+
   const handleOCRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -112,6 +137,11 @@ export default function Index() {
 
       if (extracted.materials && extracted.materials.length > 0) {
         setMaterials(extracted.materials);
+      }
+
+      // Calculate delivery fee if address was extracted
+      if (extracted.customerAddress) {
+        await calculateDeliveryFee(extracted.customerAddress);
       }
 
       setOcrProgress(100);
