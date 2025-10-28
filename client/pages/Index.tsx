@@ -573,6 +573,14 @@ export default function Index() {
           </div>
         )}
       </main>
+
+      <AlertDialog
+        title=""
+        message={alert.message}
+        isOpen={alert.isOpen}
+        onClose={alert.close}
+        type={alert.type}
+      />
     </div>
   );
 }
