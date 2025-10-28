@@ -1,5 +1,5 @@
 let lastGeocodingTime = 0;
-const GEOCODING_DELAY = 1300; // 1.3 seconds between requests for rate limiting
+const GEOCODING_DELAY = 1000; // 1 second between requests for rate limiting
 
 export const geocodeAddress = async (address: string): Promise<{ lat: number; lon: number } | null> => {
   if (!address) {
