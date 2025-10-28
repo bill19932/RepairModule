@@ -536,13 +536,15 @@ export default function Index() {
                     <thead>
                       <tr className="border-b-2 border-primary bg-gray-50">
                         <th className="text-left py-3 px-3 font-semibold text-foreground">Invoice</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Date</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Date Received</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Invoice Date</th>
                         <th className="text-left py-3 px-3 font-semibold text-foreground">Customer</th>
                         <th className="text-left py-3 px-3 font-semibold text-foreground">Phone</th>
-                        <th className="text-left py-3 px-3 font-semibold text-foreground">Instrument</th>
+                        <th className="text-left py-3 px-3 font-semibold text-foreground">Instruments</th>
                         <th className="text-left py-3 px-3 font-semibold text-foreground">Repair Work</th>
                         <th className="text-center py-3 px-3 font-semibold text-foreground">George's</th>
                         <th className="text-right py-3 px-3 font-semibold text-foreground">Total</th>
+                        <th className="text-center py-3 px-3 font-semibold text-foreground">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -555,15 +557,21 @@ export default function Index() {
                         return (
                           <tr key={idx} className={`border-b border-border hover:bg-gray-50 transition-colors ${invoice.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
                             <td className="py-3 px-3 font-semibold text-primary">{invoice.invoiceNumber}</td>
+                            <td className="py-3 px-3 text-muted-foreground">{new Date(invoice.dateReceived).toLocaleDateString()}</td>
                             <td className="py-3 px-3 text-muted-foreground">{new Date(invoice.date).toLocaleDateString()}</td>
                             <td className="py-3 px-3 text-foreground">{invoice.customerName}</td>
                             <td className="py-3 px-3 text-foreground text-xs">{invoice.customerPhone || '—'}</td>
-                            <td className="py-3 px-3 text-foreground">{invoice.instrumentType}</td>
+                            <td className="py-3 px-3 text-foreground">{invoice.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join(', ')}</td>
                             <td className="py-3 px-3 text-foreground text-xs">{invoice.repairDescription.substring(0, 40)}{invoice.repairDescription.length > 40 ? '...' : ''}</td>
                             <td className="py-3 px-3 text-center text-xs font-semibold">
                               {invoice.isGeorgesMusic ? <span className="bg-blue-200 text-blue-900 px-2 py-1 rounded">Yes</span> : <span className="text-muted-foreground">—</span>}
                             </td>
                             <td className="py-3 px-3 text-right font-bold text-primary">${displayTotal.toFixed(2)}</td>
+                            <td className="py-3 px-3 text-center">
+                              <button onClick={() => handleDeleteInvoice(invoice.invoiceNumber)} className="text-destructive hover:text-destructive/80 transition-colors">
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
