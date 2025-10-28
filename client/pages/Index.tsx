@@ -85,7 +85,11 @@ export default function Index() {
     try {
       setDeliveryDebug(`Geocoding: "${address}"...`);
 
-      const fullAddr = address.trim().includes(',') ? address.trim() : `${address.trim()}, PA`;
+      // Clean up address: remove Unit/Apt/Suite numbers for geocoding
+      let cleanAddr = address.trim();
+      cleanAddr = cleanAddr.replace(/\b(?:Unit|Apt|Apt\.|Apartment|Suite|Ste|Ste\.)\s*[0-9A-Za-z-]+/gi, '').trim();
+
+      const fullAddr = cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, PA`;
       console.log(`Attempting to geocode: "${fullAddr}"`);
       const customerCoords = await geocodeAddress(fullAddr);
 
