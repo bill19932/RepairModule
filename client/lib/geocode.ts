@@ -1,3 +1,6 @@
+let lastGeocodingTime = 0;
+const GEOCODING_DELAY = 1300; // 1.3 seconds between requests for rate limiting
+
 export const geocodeAddress = async (address: string): Promise<{ lat: number; lon: number } | null> => {
   if (!address) {
     console.warn('[GEOCODE] No address provided');
@@ -5,38 +8,85 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; lo
   }
 
   try {
+    // Implement rate limiting
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastGeocodingTime;
+    if (timeSinceLastRequest < GEOCODING_DELAY) {
+      await new Promise(resolve => setTimeout(resolve, GEOCODING_DELAY - timeSinceLastRequest));
+    }
+    lastGeocodingTime = Date.now();
+
     console.log(`[GEOCODE] Requesting geocoding for: "${address}"`);
 
-    const url = new URL('/api/geocode', window.location.origin);
-    url.searchParams.set('address', address);
+    // Try server endpoint first
+    try {
+      const url = new URL('/api/geocode', window.location.origin);
+      url.searchParams.set('address', address);
 
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
+      const res = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          console.log(`[GEOCODE] Server geocoded "${address}" to: ${json.data.lat}, ${json.data.lon}`);
+          return {
+            lat: json.data.lat,
+            lon: json.data.lon
+          };
+        }
       }
+    } catch (serverErr) {
+      console.warn('[GEOCODE] Server endpoint failed, trying direct Nominatim API');
+    }
+
+    // Fallback to direct Nominatim API
+    console.log('[GEOCODE] Using direct Nominatim API');
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const res = await fetch(nominatimUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'DelcoMusicCo-InvoiceApp/1.0'
+      },
+      // @ts-ignore
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
+
     if (!res.ok) {
-      console.warn(`[GEOCODE] API request failed with status ${res.status}`);
+      console.warn(`[GEOCODE] Nominatim API returned status ${res.status}`);
       return null;
     }
 
     const json = await res.json();
 
-    if (json.success && json.data) {
-      console.log(`[GEOCODE] Successfully geocoded "${address}" to: ${json.data.lat}, ${json.data.lon}`);
-      return {
-        lat: json.data.lat,
-        lon: json.data.lon
+    if (Array.isArray(json) && json.length > 0) {
+      const result = {
+        lat: parseFloat(json[0].lat),
+        lon: parseFloat(json[0].lon)
       };
+      console.log(`[GEOCODE] Nominatim geocoded "${address}" to: ${result.lat}, ${result.lon}`);
+      return result;
     }
 
-    console.warn(`[GEOCODE] Geocoding failed: ${json.error || 'Unknown error'}`);
+    console.warn(`[GEOCODE] No results found for address: "${address}"`);
     return null;
 
   } catch (err) {
-    console.error(`[GEOCODE] Exception while geocoding "${address}":`, err);
+    if (err instanceof Error && err.name === 'AbortError') {
+      console.error(`[GEOCODE] Request timeout for address: "${address}"`);
+    } else {
+      console.error(`[GEOCODE] Exception while geocoding "${address}":`, err);
+    }
     return null;
   }
 };
