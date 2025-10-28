@@ -285,28 +285,25 @@ export default function Index() {
   };
 
   const calculateTotals = () => {
-    // All materials including delivery fee (if present)
     const servicesTotal = materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
     const subtotal = servicesTotal;
-    const tax = subtotal * 0.06;
-    const total = subtotal + tax;
 
-    // George's Music upcharge (1.54x) - only applies to non-delivery services
-    // Get only non-delivery materials for George's calculation
-    const nonDeliveryTotal = materials
-      .filter(m => !m.description.startsWith('Delivery Fee ('))
-      .reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
+    // Add delivery fee (separate from materials)
+    const deliveryAmount = formData.isGeorgesMusic ? 0 : (deliveryFee || 0);
+    const subtotalWithDelivery = subtotal + deliveryAmount;
+    const tax = subtotalWithDelivery * 0.06;
+    const total = subtotalWithDelivery + tax;
 
+    // George's Music upcharge (1.54x) - applies to services only, not delivery
     const georgesUpcharge = formData.isGeorgesMusic ? 1.54 : 1;
-    const georgesSubtotal = nonDeliveryTotal * georgesUpcharge;
+    const georgesSubtotal = subtotal * georgesUpcharge;
     const georgesTax = georgesSubtotal * 0.06;
     const georgesTotal = georgesSubtotal + georgesTax;
 
     return {
       servicesTotal,
       subtotal,
-      delivery: 0, // delivery is now part of materials/subtotal
-      subtotalWithDelivery: subtotal,
+      delivery: deliveryAmount,
       tax,
       total,
       georgesSubtotal,
