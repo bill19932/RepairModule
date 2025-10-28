@@ -78,10 +78,13 @@ export default function Index() {
     if (!address || !address.trim() || formData.isGeorgesMusic) {
       setDeliveryMiles(null);
       setDeliveryFee(0);
+      setDeliveryDebug('');
       return;
     }
 
     try {
+      setDeliveryDebug(`Trying to geocode...`);
+
       // Clean up address: remove Unit/Apt/Suite numbers for geocoding
       let cleanAddr = address.trim();
       cleanAddr = cleanAddr.replace(/\b(?:Unit|Apt|Apt\.|Apartment|Suite|Ste|Ste\.|#)\s*[0-9A-Za-z\-]+/gi, '').trim();
@@ -92,26 +95,32 @@ export default function Index() {
       const addressVariations = [
         cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, Wynnewood, PA`,
         cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, PA`,
-        cleanAddr.includes('PA') ? cleanAddr : `${cleanAddr}, Pennsylvania`,
+        cleanAddr.includes('PA') || cleanAddr.includes('Pennsylvania') ? cleanAddr : `${cleanAddr}, PA`,
         cleanAddr, // Try original cleaned address without state
       ];
 
       let customerCoords = null;
+      let successfulAddr = '';
       for (const addrVariation of addressVariations) {
         customerCoords = await geocodeAddress(addrVariation);
         if (customerCoords) {
+          successfulAddr = addrVariation;
           break; // Successfully geocoded, stop trying variations
         }
       }
 
       if (!customerCoords) {
+        setDeliveryDebug(`❌ Could not geocode "${address}" - tried ${addressVariations.length} variations`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
       }
 
+      setDeliveryDebug(`✓ Geocoded: "${successfulAddr}"`);
+
       const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
       if (!baseCoords) {
+        setDeliveryDebug(`❌ Failed to geocode base address`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
@@ -122,10 +131,12 @@ export default function Index() {
       const fee = roundedMiles * 2 * 0.85;
       const finalFee = parseFloat(fee.toFixed(2));
 
+      setDeliveryDebug(`✓ ${roundedMiles} miles = $${finalFee}`);
       setDeliveryMiles(roundedMiles);
       setDeliveryFee(finalFee);
 
     } catch (err) {
+      setDeliveryDebug(`❌ Error: ${err instanceof Error ? err.message : String(err)}`);
       setDeliveryMiles(null);
       setDeliveryFee(0);
     }
