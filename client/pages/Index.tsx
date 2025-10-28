@@ -97,9 +97,11 @@ export default function Index() {
 
       setFormData(prev => ({
         ...prev,
+        invoiceNumber: extracted.invoiceNumber || prev.invoiceNumber,
         customerName: extracted.customerName || prev.customerName,
         customerPhone: phone || prev.customerPhone,
         customerEmail: email || prev.customerEmail,
+        customerAddress: extracted.customerAddress || prev.customerAddress,
         repairDescription: extracted.repairDescription || prev.repairDescription,
       }));
 
