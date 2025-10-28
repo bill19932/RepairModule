@@ -167,7 +167,24 @@ export default function Index() {
     return { servicesTotal, subtotal, tax, total };
   };
 
+  const getFilteredInvoices = () => {
+    if (!searchQuery.trim()) return savedInvoices;
+
+    const query = searchQuery.toLowerCase();
+    return savedInvoices.filter(invoice =>
+      invoice.invoiceNumber.toLowerCase().includes(query) ||
+      invoice.customerName.toLowerCase().includes(query) ||
+      invoice.customerPhone.toLowerCase().includes(query) ||
+      invoice.customerEmail.toLowerCase().includes(query) ||
+      invoice.instrumentType.toLowerCase().includes(query) ||
+      invoice.instrumentDescription.toLowerCase().includes(query) ||
+      invoice.repairDescription.toLowerCase().includes(query) ||
+      invoice.date.includes(query)
+    );
+  };
+
   const totals = calculateTotals();
+  const filteredInvoices = getFilteredInvoices();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
