@@ -555,7 +555,7 @@ export default function Index() {
                           <input
                             type="text"
                             disabled
-                            value={`Delivery Fee (${deliveryMiles} miles × 3 trips)`}
+                            value={`Delivery Fee (${deliveryMiles} miles × 2 trips)`}
                             className="input-modern text-sm flex-1 bg-blue-100 text-gray-700 cursor-not-allowed"
                           />
                           <input
