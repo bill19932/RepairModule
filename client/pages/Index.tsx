@@ -26,6 +26,7 @@ export default function Index() {
     customerName: '' as string,
     customerPhone: '' as string,
     customerEmail: '' as string,
+    customerAddress: '' as string,
     repairDescription: '' as string,
     laborHours: 0 as number,
     hourlyRate: 0 as number,
