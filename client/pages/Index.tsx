@@ -91,26 +91,40 @@ export default function Index() {
       // Remove extra commas and spaces
       cleanAddr = cleanAddr.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
 
+      // Check if address already has state/zip info
+      const hasState = /\b(PA|Pennsylvania|19\d{3})\b/i.test(cleanAddr);
+
       // Try multiple address format variations
-      const addressVariations = [
-        cleanAddr, // Try original cleaned address as-is first
-        cleanAddr.includes('PA') || cleanAddr.includes('Pennsylvania') ? cleanAddr : `${cleanAddr}, PA`,
-        cleanAddr.includes('PA') || cleanAddr.includes('Pennsylvania') ? cleanAddr : `${cleanAddr}, Pennsylvania`,
-        cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, Wynnewood, PA`, // Only add Wynnewood if no comma (no city specified)
-      ];
+      const addressVariations = [];
+
+      if (hasState) {
+        // If address already has state, try it as-is first
+        addressVariations.push(cleanAddr);
+      } else {
+        // If no state, try with Pennsylvania variations
+        addressVariations.push(`${cleanAddr}, PA`);
+        addressVariations.push(`${cleanAddr}, Pennsylvania`);
+      }
+
+      // Also try original if different
+      if (!hasState) {
+        addressVariations.push(cleanAddr);
+      }
 
       let customerCoords = null;
       let successfulAddr = '';
+
       for (const addrVariation of addressVariations) {
+        console.log(`[DELIVERY] Attempting variation: "${addrVariation}"`);
         customerCoords = await geocodeAddress(addrVariation);
         if (customerCoords) {
           successfulAddr = addrVariation;
-          break; // Successfully geocoded, stop trying variations
+          break;
         }
       }
 
       if (!customerCoords) {
-        setDeliveryDebug(`❌ Could not geocode "${address}" - tried ${addressVariations.length} variations`);
+        setDeliveryDebug(`❌ Geocoding failed for: "${cleanAddr}" (tried ${addressVariations.length} variations)`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
