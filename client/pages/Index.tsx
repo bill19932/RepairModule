@@ -44,12 +44,19 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const alert = useAlert();
 
-  // Keep saved invoices in sync when returning to this page
+  // Keep saved invoices in sync when returning to this page and across tabs
   useEffect(() => {
     const refresh = () => setSavedInvoices(getAllInvoicesFromLocalStorage());
     refresh();
     window.addEventListener('focus', refresh);
-    return () => window.removeEventListener('focus', refresh);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'delco-invoices') refresh();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
