@@ -26,6 +26,7 @@ export const generateCSVRow = (invoice: RepairInvoice): string => {
     invoice.materials.map(m => `${m.description} ($${m.unitCost})`).join('; '),
     servicesTotal.toFixed(2),
     subtotal.toFixed(2),
+    (invoice.deliveryMiles || '').toString(),
     // include delivery if present
     (invoice.deliveryFee || 0).toFixed(2),
     tax.toFixed(2),
