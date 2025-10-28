@@ -43,6 +43,48 @@ export default function Index() {
     }));
   };
 
+  const handleOCRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingOCR(true);
+    setOcrProgress(30);
+
+    try {
+      const extracted = await extractInvoiceData(file);
+      setOcrProgress(80);
+
+      // Update form with extracted data
+      setFormData(prev => ({
+        ...prev,
+        customerName: extracted.customerName || prev.customerName,
+        customerPhone: extracted.customerPhone || prev.customerPhone,
+        customerEmail: extracted.customerEmail || prev.customerEmail,
+        instrumentType: extracted.instrumentType || prev.instrumentType,
+        instrumentDescription: extracted.instrumentDescription || prev.instrumentDescription,
+        repairDescription: extracted.repairDescription || prev.repairDescription,
+      }));
+
+      // Update materials if extracted
+      if (extracted.materials && extracted.materials.length > 0) {
+        setMaterials(extracted.materials);
+      }
+
+      setOcrProgress(100);
+      setTimeout(() => {
+        alert('✅ Invoice data extracted successfully! Please review and adjust as needed.');
+        setOcrProgress(0);
+      }, 500);
+    } catch (error) {
+      console.error('OCR Error:', error);
+      alert('❌ Failed to extract invoice data. Please make sure the image is clear and try again.');
+      setOcrProgress(0);
+    } finally {
+      setIsProcessingOCR(false);
+      e.target.value = '';
+    }
+  };
+
   const handleMaterialChange = (index: number, field: keyof RepairMaterial, value: string | number) => {
     const newMaterials = [...materials];
     if (field === 'quantity' || field === 'unitCost') {
