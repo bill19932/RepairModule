@@ -4,8 +4,9 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   const materialsTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
   const laborTotal = invoice.laborHours * invoice.hourlyRate;
   const subtotal = materialsTotal + laborTotal;
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const tax = subtotal * 0.06;
+  const dmcTotal = subtotal;
+  const customerTotal = subtotal + tax;
 
   const html = `
 <!DOCTYPE html>
@@ -20,269 +21,243 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
     }
     
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #1a1a1a;
+      font-family: Arial, sans-serif;
+      color: #333;
       background: white;
-      padding: 40px;
+      padding: 20px;
     }
     
-    .invoice-container {
-      max-width: 800px;
+    .container {
+      max-width: 850px;
       margin: 0 auto;
       background: white;
     }
     
-    .header {
+    .header-bar {
+      background: linear-gradient(to right, #0066cc 0%, #0066cc 100%);
+      height: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .header-section {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 40px;
-      border-bottom: 3px solid #e74c3c;
-      padding-bottom: 30px;
-    }
-    
-    .company-info h1 {
-      font-size: 32px;
-      color: #e74c3c;
-      margin-bottom: 5px;
-      font-weight: 700;
-    }
-    
-    .company-info p {
-      color: #666;
-      font-size: 14px;
-      margin: 2px 0;
-    }
-    
-    .invoice-title {
-      text-align: right;
-    }
-    
-    .invoice-title h2 {
-      font-size: 28px;
-      color: #333;
-      margin-bottom: 10px;
-    }
-    
-    .invoice-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-    
-    .detail-section {
-      background: #f9f9f9;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    
-    .detail-section h3 {
-      font-size: 12px;
-      text-transform: uppercase;
-      color: #e74c3c;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-    
-    .detail-section p {
-      font-size: 14px;
-      margin: 4px 0;
-      color: #333;
-    }
-    
-    .detail-section .label {
-      font-weight: 600;
-      color: #666;
-    }
-    
-    .instrument-section {
-      grid-column: 1 / -1;
-      background: #fff3e0;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    
-    .instrument-section h3 {
-      color: #f39c12;
-    }
-    
-    .instrument-section p {
-      font-size: 14px;
-      margin: 4px 0;
-      color: #333;
-    }
-    
-    .description-section {
-      grid-column: 1 / -1;
-      background: #e8f5e9;
-      padding: 15px;
-      border-radius: 8px;
       margin-bottom: 30px;
     }
     
-    .description-section h3 {
-      color: #27ae60;
+    .logo-section {
+      flex: 1;
     }
     
-    .description-section p {
-      font-size: 14px;
+    .logo-box {
+      display: inline-block;
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    
+    .logo-box div {
+      font-size: 10px;
+      font-weight: bold;
+      color: #0066cc;
+      text-align: center;
+      line-height: 1.2;
+    }
+    
+    .invoice-label {
+      font-size: 18px;
+      font-weight: bold;
       color: #333;
-      line-height: 1.6;
+      margin-bottom: 8px;
     }
     
-    table {
+    .contact-info {
+      font-size: 12px;
+      color: #0066cc;
+      margin-bottom: 2px;
+    }
+    
+    .services {
+      font-size: 11px;
+      color: #666;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+    
+    .invoice-number {
+      text-align: right;
+      font-size: 12px;
+    }
+    
+    .invoice-number div {
+      margin-bottom: 5px;
+    }
+    
+    .info-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
+      border: 1px solid #333;
     }
     
-    table th {
-      background: #34495e;
-      color: white;
-      padding: 12px;
+    .info-table th {
+      background: #f0f0f0;
+      padding: 8px;
       text-align: left;
-      font-weight: 600;
-      font-size: 13px;
+      font-weight: bold;
+      font-size: 12px;
+      border: 1px solid #333;
     }
     
-    table td {
-      padding: 12px;
-      border-bottom: 1px solid #ecf0f1;
-      font-size: 14px;
+    .info-table td {
+      padding: 8px;
+      font-size: 12px;
+      border: 1px solid #333;
     }
     
-    table tr:nth-child(even) {
-      background: #f8f9fa;
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    .items-table th {
+      background: #0066cc;
+      color: white;
+      padding: 10px;
+      text-align: left;
+      font-weight: bold;
+      font-size: 12px;
+      border: none;
+    }
+    
+    .items-table td {
+      padding: 8px 10px;
+      font-size: 11px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .items-table tr:last-child td {
+      border-bottom: 1px solid #333;
     }
     
     .text-right {
       text-align: right;
     }
     
-    .totals {
-      width: 100%;
+    .totals-section {
       margin-bottom: 30px;
+      width: 100%;
     }
     
-    .totals-table {
-      width: 350px;
-      margin-left: auto;
-    }
-    
-    .totals-table td {
-      padding: 10px;
-      border: none;
-      font-size: 14px;
-    }
-    
-    .totals-table td:first-child {
-      text-align: left;
-      color: #666;
-    }
-    
-    .totals-table td:last-child {
-      text-align: right;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .totals-table .subtotal-row td:last-child {
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 15px;
-      color: #666;
-    }
-    
-    .totals-table .tax-row td {
-      color: #666;
-    }
-    
-    .totals-table .total-row td {
-      font-size: 16px;
-      font-weight: 700;
-      color: #e74c3c;
-      border-top: 2px solid #e74c3c;
-      padding-top: 15px;
-    }
-    
-    .notes-section {
-      background: #f5f5f5;
-      padding: 15px;
-      border-radius: 8px;
-      border-left: 4px solid #2196f3;
-    }
-    
-    .notes-section h3 {
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
       font-size: 12px;
-      text-transform: uppercase;
-      color: #2196f3;
-      margin-bottom: 8px;
-      font-weight: 600;
+      border-bottom: 1px solid #ddd;
     }
     
-    .notes-section p {
-      font-size: 14px;
+    .totals-row.subtotal {
+      border-bottom: 1px solid #333;
+    }
+    
+    .totals-row.total {
+      font-weight: bold;
+      border-bottom: 2px solid #333;
+      border-top: 1px solid #333;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    
+    .footer-message {
+      font-size: 11px;
       color: #333;
+      text-align: center;
+      margin-top: 30px;
       line-height: 1.5;
     }
     
-    .footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #ecf0f1;
+    .footer-message .highlight {
+      font-weight: bold;
+    }
+    
+    .thank-you {
       text-align: center;
-      color: #999;
-      font-size: 12px;
+      font-weight: bold;
+      font-size: 13px;
+      margin-top: 20px;
+    }
+    
+    .notes-section {
+      background: #f9f9f9;
+      padding: 10px;
+      margin-top: 15px;
+      border-left: 3px solid #0066cc;
+      font-size: 11px;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="invoice-container">
-    <div class="header">
-      <div class="company-info">
-        <h1>🎸 Delco Music Co</h1>
-        <p>Professional Musical Instrument Repair</p>
-        <p>repair@delcomusic.com</p>
+  <div class="container">
+    <div class="header-bar"></div>
+    
+    <div class="header-section">
+      <div class="logo-section">
+        <div class="logo-box">
+          <div style="font-size: 14px; letter-spacing: 2px;">DELCO</div>
+          <div style="font-size: 14px; letter-spacing: 2px;">MUSIC</div>
+          <div style="font-size: 10px; color: #999;">COMPANY</div>
+        </div>
+        <div class="invoice-label">INVOICE</div>
+        <div class="contact-info">Bill@delcomusicco.com</div>
+        <div class="contact-info">610.505.6096</div>
+        <div class="services">
+          <div>Private Lessons</div>
+          <div>Instrument Repairs</div>
+          <div>Recording Services</div>
+        </div>
       </div>
-      <div class="invoice-title">
-        <h2>INVOICE</h2>
-        <p style="color: #e74c3c; font-weight: 600;">#${invoice.invoiceNumber}</p>
-        <p style="color: #666; margin-top: 8px;">${new Date(invoice.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      <div class="invoice-number">
+        <div><strong>Invoice #</strong></div>
+        <div style="font-size: 14px; font-weight: bold;">${invoice.invoiceNumber}</div>
+        <div style="margin-top: 10px; font-size: 11px;">Date: ${new Date(invoice.date).toLocaleDateString('en-US')}</div>
       </div>
     </div>
     
-    <div class="invoice-details">
-      <div class="detail-section">
-        <h3>Bill To</h3>
-        <p class="label">${invoice.customerName}</p>
-        <p>${invoice.customerPhone}</p>
-        <p>${invoice.customerEmail}</p>
-      </div>
-      
-      <div class="detail-section">
-        <h3>Service Date</h3>
-        <p>${new Date(invoice.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      </div>
-      
-      <div class="instrument-section">
-        <h3>Instrument Information</h3>
-        <p><span class="label">Type:</span> ${invoice.instrumentType}</p>
-        <p><span class="label">Description:</span> ${invoice.instrumentDescription}</p>
-      </div>
-      
-      <div class="description-section">
-        <h3>Repair Work Description</h3>
-        <p>${invoice.repairDescription.split('\n').join('<br>')}</p>
-      </div>
-    </div>
+    <table class="info-table">
+      <tr>
+        <th style="width: 20%;">Attention</th>
+        <td style="width: 30%;">${invoice.customerName}</td>
+        <th style="width: 20%;">Email</th>
+        <td>${invoice.customerEmail || 'na'}</td>
+      </tr>
+      <tr>
+        <th>Number</th>
+        <td>${invoice.customerPhone}</td>
+        <th>Service</th>
+        <td>${invoice.repairDescription.substring(0, 40)}${invoice.repairDescription.length > 40 ? '...' : ''}</td>
+      </tr>
+      <tr>
+        <th>Address</th>
+        <td colspan="3">${invoice.instrumentDescription || 'N/A'}</td>
+      </tr>
+    </table>
     
-    <table>
+    <table class="items-table">
       <thead>
         <tr>
-          <th>Item Description</th>
-          <th style="text-align: center; width: 80px;">Qty</th>
-          <th style="text-align: right; width: 100px;">Unit Cost</th>
-          <th style="text-align: right; width: 100px;">Total</th>
+          <th style="width: 50%;">Description</th>
+          <th style="width: 15%; text-align: center;">Quantity</th>
+          <th style="width: 15%; text-align: right;">Unit Cost</th>
+          <th style="width: 20%; text-align: right;">Cost</th>
         </tr>
       </thead>
       <tbody>
@@ -291,43 +266,50 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
             <td>${material.description}</td>
             <td style="text-align: center;">${material.quantity}</td>
             <td style="text-align: right;">$${material.unitCost.toFixed(2)}</td>
-            <td style="text-align: right; font-weight: 600;">$${(material.quantity * material.unitCost).toFixed(2)}</td>
+            <td style="text-align: right;">$${(material.quantity * material.unitCost).toFixed(2)}</td>
           </tr>
         `).join('')}
         <tr>
-          <td colspan="3" style="font-weight: 600; text-align: right;">Labor (${invoice.laborHours} hrs @ $${invoice.hourlyRate}/hr)</td>
-          <td style="text-align: right; font-weight: 600;">$${laborTotal.toFixed(2)}</td>
+          <td colspan="2" style="text-align: left; font-size: 10px; border-top: 1px solid #ddd;">
+            ${invoice.laborHours > 0 ? `Labor: ${invoice.laborHours} hrs @ $${invoice.hourlyRate}/hr` : ''}
+          </td>
+          <td style="text-align: right; border-top: 1px solid #ddd;"></td>
+          <td style="text-align: right; border-top: 1px solid #ddd; font-weight: bold;">$${laborTotal.toFixed(2)}</td>
         </tr>
       </tbody>
     </table>
     
-    <div class="totals">
-      <table class="totals-table">
-        <tr class="subtotal-row">
-          <td>Subtotal</td>
-          <td>$${subtotal.toFixed(2)}</td>
-        </tr>
-        <tr class="tax-row">
-          <td>Tax (8%)</td>
-          <td>$${tax.toFixed(2)}</td>
-        </tr>
-        <tr class="total-row">
-          <td>Total Due</td>
-          <td>$${total.toFixed(2)}</td>
-        </tr>
-      </table>
+    <div class="totals-section">
+      <div class="totals-row subtotal">
+        <span>Subtotal</span>
+        <span>$${subtotal.toFixed(2)}</span>
+      </div>
+      <div class="totals-row">
+        <span>6% Tax</span>
+        <span>$${tax.toFixed(2)}</span>
+      </div>
+      <div class="totals-row total">
+        <span>DMC Total</span>
+        <span>$${dmcTotal.toFixed(2)}</span>
+      </div>
+      <div class="totals-row total" style="border-top: none;">
+        <span>Customer Total</span>
+        <span>$${customerTotal.toFixed(2)}</span>
+      </div>
     </div>
     
     ${invoice.notes ? `
       <div class="notes-section">
-        <h3>Additional Notes</h3>
-        <p>${invoice.notes.split('\n').join('<br>')}</p>
+        <strong>Notes:</strong><br>
+        ${invoice.notes.split('\n').join('<br>')}
       </div>
     ` : ''}
     
-    <div class="footer">
-      <p>Thank you for choosing Delco Music Co for your instrument repair needs.</p>
-      <p>Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <div class="footer-message">
+      <p>Thank you for your business! If you have a few minutes, a <span class="highlight">Google Review</span></p>
+      <p>would be greatly appreciated and helps get our business out to more people!</p>
+      <p style="margin-top: 10px;">Sincerely yours,</p>
+      <p style="font-size: 14px; margin-top: 5px;"><strong>Delco Music Co.</strong></p>
     </div>
   </div>
 </body>
