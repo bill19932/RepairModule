@@ -155,44 +155,14 @@ export default function Index() {
         setInstruments(extracted.instruments);
       }
 
-      // Combine extracted materials with delivery fee
-      let newMaterials = [...(extracted.materials || [])];
+      // Set extracted materials
+      if (extracted.materials && extracted.materials.length > 0) {
+        setMaterials(extracted.materials);
+      }
 
       // Calculate delivery fee if address was extracted
       if (extracted.customerAddress) {
-        console.log('[OCR] Calculating delivery fee for:', extracted.customerAddress);
-
-        const fullAddr = extracted.customerAddress.includes(',') ? extracted.customerAddress : `${extracted.customerAddress}, Wynnewood, PA`;
-        const customerCoords = await geocodeAddress(fullAddr);
-
-        if (customerCoords) {
-          const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
-          if (baseCoords) {
-            const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
-            const roundedMiles = Math.round(miles);
-            const fee = roundedMiles * 3 * 0.85;
-            const finalFee = parseFloat(fee.toFixed(2));
-
-            const deliveryDescription = `Delivery Fee (${roundedMiles} miles × 3 trips)`;
-            newMaterials.push({
-              description: deliveryDescription,
-              quantity: 1,
-              unitCost: finalFee
-            });
-
-            setDeliveryMiles(roundedMiles);
-            setDeliveryFee(finalFee);
-            setIsDeliveryInMaterials(true);
-
-            console.log('[OCR] ✓ Delivery fee added:', deliveryDescription, '$' + finalFee);
-          }
-        }
-      }
-
-      // Set all materials at once
-      if (newMaterials.length > 0) {
-        console.log('[OCR] Setting all materials:', newMaterials);
-        setMaterials(newMaterials);
+        await calculateDeliveryFee(extracted.customerAddress);
       }
 
       setOcrProgress(100);
@@ -409,7 +379,7 @@ export default function Index() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Image Upload for OCR */}
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-2">���� Auto-Fill from Image</label>
+                    <label className="block text-sm font-semibold text-foreground mb-2">📸 Auto-Fill from Image</label>
                     <div className="relative border-2 border-dashed border-primary/30 rounded-sm p-6 bg-blue-50 hover:border-primary/50 transition-colors cursor-pointer group">
                       <input
                         type="file"
