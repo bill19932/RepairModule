@@ -53,8 +53,8 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; lo
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-      console.warn('[GEOCODE] Request timeout - aborting');
-    }, 8000);
+      console.warn('[GEOCODE] Request timeout for address: ' + address);
+    }, 15000); // 15 second timeout
 
     let res;
     try {
