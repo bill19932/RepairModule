@@ -4,9 +4,11 @@ import { resolve } from 'path';
 export default defineConfig({
   build: {
     lib: {
-      entry: resolve(__dirname, 'electron/main.ts'),
-      name: 'DelcoMusicElectronMain',
-      fileName: () => 'main.js',
+      entry: {
+        main: resolve(__dirname, 'electron/main.ts'),
+        preload: resolve(__dirname, 'electron/preload.ts'),
+      },
+      name: 'DelcoMusicElectron',
       formats: ['cjs'],
     },
     outDir: 'dist/electron',
