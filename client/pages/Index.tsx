@@ -377,24 +377,22 @@ export default function Index() {
                     <input type="text" name="repairDescription" value={formData.repairDescription} onChange={handleFormChange} placeholder="What work was done" className="input-modern text-sm" required />
                   </div>
 
-                  {/* George's Music Toggle */}
-                  <div className="flex items-center gap-3 bg-blue-50 p-4 rounded-sm border border-blue-200">
-                    <label className="flex items-center gap-2 cursor-pointer flex-1">
-                      <input
-                        type="checkbox"
-                        name="isGeorgesMusic"
-                        checked={formData.isGeorgesMusic}
-                        onChange={handleFormChange}
-                        className="w-4 h-4 cursor-pointer"
-                      />
-                      <span className="text-sm font-semibold text-foreground">George's Price</span>
-                    </label>
-                  </div>
-
                   {/* Services/Materials */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-semibold text-foreground">Services</label>
+                      <div className="flex items-center gap-4">
+                        <label className="text-xs font-semibold text-foreground">Services</label>
+                        <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            name="isGeorgesMusic"
+                            checked={formData.isGeorgesMusic}
+                            onChange={handleFormChange}
+                            className="w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-xs font-semibold text-foreground">George's Price</span>
+                        </label>
+                      </div>
                       <button type="button" onClick={addMaterial} className="text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1">
                         <Plus size={14} /> Add Service
                       </button>
