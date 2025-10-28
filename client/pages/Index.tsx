@@ -181,7 +181,7 @@ export default function Index() {
 
     setInstruments([{ type: '', description: '' }]);
     setMaterials([{ description: '', quantity: 1, unitCost: 0 }]);
-    alert('Invoice created and saved! PDF ready to print.');
+    alert.show('Invoice created and saved! PDF ready to print.', 'success');
   };
 
   const calculateTotals = () => {
