@@ -450,10 +450,10 @@ export default function Index() {
                   <div className="grid grid-cols-1 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">Address</label>
-                      <input type="text" name="customerAddress" value={formData.customerAddress} onChange={async (e) => {
-                        handleFormChange(e as any);
+                      <input type="text" name="customerAddress" value={formData.customerAddress} onChange={(e) => {
+                        handleFormChange(e);
                         const addr = e.target.value;
-                        await calculateDeliveryFee(addr);
+                        calculateDeliveryFee(addr);
                       }} placeholder="Client address" className="input-modern text-sm" />
                     </div>
                   </div>
