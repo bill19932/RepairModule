@@ -28,14 +28,52 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
     // Convert file to data URL to ensure tesseract can read it in all environments
     const dataUrl = await readFileAsDataURL(imageFile);
 
-    // Use tesseract to recognize text; provide simple logger
-    const { data } = await Tesseract.recognize(dataUrl, 'eng', {
-      logger: m => {
-        // optional: can forward progress to UI
-        // console.log('Tesseract', m);
-      }
+    // Ensure the dataUrl is a loadable image, draw to canvas to normalize format/size
+    await new Promise<void>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = (e) => reject(new Error('Image failed to load'));
+      img.src = dataUrl;
     });
 
+    // draw to canvas to normalize and avoid tesseract reading issues
+    const normalizedDataUrl = await new Promise<string>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 2000;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxW) {
+          const ratio = maxW / w;
+          w = maxW;
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d')!;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = dataUrl;
+    });
+
+    // Use tesseract to recognize text; provide simple logger
+    let ocrResult;
+    try {
+      ocrResult = await Tesseract.recognize(normalizedDataUrl, 'eng', {
+        logger: m => {
+          // optional: can forward progress to UI
+        }
+      });
+    } catch (err) {
+      console.error('Tesseract failed:', err);
+      throw err;
+    }
+
+    const data = ocrResult?.data || {};
     const text = data?.text || '';
 
     const extracted: ExtractedInvoiceData = {};
