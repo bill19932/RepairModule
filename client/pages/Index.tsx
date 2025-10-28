@@ -162,13 +162,12 @@ export default function Index() {
     downloadInvoicePDF(invoice);
 
     setFormData({
-      invoiceNumber: `INV-${nextNumber}`,
+      invoiceNumber: '',
+      dateReceived: new Date().toISOString().split('T')[0],
       date: new Date().toISOString().split('T')[0],
       customerName: '',
       customerPhone: '',
       customerEmail: '',
-      instrumentType: '',
-      instrumentDescription: '',
       repairDescription: '',
       laborHours: 0,
       hourlyRate: 0,
@@ -176,6 +175,7 @@ export default function Index() {
       isGeorgesMusic: false,
     });
 
+    setInstruments([{ type: '', description: '' }]);
     setMaterials([{ description: '', quantity: 1, unitCost: 0 }]);
     alert('Invoice created and saved! PDF ready to print.');
   };
