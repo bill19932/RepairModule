@@ -510,12 +510,6 @@ export default function Index() {
                     </div>
                   </div>
 
-                  {/* Notes */}
-                  <div>
-                    <label className="block text-xs font-semibold text-foreground mb-1">Notes</label>
-                    <textarea name="notes" value={formData.notes} onChange={handleFormChange} placeholder="Any additional notes..." className="input-modern text-sm min-h-16" />
-                  </div>
-
                   {/* Submit Button */}
                   <div className="flex justify-center">
                     <button type="submit" className="bg-primary text-primary-foreground font-bold py-2 px-6 rounded-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
