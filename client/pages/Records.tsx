@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RepairInvoice } from '@/lib/invoice-types';
 import { getAllInvoicesFromLocalStorage, downloadCSV } from '@/lib/csv-exporter';
+import { generateInvoicePDF } from '@/lib/pdf-generator';
 import { Trash2, Download, FileText, Search } from 'lucide-react';
 import { AlertDialog, useAlert } from '@/components/AlertDialog';
 
