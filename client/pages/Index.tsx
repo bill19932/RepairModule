@@ -83,10 +83,25 @@ export default function Index() {
     try {
       // Clean up address: remove Unit/Apt/Suite numbers for geocoding
       let cleanAddr = address.trim();
-      cleanAddr = cleanAddr.replace(/\b(?:Unit|Apt|Apt\.|Apartment|Suite|Ste|Ste\.)\s*[0-9A-Za-z-]+/gi, '').trim();
+      cleanAddr = cleanAddr.replace(/\b(?:Unit|Apt|Apt\.|Apartment|Suite|Ste|Ste\.|#)\s*[0-9A-Za-z\-]+/gi, '').trim();
+      // Remove extra commas and spaces
+      cleanAddr = cleanAddr.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
 
-      const fullAddr = cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, PA`;
-      const customerCoords = await geocodeAddress(fullAddr);
+      // Try multiple address format variations
+      const addressVariations = [
+        cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, Wynnewood, PA`,
+        cleanAddr.includes(',') ? cleanAddr : `${cleanAddr}, PA`,
+        cleanAddr.includes('PA') ? cleanAddr : `${cleanAddr}, Pennsylvania`,
+        cleanAddr, // Try original cleaned address without state
+      ];
+
+      let customerCoords = null;
+      for (const addrVariation of addressVariations) {
+        customerCoords = await geocodeAddress(addrVariation);
+        if (customerCoords) {
+          break; // Successfully geocoded, stop trying variations
+        }
+      }
 
       if (!customerCoords) {
         setDeliveryMiles(null);
