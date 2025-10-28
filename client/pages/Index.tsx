@@ -78,24 +78,29 @@ export default function Index() {
     if (!address || !address.trim() || formData.isGeorgesMusic) {
       setDeliveryMiles(null);
       setDeliveryFee(0);
+      setDeliveryDebug('');
       return;
     }
 
     try {
-      console.log(`[DELIVERY] Geocoding address: "${address}"`);
+      setDeliveryDebug(`Geocoding: "${address}"...`);
 
       const fullAddr = address.trim().includes(',') ? address.trim() : `${address.trim()}, PA`;
+      console.log(`Attempting to geocode: "${fullAddr}"`);
       const customerCoords = await geocodeAddress(fullAddr);
+
       if (!customerCoords) {
-        console.warn('[DELIVERY] Failed to geocode customer address');
+        setDeliveryDebug(`❌ Failed to geocode: "${fullAddr}"`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
       }
 
+      setDeliveryDebug(`✓ Customer: ${customerCoords.lat.toFixed(4)}, ${customerCoords.lon.toFixed(4)}`);
+
       const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
       if (!baseCoords) {
-        console.warn('[DELIVERY] Failed to geocode base address');
+        setDeliveryDebug(`❌ Failed to geocode base address`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
@@ -106,13 +111,12 @@ export default function Index() {
       const fee = roundedMiles * 3 * 0.85;
       const finalFee = parseFloat(fee.toFixed(2));
 
-      console.log(`[DELIVERY] ✓ ${roundedMiles} miles = $${finalFee}`);
-
+      setDeliveryDebug(`✓ ${roundedMiles} miles = $${finalFee}`);
       setDeliveryMiles(roundedMiles);
       setDeliveryFee(finalFee);
 
     } catch (err) {
-      console.error('[DELIVERY] Error:', err);
+      setDeliveryDebug(`❌ Error: ${err instanceof Error ? err.message : String(err)}`);
       setDeliveryMiles(null);
       setDeliveryFee(0);
     }
