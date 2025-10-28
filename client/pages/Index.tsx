@@ -66,7 +66,9 @@ export default function Index() {
       let phone = extracted.customerPhone || '';
       let email = extracted.customerEmail || '';
 
-      if (BILL_PHONE_NUMBERS.some(p => phone.includes(p.replace(/\D/g, '')))) {
+      // Filter out Bill's phone number (compare without formatting)
+      const phoneDigitsOnly = phone.replace(/\D/g, '');
+      if (BILL_PHONE_NUMBERS.some(p => p.replace(/\D/g, '') === phoneDigitsOnly)) {
         phone = '';
       }
 
