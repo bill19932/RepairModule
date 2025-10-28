@@ -365,16 +365,10 @@ export default function Index() {
                     </div>
                   </div>
 
-                  {/* Instrument Description & Repair Work */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Instrument Description</label>
-                      <input type="text" name="instrumentDescription" value={formData.instrumentDescription} onChange={handleFormChange} placeholder="e.g., 2010 Fender Strat" className="input-modern text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">Repair Work *</label>
-                      <input type="text" name="repairDescription" value={formData.repairDescription} onChange={handleFormChange} placeholder="What work was done" className="input-modern text-sm" required />
-                    </div>
+                  {/* Repair Work */}
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Repair Work *</label>
+                    <input type="text" name="repairDescription" value={formData.repairDescription} onChange={handleFormChange} placeholder="What work was done" className="input-modern text-sm" required />
                   </div>
 
                   {/* George's Music Toggle */}
@@ -387,7 +381,7 @@ export default function Index() {
                         onChange={handleFormChange}
                         className="w-4 h-4 cursor-pointer"
                       />
-                      <span className="text-sm font-semibold text-foreground">This repair is for George's Music (1.54x upcharge)</span>
+                      <span className="text-sm font-semibold text-foreground">George's Price</span>
                     </label>
                   </div>
 
