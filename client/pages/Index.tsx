@@ -433,10 +433,12 @@ export default function Index() {
                   </div>
 
                   {/* Submit Button */}
-                  <button type="submit" className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2">
-                    <Download size={18} />
-                    Create Invoice & Download PDF
-                  </button>
+                  <div className="flex justify-start">
+                    <button type="submit" className="bg-primary text-primary-foreground font-bold py-2 px-6 rounded-sm hover:bg-primary/90 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
+                      <Download size={16} />
+                      Print
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
