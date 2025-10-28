@@ -527,16 +527,6 @@ export default function Index() {
                 )}
               </div>
 
-              {showForm && (
-                <>
-                  <div className="flex justify-center">
-                    <button onClick={() => exportAllInvoicesToCSV()} className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-sm transition-colors flex items-center justify-center gap-2 text-sm">
-                      <Download size={16} />
-                      Export to Spreadsheet
-                    </button>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </div>
