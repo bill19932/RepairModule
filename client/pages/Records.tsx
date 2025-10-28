@@ -172,7 +172,21 @@ export default function Records() {
                   return (
                     <tr key={inv.invoiceNumber} className={`border-b border-border hover:bg-gray-50 transition-colors ${inv.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
                       <td className="py-3 px-3"><input type="checkbox" checked={selected.includes(inv.invoiceNumber)} onChange={() => toggleSelect(inv.invoiceNumber)} /></td>
-                      <td className="py-3 px-3 font-semibold text-primary">{inv.invoiceNumber}</td>
+                      <td className="py-3 px-3 font-semibold text-primary">
+                        <button onClick={() => {
+                          const html = inv.invoiceHtml || generateInvoicePDF(inv);
+                          const w = window.open('', '_blank');
+                          if (w) {
+                            w.document.open();
+                            w.document.write(html);
+                            w.document.close();
+                          } else {
+                            alert.show('Unable to open invoice preview. Please allow popups.', 'error');
+                          }
+                        }} className="underline text-primary font-semibold">
+                          {inv.invoiceNumber}
+                        </button>
+                      </td>
                       <td className="py-3 px-3 text-muted-foreground">{new Date(inv.dateReceived).toLocaleDateString()}</td>
                       <td className="py-3 px-3 text-foreground">{inv.customerName}</td>
                       <td className="py-3 px-3 text-foreground">{inv.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join(', ')}</td>
