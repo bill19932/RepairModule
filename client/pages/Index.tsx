@@ -73,38 +73,58 @@ export default function Index() {
   };
 
   const calculateDeliveryFee = async (address: string) => {
-    if (!address || formData.isGeorgesMusic) {
+    if (!address) {
+      console.log('calculateDeliveryFee: No address provided');
+      setDeliveryMiles(null);
+      setDeliveryFee(0);
+      return;
+    }
+
+    if (formData.isGeorgesMusic) {
+      console.log('calculateDeliveryFee: George\'s Music selected, skipping delivery fee');
       setDeliveryMiles(null);
       setDeliveryFee(0);
       return;
     }
 
     try {
-      const customerCoords = await geocodeAddress(address + ', PA');
+      console.log(`calculateDeliveryFee: Starting calculation for address: "${address}"`);
+
+      const fullCustomerAddress = address.includes(',') ? address : `${address}, PA`;
+      console.log(`calculateDeliveryFee: Geocoding customer address: "${fullCustomerAddress}"`);
+
+      const customerCoords = await geocodeAddress(fullCustomerAddress);
       if (!customerCoords) {
-        console.warn('Could not geocode customer address:', address);
+        console.warn(`calculateDeliveryFee: Could not geocode customer address: "${fullCustomerAddress}"`);
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
       }
 
+      console.log(`calculateDeliveryFee: Customer coords: ${customerCoords.lat}, ${customerCoords.lon}`);
+
       const baseCoords = await geocodeAddress('150 E Wynnewood Rd, Wynnewood, PA');
       if (!baseCoords) {
-        console.warn('Could not geocode base address');
+        console.warn('calculateDeliveryFee: Could not geocode base address');
         setDeliveryMiles(null);
         setDeliveryFee(0);
         return;
       }
+
+      console.log(`calculateDeliveryFee: Base coords: ${baseCoords.lat}, ${baseCoords.lon}`);
 
       const miles = haversineMiles(baseCoords.lat, baseCoords.lon, customerCoords.lat, customerCoords.lon);
       const roundedMiles = Math.round(miles);
       setDeliveryMiles(roundedMiles);
+
       // roundedMiles × 3 trips × $0.85 per mile
       const fee = roundedMiles * 3 * 0.85;
-      setDeliveryFee(parseFloat(fee.toFixed(2)));
-      console.log(`Delivery fee calculated: ${roundedMiles} miles = $${fee.toFixed(2)}`);
+      const finalFee = parseFloat(fee.toFixed(2));
+      setDeliveryFee(finalFee);
+
+      console.log(`✓ Delivery fee calculated: ${roundedMiles} miles = $${finalFee}`);
     } catch (err) {
-      console.error('Geocode error', err);
+      console.error('calculateDeliveryFee: Exception occurred:', err);
       setDeliveryMiles(null);
       setDeliveryFee(0);
     }
