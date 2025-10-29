@@ -251,6 +251,16 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
+    // Date Received - look for dates in MM/DD/YYYY or similar formats
+    const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if (dateMatch) {
+      const month = dateMatch[1].padStart(2, "0");
+      const day = dateMatch[2].padStart(2, "0");
+      const year = dateMatch[3];
+      // Convert to YYYY-MM-DD format for the form
+      extracted.dateReceived = `${year}-${month}-${day}`;
+    }
+
     // Customer Name - try multiple patterns
     let customerName: string | undefined;
 
