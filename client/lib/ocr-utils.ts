@@ -146,12 +146,18 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
 
     let ocrResult;
     try {
+      console.log('Starting OCR with image size:', imageFile.size, 'bytes');
       ocrResult = await Tesseract.recognize(normalizedDataUrl, 'eng', {
-        logger: () => {}
+        logger: (m: any) => {
+          if (m.status === 'recognizing') {
+            console.log('OCR progress:', Math.round(m.progress * 100) + '%');
+          }
+        }
       });
+      console.log('OCR completed successfully');
     } catch (err) {
       console.error('Tesseract failed:', err);
-      throw err;
+      throw new Error('OCR processing failed: ' + (err as Error).message);
     }
 
     const text = ocrResult?.data?.text || '';
