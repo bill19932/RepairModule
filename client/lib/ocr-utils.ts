@@ -290,37 +290,32 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - extract from TOP SECTION only (before Trouble Reported)
-    // Look for dates with context clues like "Spoke w/" or in the product info section
-    // The service date (like 10/4) appears early; avoid the "Due date" which is later
-    const dateMatches = Array.from(topSection.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+    // Date Received - extract from TOP SECTION only
+    // For George's Music forms, look for the first date that appears with "Spoke w/" label
+    // This is the service date (like 10/4/2025), not the due date
+    let dateReceived: string | undefined;
 
-    if (dateMatches && dateMatches.length > 0) {
-      let selectedDateMatch = null;
-
-      // If multiple dates found, prefer the one with "Spoke" context nearby (indicates service date)
-      if (dateMatches.length > 1) {
-        for (const match of dateMatches) {
-          const startIdx = match.index || 0;
-          const contextBefore = topSection.substring(Math.max(0, startIdx - 100), startIdx);
-          if (/Spoke|Service|Product|Item/i.test(contextBefore)) {
-            selectedDateMatch = match;
-            break;
-          }
-        }
+    // Try to find date right after "Spoke w/" label
+    const spokeMatch = topSection.match(/Spoke\s+w[.\/]*[\s:]*([\d\s/\-]+)/i);
+    if (spokeMatch) {
+      const dateStr = spokeMatch[1].trim();
+      const dateMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dateMatch) {
+        dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
       }
+    }
 
-      // If no context match found, take the first date
-      if (!selectedDateMatch) {
-        selectedDateMatch = dateMatches[0];
+    // Fallback: if no "Spoke" label, take the first date in the top section
+    if (!dateReceived) {
+      const dateMatches = Array.from(topSection.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+      if (dateMatches && dateMatches.length > 0) {
+        const firstMatch = dateMatches[0];
+        dateReceived = `${firstMatch[3]}-${firstMatch[1].padStart(2, "0")}-${firstMatch[2].padStart(2, "0")}`;
       }
+    }
 
-      if (selectedDateMatch) {
-        const month = selectedDateMatch[1].padStart(2, "0");
-        const day = selectedDateMatch[2].padStart(2, "0");
-        const year = selectedDateMatch[3];
-        extracted.dateReceived = `${year}-${month}-${day}`;
-      }
+    if (dateReceived) {
+      extracted.dateReceived = dateReceived;
     }
 
     // Customer Name - extract from CUSTOMER SECTION only
