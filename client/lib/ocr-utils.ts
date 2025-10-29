@@ -116,6 +116,11 @@ const extractAddressFromText = (customerSectionText: string): string | undefined
           continue;
         }
 
+        // Stop collecting if we see labels or lines that don't look like address parts
+        if (/Phone|Email|Signature|Primary|Second|Follow|Picked|Technician|[A-Z]{2,}\s*(?:\d{5})?$/.test(nextLine) && stateZipFound) {
+          break;
+        }
+
         // If we've collected address parts and hit something unexpected, stop
         if (addressParts.length >= 2) {
           break;
