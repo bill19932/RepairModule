@@ -290,32 +290,37 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - extract from TOP SECTION only
-    // For George's Music forms, look for the first date that appears with "Spoke w/" label
-    // This is the service date (like 10/4/2025), not the due date
-    let dateReceived: string | undefined;
+    // Date Received - extract from TOP SECTION only (before Trouble Reported)
+    // Look for dates with context clues like "Spoke w/" or in the product info section
+    // The service date (like 10/4) appears early; avoid the "Due date" which is later
+    const dateMatches = Array.from(topSection.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
 
-    // Try to find date right after "Spoke w/" label
-    const spokeMatch = topSection.match(/Spoke\s+w[.\/]*[\s:]*([\d\s/\-]+)/i);
-    if (spokeMatch) {
-      const dateStr = spokeMatch[1].trim();
-      const dateMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (dateMatch) {
-        dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
+    if (dateMatches && dateMatches.length > 0) {
+      let selectedDateMatch = null;
+
+      // If multiple dates found, prefer the one with "Spoke" context nearby (indicates service date)
+      if (dateMatches.length > 1) {
+        for (const match of dateMatches) {
+          const startIdx = match.index || 0;
+          const contextBefore = topSection.substring(Math.max(0, startIdx - 100), startIdx);
+          if (/Spoke|Service|Product|Item/i.test(contextBefore)) {
+            selectedDateMatch = match;
+            break;
+          }
+        }
       }
-    }
 
-    // Fallback: if no "Spoke" label, take the first date in the top section
-    if (!dateReceived) {
-      const dateMatches = Array.from(topSection.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
-      if (dateMatches && dateMatches.length > 0) {
-        const firstMatch = dateMatches[0];
-        dateReceived = `${firstMatch[3]}-${firstMatch[1].padStart(2, "0")}-${firstMatch[2].padStart(2, "0")}`;
+      // If no context match found, take the first date
+      if (!selectedDateMatch) {
+        selectedDateMatch = dateMatches[0];
       }
-    }
 
-    if (dateReceived) {
-      extracted.dateReceived = dateReceived;
+      if (selectedDateMatch) {
+        const month = selectedDateMatch[1].padStart(2, "0");
+        const day = selectedDateMatch[2].padStart(2, "0");
+        const year = selectedDateMatch[3];
+        extracted.dateReceived = `${year}-${month}-${day}`;
+      }
     }
 
     // Customer Name - extract from CUSTOMER SECTION only
@@ -327,28 +332,12 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: George's Music form format - look for first line after "CUSTOMER INFORMATION" that looks like a name
+    // Pattern 2: George's Music form format - look for customer name after "CUSTOMER INFORMATION" section
+    // The name appears after a thick black bar/section divider
     if (!customerName) {
-      const lines = customerSection.split("\n");
-      let foundCustomerInfo = false;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (/CUSTOMER\s+INFORMATION/i.test(lines[i])) {
-          foundCustomerInfo = true;
-          continue;
-        }
-
-        if (foundCustomerInfo) {
-          const line = lines[i].trim();
-          // Skip empty lines and labels
-          if (line && !/Phone|Email|Address|Signature|Picked|Follow|Technician|CC|SF/i.test(line)) {
-            // Check if line looks like a name (starts with capital letter, mostly alphabetic)
-            if (/^[A-Z][a-zA-Z\s]{2,}$/.test(line)) {
-              customerName = line;
-              break;
-            }
-          }
-        }
+      const customerInfoMatch = customerSection.match(/(?:CUSTOMER\s+INFORMATION|Service\s+Location)[^\n]*\n\s*([A-Z][a-zA-Z\s]+?)(?:\n|Address|Street)/i);
+      if (customerInfoMatch) {
+        customerName = customerInfoMatch[1].trim();
       }
     }
 
@@ -371,23 +360,31 @@ export const extractInvoiceData = async (
     }
 
     // Email - look for email address in CUSTOMER SECTION
-    // Prefer email that comes AFTER the customer name and phone (likely the customer's email)
-    // Skip the first email if it mentions "george" or "music" (store email)
-    let emailMatch = customerSection.match(
-      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
-    );
+    // Find all email addresses and pick the one that's most likely the customer's (not store email)
+    const allEmails = Array.from(customerSection.matchAll(
+      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi,
+    ));
 
-    if (emailMatch && /george|music|springfield/i.test(emailMatch[1])) {
-      // Skip store email, look for next email
-      const firstEmailEnd = (emailMatch.index || 0) + emailMatch[0].length;
-      const remainingSection = customerSection.substring(firstEmailEnd);
-      emailMatch = remainingSection.match(
-        /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
-      );
+    let selectedEmail: string | undefined;
+
+    if (allEmails.length > 0) {
+      // If we have multiple emails, skip store emails (george, music, springfield)
+      for (const emailMatch of allEmails) {
+        if (!/george|music|springfield/i.test(emailMatch[1])) {
+          selectedEmail = emailMatch[1];
+          break;
+        }
+      }
+
+      // If all emails are store emails, just use the first one
+      // (shouldn't happen in well-formed documents)
+      if (!selectedEmail) {
+        selectedEmail = allEmails[0][1];
+      }
     }
 
-    if (emailMatch) {
-      extracted.customerEmail = emailMatch[1].trim();
+    if (selectedEmail) {
+      extracted.customerEmail = selectedEmail.trim();
     }
 
     // Phone Number - look for various phone labels in CUSTOMER SECTION
