@@ -100,26 +100,47 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
       img.src = dataUrl;
     });
 
-    const normalizedDataUrl = await new Promise<string>((resolve) => {
+    const normalizedDataUrl = await new Promise<string>((resolve, reject) => {
       const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      const timeout = setTimeout(() => {
+        reject(new Error('Image processing timeout'));
+      }, 10000);
+
       img.onload = () => {
-        const maxW = 2000;
-        let w = img.width;
-        let h = img.height;
-        if (w > maxW) {
-          const ratio = maxW / w;
-          w = maxW;
-          h = Math.round(h * ratio);
+        clearTimeout(timeout);
+        try {
+          const maxW = 2000;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxW) {
+            const ratio = maxW / w;
+            w = maxW;
+            h = Math.round(h * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (err) {
+          reject(new Error('Failed to process image canvas: ' + (err as Error).message));
         }
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d')!;
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/png'));
       };
+
+      img.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Failed to load image for processing'));
+      };
+
       img.src = dataUrl;
     });
 
