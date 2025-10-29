@@ -6,6 +6,7 @@ export interface ExtractedInvoiceData {
   customerPhone?: string;
   customerEmail?: string;
   customerAddress?: string;
+  dateReceived?: string;
   instruments?: Array<{ type: string; description: string }>;
   repairDescription?: string;
   materials?: Array<{
