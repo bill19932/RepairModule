@@ -50,22 +50,13 @@ const convertHeicToJpeg = async (file: File): Promise<File> => {
 };
 
 // Helper to find customer address (not store address)
-const extractAddressFromText = (text: string): string | undefined => {
-  // For George's Music forms, the customer address is in the bottom section after "CUSTOMER INFORMATION"
+// Now receives the customerSection text already isolated
+const extractAddressFromText = (customerSectionText: string): string | undefined => {
+  // For George's Music forms, the customer address is in the CUSTOMER INFORMATION section
   // Address format: street with apt, city name, state/zip on separate lines
 
-  const lines = text.split("\n");
-  let customerSectionStart = -1;
-
-  // Find where the customer information section starts
-  for (let i = 0; i < lines.length; i++) {
-    if (/CUSTOMER\s+INFORMATION/i.test(lines[i])) {
-      customerSectionStart = i + 1;
-      break;
-    }
-  }
-
-  const searchStart = customerSectionStart > 0 ? customerSectionStart : 0;
+  const lines = customerSectionText.split("\n");
+  const searchStart = 0; // We're already in the customer section, so start from beginning
 
   // Look for street address in the customer section
   for (let i = searchStart; i < lines.length; i++) {
