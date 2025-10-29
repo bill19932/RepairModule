@@ -241,12 +241,20 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - look for the service date in top section of form (before customer info)
-    // George's forms have date at the top in MM/DD/YYYY format
-    const dateMatches = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g);
+    // Date Received - look for the service date in top section of form, before "Trouble Reported"
+    // George's forms have the service date early in the form, near the item description section
+    // Extract the date that appears before "Trouble Reported" section
+
+    // First, find where "Trouble Reported" starts
+    const troubleIndex = text.indexOf("Trouble");
+    const textBeforeTrouble = troubleIndex > 0 ? text.substring(0, troubleIndex) : text;
+
+    // Find the last date before "Trouble Reported" (this should be the service date)
+    const dateMatches = Array.from(textBeforeTrouble.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+
     if (dateMatches && dateMatches.length > 0) {
-      // Use the first date found (usually the service date at top)
-      const dateMatch = dateMatches[0].match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      // Use the last date found before "Trouble Reported" (most likely the service date)
+      const dateMatch = dateMatches[dateMatches.length - 1];
       if (dateMatch) {
         const month = dateMatch[1].padStart(2, "0");
         const day = dateMatch[2].padStart(2, "0");
