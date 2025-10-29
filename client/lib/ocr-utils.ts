@@ -290,33 +290,13 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - find the service date from the form
-    // George's forms have TWO dates: service date (appears early, like 10/13) and current date (later, like 10/29)
-    // The service date appears in the upper portion near "Service Location" or form header
+    // Date Received - extract from TOP SECTION only (before Trouble Reported)
+    // The service date always appears in the top portion of the form
+    const dateMatches = Array.from(topSection.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
 
-    // Strategy: Look for date that appears with context before "Item Description" or "Spoke w/"
-    // This date should be in the upper/middle section of the form
-
-    // Find the index of key form sections
-    const spokeIndex = text.indexOf("Spoke");
-    const itemDescIndex = text.indexOf("Item");
-    const troubleIndex = text.indexOf("Trouble");
-
-    // The service date should be between the start and the first of these sections
-    const searchEndIndex = Math.min(
-      spokeIndex > 0 ? spokeIndex : text.length,
-      itemDescIndex > 0 ? itemDescIndex : text.length,
-      troubleIndex > 0 ? troubleIndex : text.length
-    );
-
-    const textSearchArea = text.substring(0, Math.max(0, searchEndIndex));
-
-    // Find all dates in this area
-    const allDateMatches = Array.from(textSearchArea.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
-
-    if (allDateMatches && allDateMatches.length > 0) {
-      // Take the FIRST date found (this should be the service date, which appears early in the form)
-      const dateMatch = allDateMatches[0];
+    if (dateMatches && dateMatches.length > 0) {
+      // Take the first date in the top section (this is the service date, not the current date)
+      const dateMatch = dateMatches[0];
 
       if (dateMatch) {
         const month = dateMatch[1].padStart(2, "0");
