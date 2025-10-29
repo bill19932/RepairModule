@@ -331,44 +331,23 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: George's Music form format - find the line directly after CUSTOMER INFORMATION
-    // This should be the customer name (before any address/city/state lines)
-    if (!customerName) {
-      const custInfoIdx = customerSection.indexOf("CUSTOMER INFORMATION");
-      if (custInfoIdx > -1) {
-        const afterCustInfo = customerSection.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
-        const lines = afterCustInfo.split("\n");
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          // Skip empty lines
-          if (!trimmed) continue;
-          // Skip if it's a label, location word, address, or state code
-          if (/Phone|Email|Address|Signature|Picked|Follow|Technician|CC|SF|Completed|Third|Customer|Ridley|Springfield|Park|Lane|Street|Road|Ave|Drive|^PA$|^PA\s+|Pennsylvania|FL|NY|CA|NJ|DE|VA|OH/i.test(trimmed)) {
-            continue;
-          }
-          // Skip if it looks like an address (starts with number)
-          if (/^\d+/.test(trimmed)) continue;
-          // Skip if it contains only numbers/zip codes
-          if (/^\d{5}/.test(trimmed)) continue;
-          // Take first remaining line that looks like a name
-          if (/^[A-Z][a-zA-Z\s]+$/.test(trimmed) && trimmed.split(/\s+/).length >= 1 && trimmed.split(/\s+/).length <= 3 && trimmed.length > 2) {
-            customerName = trimmed;
-            break;
-          }
-        }
-      }
-    }
-
-    // Pattern 3: Look for name before address (common in repair forms)
+    // Pattern 2: George's Music form format - get FIRST non-empty line after "CUSTOMER INFORMATION"
     if (!customerName) {
       const lines = customerSection.split("\n");
-      for (let i = 0; i < lines.length - 1; i++) {
-        const line = lines[i].trim();
-        const nextLine = lines[i + 1].trim();
-        // If current line looks like a name and next line looks like an address
-        if (/^[A-Z][a-zA-Z\s]{2,}$/.test(line) && /^\d+\s+[A-Z]/.test(nextLine) && !/(Ridley|Springfield|Park|Lane|Street|Road|Ave)/i.test(line)) {
-          customerName = line;
+      let foundCustInfo = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (/CUSTOMER\s+INFORMATION/i.test(lines[i])) {
+          foundCustInfo = true;
+          continue;
+        }
+
+        if (foundCustInfo) {
+          const trimmed = lines[i].trim();
+          // Skip empty lines
+          if (!trimmed) continue;
+          // This should be the customer name - take it
+          customerName = trimmed;
           break;
         }
       }
