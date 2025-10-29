@@ -324,18 +324,23 @@ export const extractInvoiceData = async (
     // Pattern 2: Find "CUSTOMER INFORMATION" - the FIRST non-empty line after it is the customer name
     if (!customerName) {
       const custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
+      console.log("[OCR] Looking for CUSTOMER INFORMATION at index:", custInfoIdx);
       if (custInfoIdx > -1) {
         // Get everything after CUSTOMER INFORMATION
         const afterMarker = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
         const lines = afterMarker.split("\n");
+        console.log("[OCR] Lines after CUSTOMER INFORMATION:", lines.slice(0, 5).map(l => `"${l}"`));
 
         // Get the first non-empty line after CUSTOMER INFORMATION
-        for (const line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
           const trimmed = line.trim();
+          console.log(`[OCR] Line ${i}: "${trimmed}"`);
           if (trimmed && trimmed.length > 0) {
             // This is the first non-empty line - it should be the customer name
             // Clean up any OCR artifacts but keep the name intact
             customerName = trimmed.replace(/[\|\[\]]+/g, "").trim();
+            console.log("[OCR] Selected customer name:", customerName);
             // Stop at first non-empty line
             break;
           }
