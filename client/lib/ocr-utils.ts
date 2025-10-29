@@ -99,9 +99,10 @@ const extractAddressFromText = (customerSectionText: string): string | undefined
 
         // Try to match state and/or zip code
         if (!stateZipFound && (/\bPA\b|\bPennsylvania\b/i.test(nextLine) || /\d{5}/.test(nextLine))) {
-          // Extract state and zip from this line
-          const stateMatch = nextLine.match(/\bPA\b/i);
-          const zipMatch = nextLine.match(/\b(\d{5})\b/);
+          // Extract state and zip from this line, being careful to only capture valid values
+          const cleanLine = nextLine.replace(/Pc(?!\w)/gi, "").trim(); // Remove OCR artifact "Pc" that might appear before PA
+          const stateMatch = cleanLine.match(/\bPA\b/i);
+          const zipMatch = cleanLine.match(/\b(\d{5})\b/);
 
           if (stateMatch || zipMatch) {
             const stateStr = stateMatch ? "PA" : "";
@@ -130,7 +131,10 @@ const extractAddressFromText = (customerSectionText: string): string | undefined
       }
 
       // Construct full address
-      const fullAddress = addressParts.join(", ");
+      let fullAddress = addressParts.join(", ");
+
+      // Final cleanup: remove any remaining OCR artifacts like "Pc"
+      fullAddress = fullAddress.replace(/\bPc\b/g, "").replace(/,\s*,/g, ",").trim();
 
       // Validate it looks like an address
       if (!/^\d+\s+\d+\s+\d+|Quantity|Cost|Price|Description/i.test(fullAddress) && addressParts.length >= 2) {
