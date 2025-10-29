@@ -251,14 +251,19 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - look for dates in MM/DD/YYYY or similar formats
-    const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-    if (dateMatch) {
-      const month = dateMatch[1].padStart(2, "0");
-      const day = dateMatch[2].padStart(2, "0");
-      const year = dateMatch[3];
-      // Convert to YYYY-MM-DD format for the form
-      extracted.dateReceived = `${year}-${month}-${day}`;
+    // Date Received - look for the service date in top section of form (before customer info)
+    // George's forms have date at the top in MM/DD/YYYY format
+    const dateMatches = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g);
+    if (dateMatches && dateMatches.length > 0) {
+      // Use the first date found (usually the service date at top)
+      const dateMatch = dateMatches[0].match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dateMatch) {
+        const month = dateMatch[1].padStart(2, "0");
+        const day = dateMatch[2].padStart(2, "0");
+        const year = dateMatch[3];
+        // Convert to YYYY-MM-DD format for the form
+        extracted.dateReceived = `${year}-${month}-${day}`;
+      }
     }
 
     // Customer Name - try multiple patterns
