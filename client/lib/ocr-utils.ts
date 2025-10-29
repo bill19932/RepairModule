@@ -353,24 +353,34 @@ export const extractInvoiceData = async (
       extracted.customerAddress = address;
     }
 
-    // Repair Description - extract from "Trouble Reported" section
+    // Repair Description - extract from "Trouble Reported" box
     let repairDescription: string | undefined;
 
-    // Find "Trouble Reported" label and extract the text in that box
-    const troubleMatch = text.match(/Trouble\s+Reported\s*:?\s*\n([^]*?)(?=\n(?:Special\s+Instructions|Technician|Item\s+is|Service\s+Performed)|$)/i);
+    // Find the "Trouble Reported:" label and extract the multi-line text that follows it
+    // The pattern should capture text until we hit "Special Instructions" or "Technician Comments"
+    const troubleMatch = text.match(/Trouble\s+Reported\s*:?\s*([^]*?)(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i);
 
     if (troubleMatch) {
       let troubleText = troubleMatch[1].trim();
 
-      // Clean up the text - remove excessive whitespace but preserve the content
-      troubleText = troubleText
+      // Filter out lines that are just separators or labels
+      const lines = troubleText
         .split("\n")
         .map(line => line.trim())
-        .filter(line => line.length > 0 && !/^-+$/.test(line)) // Remove separator lines
-        .join(" ");
+        .filter(line => {
+          // Remove empty lines, separator lines, and lines that are just numbers/dashes
+          if (!line || /^-+$/.test(line) || /^[0-9]+$/.test(line)) return false;
+          // Remove lines that look like form labels or UI elements
+          if (/Service|Return|RETURN|ORDER|George|Music/i.test(line)) return false;
+          return true;
+        });
 
-      if (troubleText.length > 5) {
-        repairDescription = troubleText;
+      if (lines.length > 0) {
+        troubleText = lines.join(" ");
+
+        if (troubleText.length > 5) {
+          repairDescription = troubleText;
+        }
       }
     }
 
