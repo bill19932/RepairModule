@@ -346,9 +346,15 @@ export const extractInvoiceData = async (
           const trimmed = lines[i].trim();
           // Skip empty lines
           if (!trimmed) continue;
-          // This should be the customer name - take it
-          customerName = trimmed;
-          break;
+          // Extract only the name part, stop at any pipe, bracket, or other noise
+          let name = trimmed.split(/[\|pw\[\]]/)[0].trim();
+          // Further clean: remove anything after common delimiters
+          name = name.replace(/\s+pw\s*/i, "").replace(/\|.*$/g, "").trim();
+          // Only take if it looks like a name (contains letters, no numbers at start)
+          if (name && /^[A-Z][a-zA-Z\s]+$/.test(name)) {
+            customerName = name;
+            break;
+          }
         }
       }
     }
