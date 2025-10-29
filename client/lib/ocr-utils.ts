@@ -398,6 +398,9 @@ export const extractInvoiceData = async (
     if (troubleMatch) {
       let troubleText = troubleMatch[1].trim();
 
+      // Remove leading/trailing punctuation and special characters
+      troubleText = troubleText.replace(/^[;:|\/\s]+/, "").replace(/[;:|\/\s]+$/, "").trim();
+
       // Filter out lines that are just separators or labels
       const lines = troubleText
         .split("\n")
@@ -412,6 +415,12 @@ export const extractInvoiceData = async (
 
       if (lines.length > 0) {
         troubleText = lines.join(" ");
+
+        // Clean up the joined text - remove extra spaces and fix common OCR issues
+        troubleText = troubleText
+          .replace(/\s+/g, " ") // normalize whitespace
+          .replace(/\s([.,;!?])/g, "$1") // remove space before punctuation
+          .trim();
 
         if (troubleText.length > 5) {
           repairDescription = troubleText;
