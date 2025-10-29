@@ -299,7 +299,19 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
 
     return extracted;
   } catch (error) {
-    console.error('OCR Error:', error);
-    throw new Error('Failed to extract invoice data. Please check the image quality and try again.');
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('OCR Error:', errorMsg);
+
+    if (errorMsg.includes('Image failed to load')) {
+      throw new Error('Failed to load image. Please ensure the file is a valid image (JPG, PNG, etc.).');
+    } else if (errorMsg.includes('timeout')) {
+      throw new Error('Image processing took too long. Please try with a different image.');
+    } else if (errorMsg.includes('canvas')) {
+      throw new Error('Failed to process image. The file may be corrupted.');
+    } else if (errorMsg.includes('OCR')) {
+      throw new Error('Text recognition failed. Please try with a clearer image.');
+    } else {
+      throw new Error('Failed to extract invoice data: ' + errorMsg);
+    }
   }
 };
