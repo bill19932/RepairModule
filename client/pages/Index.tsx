@@ -723,13 +723,14 @@ export default function Index() {
                     <label className="block text-xs font-semibold text-foreground mb-1">
                       Repair Work *
                     </label>
-                    <input
-                      type="text"
+                    <textarea
                       name="repairDescription"
                       value={formData.repairDescription}
                       onChange={handleFormChange}
                       placeholder="What work was done"
-                      className="input-modern text-sm"
+                      className="input-modern text-sm resize-none"
+                      rows={3}
+                      style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
                       required
                     />
                   </div>
