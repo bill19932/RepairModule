@@ -290,30 +290,35 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - ALWAYS appears just ABOVE "Service Location"
+    // Date Received - ALWAYS appears on the same line just BEFORE "Service Location"
     let dateReceived: string | undefined;
 
-    // Primary method: Find "Service Location" and look backwards for the nearest date
+    // Primary method: Find the line with "Service Location" and extract date from it
     const svcLocIdx = text.indexOf("Service Location");
     if (svcLocIdx > -1) {
-      // Get text before Service Location (look back up to 100 chars)
-      const beforeSvcLoc = text.substring(Math.max(0, svcLocIdx - 100), svcLocIdx);
-      // Find all dates in this section
-      const dateMatches = Array.from(beforeSvcLoc.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
-      if (dateMatches.length > 0) {
-        // Take the LAST (most recent) date found before Service Location
-        const lastMatch = dateMatches[dateMatches.length - 1];
-        dateReceived = `${lastMatch[3]}-${lastMatch[1].padStart(2, "0")}-${lastMatch[2].padStart(2, "0")}`;
+      // Get the line containing "Service Location" - go back to find line start
+      const lineStart = text.lastIndexOf("\n", svcLocIdx) + 1;
+      const lineEnd = text.indexOf("\n", svcLocIdx);
+      const svcLocLine = text.substring(lineStart, lineEnd > -1 ? lineEnd : svcLocIdx + 50);
+
+      // Extract date from this line (should be at the beginning)
+      const dateMatch = svcLocLine.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dateMatch) {
+        dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
       }
     }
 
-    // Fallback: Search for date near "Spoke w/" label
+    // Fallback: Look for date on lines between PRODUCT INFORMATION and Service Location
     if (!dateReceived) {
-      const spokeMatch = text.match(/Spoke\s+w[.\/]*\s*([\d\/\-]+)/);
-      if (spokeMatch) {
-        const dateMatch = spokeMatch[1].match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-        if (dateMatch) {
-          dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
+      const prodIdx = text.indexOf("PRODUCT INFORMATION");
+      const svcIdx = text.indexOf("Service Location");
+      if (prodIdx > -1 && svcIdx > prodIdx) {
+        const betweenSections = text.substring(prodIdx, svcIdx);
+        const dateMatches = Array.from(betweenSections.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+        if (dateMatches.length > 0) {
+          // Take the first date found between these sections
+          const match = dateMatches[0];
+          dateReceived = `${match[3]}-${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}`;
         }
       }
     }
