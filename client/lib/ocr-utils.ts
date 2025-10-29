@@ -290,36 +290,18 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - ALWAYS appears on the same line just BEFORE "Service Location"
+    // Date Received - ALWAYS appears just ABOVE "Service Location"
     let dateReceived: string | undefined;
 
-    // Primary method: Find the line with "Service Location" and extract date from it
+    // Strategy: Get all text before Service Location, find dates, take the last one
     const svcLocIdx = text.indexOf("Service Location");
     if (svcLocIdx > -1) {
-      // Get the line containing "Service Location" - go back to find line start
-      const lineStart = text.lastIndexOf("\n", svcLocIdx) + 1;
-      const lineEnd = text.indexOf("\n", svcLocIdx);
-      const svcLocLine = text.substring(lineStart, lineEnd > -1 ? lineEnd : svcLocIdx + 50);
-
-      // Extract date from this line (should be at the beginning)
-      const dateMatch = svcLocLine.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (dateMatch) {
-        dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
-      }
-    }
-
-    // Fallback: Look for date on lines between PRODUCT INFORMATION and Service Location
-    if (!dateReceived) {
-      const prodIdx = text.indexOf("PRODUCT INFORMATION");
-      const svcIdx = text.indexOf("Service Location");
-      if (prodIdx > -1 && svcIdx > prodIdx) {
-        const betweenSections = text.substring(prodIdx, svcIdx);
-        const dateMatches = Array.from(betweenSections.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
-        if (dateMatches.length > 0) {
-          // Take the first date found between these sections
-          const match = dateMatches[0];
-          dateReceived = `${match[3]}-${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}`;
-        }
+      const beforeSvc = text.substring(0, svcLocIdx);
+      const allDates = Array.from(beforeSvc.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+      if (allDates.length > 0) {
+        // Take the LAST date before Service Location (closest one)
+        const lastDate = allDates[allDates.length - 1];
+        dateReceived = `${lastDate[3]}-${lastDate[1].padStart(2, "0")}-${lastDate[2].padStart(2, "0")}`;
       }
     }
 
@@ -351,12 +333,12 @@ export const extractInvoiceData = async (
           const trimmed = lines[i].trim();
           // Skip empty lines
           if (!trimmed) continue;
-          // Extract only the name part, stop at any pipe, bracket, or other noise
-          let name = trimmed.split(/[\|pw\[\]]/)[0].trim();
-          // Further clean: remove anything after common delimiters
-          name = name.replace(/\s+pw\s*/i, "").replace(/\|.*$/g, "").trim();
-          // Only take if it looks like a name (contains letters, no numbers at start)
-          if (name && /^[A-Z][a-zA-Z\s]+$/.test(name)) {
+          // Clean up OCR noise: remove pipes, brackets, and other obvious artifacts
+          let name = trimmed.replace(/[\|\[\]]/g, "").trim();
+          // Remove trailing garbage like "pw" or numbers
+          name = name.replace(/\s+\w+\s*[\|\]]*\s*$/g, "").trim();
+          // If we have a reasonable name, use it
+          if (name && name.length > 3 && /^[A-Z][a-zA-Z]/.test(name)) {
             customerName = name;
             break;
           }
@@ -368,8 +350,7 @@ export const extractInvoiceData = async (
       extracted.customerName = customerName;
     }
 
-    // Email - look for email address in CUSTOMER SECTION (under "CUSTOMER INFORMATION")
-    // Customer email appears after the name and phone in the customer info section
+    // Email - look for email address (find all, prefer customer email over store email)
     let selectedEmail: string | undefined;
 
     // Find all emails in the entire text
@@ -378,19 +359,19 @@ export const extractInvoiceData = async (
     ));
 
     if (allEmails.length > 0) {
-      // If multiple emails found, prefer customer email (not store email)
+      // Strategy: Look for customer email by skipping known store domains
       for (const emailMatch of allEmails) {
         const email = emailMatch[1];
-        // Skip store email (springfield@georgesmusic.com or similar)
-        if (!/springfield|georgesmusic|george.*music/i.test(email)) {
+        // Skip if it looks like a store email
+        if (!email.includes("springfield") && !email.includes("georgesmusic")) {
           selectedEmail = email;
           break;
         }
       }
 
-      // If all emails are store emails, use the second one if available
+      // If no customer email found (all are store emails), use the last email
       if (!selectedEmail && allEmails.length > 1) {
-        selectedEmail = allEmails[1][1];
+        selectedEmail = allEmails[allEmails.length - 1][1];
       }
     }
 
