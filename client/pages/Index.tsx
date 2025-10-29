@@ -220,8 +220,9 @@ export default function Index() {
         setOcrProgress(0);
       }, 500);
     } catch (error) {
-      console.error('OCR Error:', error);
-      alert.show('Failed to extract invoice data. Please check the image quality and try again.', 'error');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('OCR Error:', errorMsg);
+      alert.show(errorMsg, 'error');
       setOcrProgress(0);
     } finally {
       setIsProcessingOCR(false);
