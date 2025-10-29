@@ -334,12 +334,25 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: George's Music form format - look for customer name after "CUSTOMER INFORMATION" section
-    // The name appears after a thick black bar/section divider
+    // Pattern 2: George's Music form format - look for first line after "CUSTOMER INFORMATION" that looks like a name
     if (!customerName) {
-      const customerInfoMatch = customerSection.match(/(?:CUSTOMER\s+INFORMATION|Service\s+Location)[^\n]*\n\s*([A-Z][a-zA-Z\s]+?)(?:\n|Address|Street)/i);
-      if (customerInfoMatch) {
-        customerName = customerInfoMatch[1].trim();
+      const custInfoIdx = customerSection.indexOf("CUSTOMER INFORMATION");
+      if (custInfoIdx > -1) {
+        const afterCustInfo = customerSection.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
+        const lines = afterCustInfo.split("\n");
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          // Skip empty lines and labels
+          if (!trimmed || /Phone|Email|Address|Signature|Picked|Follow|Technician|CC|SF|Completed|Third|Customer\s+Signature/i.test(trimmed)) {
+            continue;
+          }
+          // Take first line that looks like a name (starts with capital, mostly letters and spaces)
+          if (/^[A-Z][a-zA-Z\s]{2,}$/.test(trimmed) && trimmed.split(/\s+/).length <= 3) {
+            customerName = trimmed;
+            break;
+          }
+        }
       }
     }
 
