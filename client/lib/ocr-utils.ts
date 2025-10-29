@@ -358,25 +358,27 @@ export const extractInvoiceData = async (
     // Email - look for email address (find all, prefer customer email over store email)
     let selectedEmail: string | undefined;
 
-    // Find all emails in the entire text
+    // Find all emails in the entire text (very permissive regex)
     const allEmails = Array.from(text.matchAll(
-      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi,
+      /([a-zA-Z0-9][a-zA-Z0-9._%+\-]*@[a-zA-Z0-9][a-zA-Z0-9.\-]*\.[a-zA-Z]{2,})/gi,
     ));
 
     if (allEmails.length > 0) {
       // Strategy: Look for customer email by skipping known store domains
       for (const emailMatch of allEmails) {
         const email = emailMatch[1];
-        // Skip if it looks like a store email
-        if (!email.includes("springfield") && !email.includes("georgesmusic")) {
-          selectedEmail = email;
-          break;
+        // Skip if it's clearly a store email
+        if (email.toLowerCase().includes("springfield") || email.toLowerCase().includes("george")) {
+          continue;
         }
+        // Use first non-store email
+        selectedEmail = email;
+        break;
       }
 
-      // If no customer email found (all are store emails), use the last email
-      if (!selectedEmail && allEmails.length > 1) {
-        selectedEmail = allEmails[allEmails.length - 1][1];
+      // If no customer email found (all are store emails), use any email
+      if (!selectedEmail && allEmails.length > 0) {
+        selectedEmail = allEmails[0][1];
       }
     }
 
