@@ -131,29 +131,18 @@ const extractAddressFromText = (text: string): string | undefined => {
 
 // Helper to find invoice number
 const extractInvoiceNumber = (text: string): string | undefined => {
-  // First try "Invoice #" or "Invoice Number" format
-  const labelMatch = text.match(/Invoice\s*#\s*(\d+)/i);
-  if (labelMatch) {
+  // Only extract invoice number if it's explicitly labeled "Invoice" or "Invoice #"
+  // Don't extract random 5-digit numbers as they might be zip codes
+
+  // Look for explicit "Invoice #" or "Invoice Number" format
+  const labelMatch = text.match(/Invoice\s*#\s*([A-Z0-9]+)/i);
+  if (labelMatch && !labelMatch[1].match(/^\d{5}$/)) {
+    // Don't return if it's just 5 digits (likely a zip code)
     return labelMatch[1];
   }
 
-  // Look for patterns like "33740", "33742", "336xx", "337xx", "338xx"
-  // These appear as standalone numbers in the 5-digit range
-  const numberMatch = text.match(/\bInvoice[^\d]*(\d{5})\b/i);
-  if (numberMatch) {
-    return numberMatch[1];
-  }
-
-  // Fallback: Look for any 5-digit number that appears isolated on its own line
-  const lines = text.split("\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (/^\d{5}$/.test(trimmed)) {
-      // This could be an invoice number
-      return trimmed;
-    }
-  }
-
+  // For George's Music forms, invoice number might not be present
+  // Return undefined if we can't confidently extract it
   return undefined;
 };
 
