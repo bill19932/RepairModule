@@ -375,8 +375,8 @@ export const extractInvoiceData = async (
       extracted.customerPhone = phone;
     }
 
-    // Address - with full sweep logic
-    const address = extractAddressFromText(text);
+    // Address - extract from CUSTOMER SECTION only
+    const address = extractAddressFromText(customerSection);
     if (address) {
       extracted.customerAddress = address;
     }
