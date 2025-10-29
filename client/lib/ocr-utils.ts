@@ -274,9 +274,9 @@ export const extractInvoiceData = async (
     let itemDescIdx = -1;
 
     for (let i = 0; i < lines.length; i++) {
-      if (/^Trouble\s+Reported/i.test(lines[i])) troubleReportedIdx = i;
-      if (/^CUSTOMER\s+INFORMATION/i.test(lines[i])) customerInfoIdx = i;
-      if (/^Item\s+Description/i.test(lines[i])) itemDescIdx = i;
+      if (/Trouble\s+Reported/i.test(lines[i])) troubleReportedIdx = i;
+      if (/CUSTOMER\s+INFORMATION/i.test(lines[i])) customerInfoIdx = i;
+      if (/Item\s+Description/i.test(lines[i])) itemDescIdx = i;
     }
 
     // Define sections
