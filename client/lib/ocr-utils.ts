@@ -436,23 +436,40 @@ export const extractInvoiceData = async (
       extracted.materials = materials;
     }
 
-    // Infer instrument from repair description
-    if (extracted.repairDescription) {
-      const d = extracted.repairDescription.toLowerCase();
-      let instrumentType = "";
+    // Extract instrument details
+    let instrumentType = "Guitar";
+    let instrumentDescription = "";
 
-      if (d.includes("guitar")) instrumentType = "Guitar";
-      else if (d.includes("bass")) instrumentType = "Bass";
-      else if (d.includes("violin")) instrumentType = "Violin";
-      else if (d.includes("cello")) instrumentType = "Cello";
-      else if (d.includes("setup")) instrumentType = "Guitar";
-      else instrumentType = "Guitar";
+    // Pattern 1: Look for "Item Description" field (George's Music forms)
+    const itemDescMatch = text.match(/Item\s+Description[\s:]*([^\n]*?)(?:\nQty|Quantity|$)/i);
+    if (itemDescMatch) {
+      instrumentDescription = itemDescMatch[1].trim();
 
-      if (instrumentType) {
-        extracted.instruments = [
-          { type: instrumentType, description: extracted.repairDescription },
-        ];
+      // Try to extract serial number if present in the same area
+      const serialMatch = text.match(/Serial\s*#\s*([A-Z0-9]+)/i);
+      if (serialMatch && instrumentDescription.length < 50) {
+        instrumentDescription += " (Serial: " + serialMatch[1] + ")";
       }
+    }
+
+    // Pattern 2: Extract instrument type from instrument description or repair description
+    const fullText = (instrumentDescription + " " + (extracted.repairDescription || "")).toLowerCase();
+
+    if (fullText.includes("guitar")) instrumentType = "Guitar";
+    else if (fullText.includes("bass")) instrumentType = "Bass";
+    else if (fullText.includes("violin")) instrumentType = "Violin";
+    else if (fullText.includes("cello")) instrumentType = "Cello";
+    else if (fullText.includes("fernandes") || fullText.includes("ravelle")) instrumentType = "Guitar";
+    else if (fullText.includes("setup")) instrumentType = "Guitar";
+    else instrumentType = "Guitar";
+
+    // Use instrument description from form, or repair description as fallback
+    const finalInstrumentDesc = instrumentDescription || extracted.repairDescription || "Repair";
+
+    if (finalInstrumentDesc) {
+      extracted.instruments = [
+        { type: instrumentType, description: finalInstrumentDesc },
+      ];
     }
 
     return extracted;
