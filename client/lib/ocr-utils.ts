@@ -369,96 +369,21 @@ export const extractInvoiceData = async (
       extracted.repairDescription = repairDescription;
     }
 
-    // Parse work items table
-    // Look for "Description" header which marks the start of the items table
-    const descHeaderIndex = text.indexOf("Description");
+    // For George's Music forms, we typically don't extract materials/services from the table
+    // The form shows empty service rows with just "$0.00", which we should skip
+    // Only extract if there are clearly meaningful line items with descriptions and amounts
+
     const materials: Array<{
       description: string;
       quantity: number;
       unitCost: number;
     }> = [];
 
-    if (descHeaderIndex !== -1) {
-      // Extract text from after "Description" header until we hit summary lines (Subtotal, Tax, Total)
-      const tableText = text.substring(descHeaderIndex);
-      const summaryStart = tableText.search(/Subtotal|Materials|George/i);
-      const tableContent =
-        summaryStart > 0 ? tableText.substring(0, summaryStart) : tableText;
+    // Skip materials extraction for now for George's Music forms
+    // These forms usually have empty service rows that shouldn't be extracted
+    // If needed, add explicit extraction logic here in the future
 
-      // Split by newlines and process each potential line
-      const lines = tableContent
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean);
-
-      // Skip the "Description", "Quantity", "Unit Cost", "Cost" header lines
-      let inItemsSection = false;
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        // Skip header row and common separator words
-        if (/Description|Quantity|Unit Cost|Cost|^-+$/i.test(line)) {
-          inItemsSection = true;
-          continue;
-        }
-
-        if (!inItemsSection) continue;
-
-        // Skip "Materials" and "Delivery Fee" rows as they're handled separately
-        if (/^Materials$|^Delivery Fee/i.test(line)) continue;
-
-        // Try to find cost patterns in the line: dollar amounts or numbers
-        // Pattern: description text, then numbers for quantity, unit cost, and total
-        const costMatch = line.match(/(\d+(?:\.\d{2})?)\s*$/);
-        const quantityMatch = line.match(
-          /\b(\d+)\s+(\d+(?:\.\d{2})?)\s+(\d+(?:\.\d{2})?)\s*$/,
-        );
-
-        if (costMatch) {
-          // This line has a cost at the end
-          const cost = parseFloat(costMatch[1]);
-
-          if (quantityMatch) {
-            // Has quantity, unit cost, and total cost
-            const qty = parseFloat(quantityMatch[1]);
-            const unitCost = parseFloat(quantityMatch[2]);
-            const description = line.replace(quantityMatch[0], "").trim();
-
-            if (description && description.length > 2 && unitCost > 0) {
-              materials.push({ description, quantity: qty, unitCost });
-            }
-          } else {
-            // Just has a cost, try to infer from line structure
-            const description = line.replace(costMatch[0], "").trim();
-
-            // Try to find quantity in the description
-            const qtyInDesc = description.match(
-              /\s(\d+)\s+(\d+(?:\.\d{2})?)\s*$/,
-            );
-            if (qtyInDesc) {
-              const qty = parseFloat(qtyInDesc[1]);
-              const unitCost = parseFloat(qtyInDesc[2]);
-              const cleanDesc = description.replace(qtyInDesc[0], "").trim();
-              if (cleanDesc && cleanDesc.length > 2) {
-                materials.push({
-                  description: cleanDesc,
-                  quantity: qty,
-                  unitCost,
-                });
-              }
-            } else if (description && description.length > 10) {
-              // Long description with just a cost - assume qty 1
-              materials.push({ description, quantity: 1, unitCost: cost });
-            }
-          }
-        }
-      }
-    }
-
-    if (materials.length > 0) {
-      extracted.materials = materials;
-    }
+    // Don't set extracted.materials - leave it undefined so form starts empty
 
     // Extract instrument details
     let instrumentType = "Guitar";
