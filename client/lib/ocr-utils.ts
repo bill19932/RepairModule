@@ -270,31 +270,37 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - look for the service date on the form
-    // The form has a date field in the top section (before "Trouble Reported")
-    // Usually appears near "Service Location" or "Item Description" area
+    // Date Received - find the service date from the form
+    // George's forms have TWO dates: service date (10/13) and current date (10/29)
+    // Service date appears AFTER "Service Location" label, current date is elsewhere
 
-    // Look for date pattern that appears before "Item Description" or "Trouble Reported"
-    const itemDescIndex = text.indexOf("Item");
-    const troubleIndex = text.indexOf("Trouble");
-    const searchEndIndex = itemDescIndex > 0 ? itemDescIndex : (troubleIndex > 0 ? troubleIndex : text.length);
+    // Look for pattern: Service Location label followed by a date
+    const serviceLocMatch = text.match(/Service\s+Location[^\n]*\n[^\n]*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i);
 
-    const textSearchArea = text.substring(0, searchEndIndex);
+    if (serviceLocMatch) {
+      const month = serviceLocMatch[1].padStart(2, "0");
+      const day = serviceLocMatch[2].padStart(2, "0");
+      const year = serviceLocMatch[3];
+      extracted.dateReceived = `${year}-${month}-${day}`;
+    } else {
+      // Fallback: look for date before "Item Description"
+      const itemDescIndex = text.indexOf("Item");
+      const troubleIndex = text.indexOf("Trouble");
+      const searchEndIndex = itemDescIndex > 0 ? itemDescIndex : (troubleIndex > 0 ? troubleIndex : text.length);
+      const textSearchArea = text.substring(0, searchEndIndex);
 
-    // Find all dates in the search area
-    const allDateMatches = Array.from(textSearchArea.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+      const allDateMatches = Array.from(textSearchArea.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
 
-    if (allDateMatches && allDateMatches.length > 0) {
-      // Look for the earliest date in this section (usually the service date comes before other dates)
-      // But prefer one that has numbers close together (likely single date field)
-      const dateMatch = allDateMatches[0]; // Take first date in the search area
+      if (allDateMatches && allDateMatches.length > 0) {
+        // Take the last date before Item Description (most likely service date)
+        const dateMatch = allDateMatches[allDateMatches.length - 1];
 
-      if (dateMatch) {
-        const month = dateMatch[1].padStart(2, "0");
-        const day = dateMatch[2].padStart(2, "0");
-        const year = dateMatch[3];
-        // Convert to YYYY-MM-DD format for the form
-        extracted.dateReceived = `${year}-${month}-${day}`;
+        if (dateMatch) {
+          const month = dateMatch[1].padStart(2, "0");
+          const day = dateMatch[2].padStart(2, "0");
+          const year = dateMatch[3];
+          extracted.dateReceived = `${year}-${month}-${day}`;
+        }
       }
     }
 
