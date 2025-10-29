@@ -313,10 +313,36 @@ export const extractInvoiceData = async (
       extracted.customerAddress = address;
     }
 
-    // Service Description - look for "Service" label followed by value
-    const serviceMatch = text.match(/Service\s+([^\n\r]+?)(?:\n|Invoice|$)/i);
-    if (serviceMatch) {
-      extracted.repairDescription = serviceMatch[1].trim();
+    // Repair Description - try multiple patterns
+    let repairDescription: string | undefined;
+
+    // Pattern 1: "Trouble Reported" section (George's Music forms)
+    const troubleMatch = text.match(/Trouble\s+Reported[\s\n]*([^\n]*?)(?:\nSpecial|Technician|$)/i);
+    if (troubleMatch) {
+      repairDescription = troubleMatch[1].trim();
+    }
+
+    // Pattern 2: Extended "Trouble Reported" section with multiple lines
+    if (!repairDescription || repairDescription.length < 10) {
+      const troubleExtendedMatch = text.match(/Trouble\s+Reported[\s\n]+([^]*?)(?:\n(?:Special|Service Performed|Technician)|$)/i);
+      if (troubleExtendedMatch) {
+        let text = troubleExtendedMatch[1].trim();
+        // Clean up the text - remove extra line breaks and spaces
+        text = text.replace(/\n\s*\n/g, " ").replace(/\s+/g, " ");
+        repairDescription = text;
+      }
+    }
+
+    // Pattern 3: "Service" label (standard invoice format)
+    if (!repairDescription) {
+      const serviceMatch = text.match(/Service\s+([^\n\r]+?)(?:\n|Invoice|$)/i);
+      if (serviceMatch) {
+        repairDescription = serviceMatch[1].trim();
+      }
+    }
+
+    if (repairDescription) {
+      extracted.repairDescription = repairDescription;
     }
 
     // Parse work items table
