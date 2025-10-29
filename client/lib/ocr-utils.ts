@@ -293,15 +293,18 @@ export const extractInvoiceData = async (
     // Date Received - ALWAYS appears just ABOVE "Service Location"
     let dateReceived: string | undefined;
 
-    // Strategy: Get all text before Service Location, find dates, take the last one
+    // Strategy: Date is ON THE SAME LINE as "Service Location"
     const svcLocIdx = text.indexOf("Service Location");
     if (svcLocIdx > -1) {
-      const beforeSvc = text.substring(0, svcLocIdx);
-      const allDates = Array.from(beforeSvc.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
-      if (allDates.length > 0) {
-        // Take the LAST date before Service Location (closest one)
-        const lastDate = allDates[allDates.length - 1];
-        dateReceived = `${lastDate[3]}-${lastDate[1].padStart(2, "0")}-${lastDate[2].padStart(2, "0")}`;
+      // Get the line containing "Service Location"
+      const lineStart = Math.max(0, text.lastIndexOf("\n", svcLocIdx) + 1);
+      const lineEnd = text.indexOf("\n", svcLocIdx);
+      const svcLine = text.substring(lineStart, lineEnd > -1 ? lineEnd : svcLocIdx + 100);
+
+      // Extract first date from this line
+      const dateMatch = svcLine.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dateMatch) {
+        dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
       }
     }
 
