@@ -333,12 +333,14 @@ export const extractInvoiceData = async (
           const trimmed = lines[i].trim();
           // Skip empty lines
           if (!trimmed) continue;
-          // Clean up OCR noise: remove pipes, brackets, and other obvious artifacts
-          let name = trimmed.replace(/[\|\[\]]/g, "").trim();
-          // Remove trailing garbage like "pw" or numbers
-          name = name.replace(/\s+\w+\s*[\|\]]*\s*$/g, "").trim();
-          // If we have a reasonable name, use it
-          if (name && name.length > 3 && /^[A-Z][a-zA-Z]/.test(name)) {
+          // Skip obvious non-name lines
+          if (/^SF\d|^[0-9]+\s+|Phone|Email|Address|Signature|Follow|Completed|Final/i.test(trimmed)) {
+            continue;
+          }
+          // This should be the customer name - take it as-is (with minimal cleanup)
+          let name = trimmed.replace(/[\|\[\]]+/g, "").trim();
+          // If it has any letters and reasonable length, use it
+          if (name && name.length > 2 && /[A-Za-z]/.test(name)) {
             customerName = name;
             break;
           }
