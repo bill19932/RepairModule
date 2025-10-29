@@ -138,9 +138,9 @@ export const extractInvoiceData = async (
       img.onerror = (e) => {
         console.error(
           "Image load failed. File size:",
-          imageFile.size,
+          processFile.size,
           "Type:",
-          imageFile.type,
+          processFile.type,
         );
         reject(
           new Error(
