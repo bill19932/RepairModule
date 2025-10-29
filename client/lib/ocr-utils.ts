@@ -341,18 +341,18 @@ export const extractInvoiceData = async (
       extracted.customerEmail = emailMatch[1].trim();
     }
 
-    // Phone Number - look for various phone labels
+    // Phone Number - look for various phone labels in CUSTOMER SECTION
     let phone: string | undefined;
 
     // Pattern 1: "Phone-Primary" or "Phone" label followed by number
-    const primaryPhoneMatch = text.match(/Phone[-\s]*Primary[\s:]*(\d{10,})/i);
+    const primaryPhoneMatch = customerSection.match(/Phone[-\s]*Primary[\s:]*(\d{10,})/i);
     if (primaryPhoneMatch) {
       phone = primaryPhoneMatch[1];
     }
 
     // Pattern 2: "Phone" or "Number" label
     if (!phone) {
-      const phoneMatch = text.match(/(?:Phone|Number)\s*[:\s]*(\d{3}[-.]?\d{3}[-.]?\d{4})/i);
+      const phoneMatch = customerSection.match(/(?:Phone|Number)\s*[:\s]*(\d{3}[-.]?\d{3}[-.]?\d{4})/i);
       if (phoneMatch) {
         phone = phoneMatch[1];
       }
@@ -360,7 +360,7 @@ export const extractInvoiceData = async (
 
     // Pattern 3: Standalone 10-digit number (as fallback)
     if (!phone) {
-      const numberMatch = text.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
+      const numberMatch = customerSection.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
       if (numberMatch) {
         phone = numberMatch[1];
       }
