@@ -292,9 +292,9 @@ export const extractInvoiceData = async (
       extracted.customerName = customerName;
     }
 
-    // Email
+    // Email - look for email address anywhere in the text
     const emailMatch = text.match(
-      /Email\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
     );
     if (emailMatch) {
       extracted.customerEmail = emailMatch[1].trim();
