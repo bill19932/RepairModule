@@ -1,4 +1,4 @@
-import Tesseract from 'tesseract.js';
+import Tesseract from "tesseract.js";
 
 export interface ExtractedInvoiceData {
   customerName?: string;
@@ -7,7 +7,11 @@ export interface ExtractedInvoiceData {
   customerAddress?: string;
   instruments?: Array<{ type: string; description: string }>;
   repairDescription?: string;
-  materials?: Array<{ description: string; quantity: number; unitCost: number }>;
+  materials?: Array<{
+    description: string;
+    quantity: number;
+    unitCost: number;
+  }>;
   laborHours?: number;
   hourlyRate?: number;
 }
@@ -16,8 +20,8 @@ const readFileAsDataURL = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === 'string') resolve(reader.result);
-      else reject(new Error('Failed to read file as data URL'));
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("Failed to read file as data URL"));
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
@@ -34,7 +38,8 @@ const extractAddressFromText = (text: string): string | undefined => {
 
   // Full sweep: Look for standard US address patterns
   // Pattern: number + street name + street type (Ave, St, Rd, etc.) + optional unit/apt + optional city/state
-  const addressRegex = /\b(\d{1,5}\s+[\w\s&,.'-]+?\s+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Place|Pl|Way|Circle|Way|Parkway|Pkwy|Highway|Hwy|Route|Rt|Terrace|Ter|Trail|Trl)\.?)\b[\w\s,#.'-]*(?:(?:Unit|Apt|Apartment|Suite|Ste|Floor|Fl|Bldg|Building)\s*[#A-Za-z0-9]+)?[\w\s,'-]*(?:(?:Wynnewood|Swarthmore|Glennolden|PA|Pennsylvania|01|02|03|04|05|06|07|08|09|10|11|12|13|14|15)[\w\s,'-]*)?/i;
+  const addressRegex =
+    /\b(\d{1,5}\s+[\w\s&,.'-]+?\s+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Place|Pl|Way|Circle|Way|Parkway|Pkwy|Highway|Hwy|Route|Rt|Terrace|Ter|Trail|Trl)\.?)\b[\w\s,#.'-]*(?:(?:Unit|Apt|Apartment|Suite|Ste|Floor|Fl|Bldg|Building)\s*[#A-Za-z0-9]+)?[\w\s,'-]*(?:(?:Wynnewood|Swarthmore|Glennolden|PA|Pennsylvania|01|02|03|04|05|06|07|08|09|10|11|12|13|14|15)[\w\s,'-]*)?/i;
 
   const streetMatch = text.match(addressRegex);
   if (streetMatch) {
@@ -42,13 +47,20 @@ const extractAddressFromText = (text: string): string | undefined => {
   }
 
   // Alternative: Look for lines with number + words that look like addresses
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
     // Look for lines starting with a number followed by text (typical address format)
-    if (/^\d{1,5}\s+[A-Z]/.test(trimmed) && trimmed.length > 10 && trimmed.length < 100) {
+    if (
+      /^\d{1,5}\s+[A-Z]/.test(trimmed) &&
+      trimmed.length > 10 &&
+      trimmed.length < 100
+    ) {
       // Make sure it's not a table row or other data
-      if (!/^\d+\s+\d+\s+\d+/.test(trimmed) && !/Quantity|Cost|Price|Description/i.test(trimmed)) {
+      if (
+        !/^\d+\s+\d+\s+\d+/.test(trimmed) &&
+        !/Quantity|Cost|Price|Description/i.test(trimmed)
+      ) {
         return trimmed;
       }
     }
@@ -73,7 +85,7 @@ const extractInvoiceNumber = (text: string): string | undefined => {
   }
 
   // Fallback: Look for any 5-digit number that appears isolated on its own line
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
     if (/^\d{5}$/.test(trimmed)) {
@@ -85,27 +97,38 @@ const extractInvoiceNumber = (text: string): string | undefined => {
   return undefined;
 };
 
-export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvoiceData> => {
+export const extractInvoiceData = async (
+  imageFile: File,
+): Promise<ExtractedInvoiceData> => {
   try {
     const dataUrl = await readFileAsDataURL(imageFile);
 
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      img.crossOrigin = "anonymous";
       img.onload = () => resolve();
       img.onerror = (e) => {
-        console.error('Image load failed. File size:', imageFile.size, 'Type:', imageFile.type);
-        reject(new Error('Image failed to load - file may be corrupted or invalid format'));
+        console.error(
+          "Image load failed. File size:",
+          imageFile.size,
+          "Type:",
+          imageFile.type,
+        );
+        reject(
+          new Error(
+            "Image failed to load - file may be corrupted or invalid format",
+          ),
+        );
       };
       img.src = dataUrl;
     });
 
     const normalizedDataUrl = await new Promise<string>((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      img.crossOrigin = "anonymous";
 
       const timeout = setTimeout(() => {
-        reject(new Error('Image processing timeout'));
+        reject(new Error("Image processing timeout"));
       }, 10000);
 
       img.onload = () => {
@@ -119,26 +142,30 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
             w = maxW;
             h = Math.round(h * ratio);
           }
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           canvas.width = w;
           canvas.height = h;
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           if (!ctx) {
-            reject(new Error('Failed to get canvas context'));
+            reject(new Error("Failed to get canvas context"));
             return;
           }
-          ctx.fillStyle = 'white';
+          ctx.fillStyle = "white";
           ctx.fillRect(0, 0, w, h);
           ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/png'));
+          resolve(canvas.toDataURL("image/png"));
         } catch (err) {
-          reject(new Error('Failed to process image canvas: ' + (err as Error).message));
+          reject(
+            new Error(
+              "Failed to process image canvas: " + (err as Error).message,
+            ),
+          );
         }
       };
 
       img.onerror = () => {
         clearTimeout(timeout);
-        reject(new Error('Failed to load image for processing'));
+        reject(new Error("Failed to load image for processing"));
       };
 
       img.src = dataUrl;
@@ -146,21 +173,21 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
 
     let ocrResult;
     try {
-      console.log('Starting OCR with image size:', imageFile.size, 'bytes');
-      ocrResult = await Tesseract.recognize(normalizedDataUrl, 'eng', {
+      console.log("Starting OCR with image size:", imageFile.size, "bytes");
+      ocrResult = await Tesseract.recognize(normalizedDataUrl, "eng", {
         logger: (m: any) => {
-          if (m.status === 'recognizing') {
-            console.log('OCR progress:', Math.round(m.progress * 100) + '%');
+          if (m.status === "recognizing") {
+            console.log("OCR progress:", Math.round(m.progress * 100) + "%");
           }
-        }
+        },
       });
-      console.log('OCR completed successfully');
+      console.log("OCR completed successfully");
     } catch (err) {
-      console.error('Tesseract failed:', err);
-      throw new Error('OCR processing failed: ' + (err as Error).message);
+      console.error("Tesseract failed:", err);
+      throw new Error("OCR processing failed: " + (err as Error).message);
     }
 
-    const text = ocrResult?.data?.text || '';
+    const text = ocrResult?.data?.text || "";
     const extracted: ExtractedInvoiceData = {};
 
     // Invoice Number - with full sweep logic
@@ -176,14 +203,17 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
     }
 
     // Email
-    const emailMatch = text.match(/Email\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+    const emailMatch = text.match(
+      /Email\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+    );
     if (emailMatch) {
       extracted.customerEmail = emailMatch[1].trim();
     }
 
     // Phone Number - look for "Number" label followed by digits
-    const phoneMatch = text.match(/Number\s+(\d{10,})/i) || 
-                      text.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
+    const phoneMatch =
+      text.match(/Number\s+(\d{10,})/i) ||
+      text.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
     if (phoneMatch) {
       let phone = phoneMatch[1];
       // Format as (XXX) XXX-XXXX if not already formatted
@@ -207,21 +237,29 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
 
     // Parse work items table
     // Look for "Description" header which marks the start of the items table
-    const descHeaderIndex = text.indexOf('Description');
-    const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
+    const descHeaderIndex = text.indexOf("Description");
+    const materials: Array<{
+      description: string;
+      quantity: number;
+      unitCost: number;
+    }> = [];
 
     if (descHeaderIndex !== -1) {
       // Extract text from after "Description" header until we hit summary lines (Subtotal, Tax, Total)
       const tableText = text.substring(descHeaderIndex);
       const summaryStart = tableText.search(/Subtotal|Materials|George/i);
-      const tableContent = summaryStart > 0 ? tableText.substring(0, summaryStart) : tableText;
+      const tableContent =
+        summaryStart > 0 ? tableText.substring(0, summaryStart) : tableText;
 
       // Split by newlines and process each potential line
-      const lines = tableContent.split('\n').map(l => l.trim()).filter(Boolean);
+      const lines = tableContent
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
 
       // Skip the "Description", "Quantity", "Unit Cost", "Cost" header lines
       let inItemsSection = false;
-      
+
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
@@ -239,7 +277,9 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
         // Try to find cost patterns in the line: dollar amounts or numbers
         // Pattern: description text, then numbers for quantity, unit cost, and total
         const costMatch = line.match(/(\d+(?:\.\d{2})?)\s*$/);
-        const quantityMatch = line.match(/\b(\d+)\s+(\d+(?:\.\d{2})?)\s+(\d+(?:\.\d{2})?)\s*$/);
+        const quantityMatch = line.match(
+          /\b(\d+)\s+(\d+(?:\.\d{2})?)\s+(\d+(?:\.\d{2})?)\s*$/,
+        );
 
         if (costMatch) {
           // This line has a cost at the end
@@ -249,23 +289,29 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
             // Has quantity, unit cost, and total cost
             const qty = parseFloat(quantityMatch[1]);
             const unitCost = parseFloat(quantityMatch[2]);
-            const description = line.replace(quantityMatch[0], '').trim();
+            const description = line.replace(quantityMatch[0], "").trim();
 
             if (description && description.length > 2 && unitCost > 0) {
               materials.push({ description, quantity: qty, unitCost });
             }
           } else {
             // Just has a cost, try to infer from line structure
-            const description = line.replace(costMatch[0], '').trim();
-            
+            const description = line.replace(costMatch[0], "").trim();
+
             // Try to find quantity in the description
-            const qtyInDesc = description.match(/\s(\d+)\s+(\d+(?:\.\d{2})?)\s*$/);
+            const qtyInDesc = description.match(
+              /\s(\d+)\s+(\d+(?:\.\d{2})?)\s*$/,
+            );
             if (qtyInDesc) {
               const qty = parseFloat(qtyInDesc[1]);
               const unitCost = parseFloat(qtyInDesc[2]);
-              const cleanDesc = description.replace(qtyInDesc[0], '').trim();
+              const cleanDesc = description.replace(qtyInDesc[0], "").trim();
               if (cleanDesc && cleanDesc.length > 2) {
-                materials.push({ description: cleanDesc, quantity: qty, unitCost });
+                materials.push({
+                  description: cleanDesc,
+                  quantity: qty,
+                  unitCost,
+                });
               }
             } else if (description && description.length > 10) {
               // Long description with just a cost - assume qty 1
@@ -283,35 +329,43 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
     // Infer instrument from repair description
     if (extracted.repairDescription) {
       const d = extracted.repairDescription.toLowerCase();
-      let instrumentType = '';
-      
-      if (d.includes('guitar')) instrumentType = 'Guitar';
-      else if (d.includes('bass')) instrumentType = 'Bass';
-      else if (d.includes('violin')) instrumentType = 'Violin';
-      else if (d.includes('cello')) instrumentType = 'Cello';
-      else if (d.includes('setup')) instrumentType = 'Guitar';
-      else instrumentType = 'Guitar';
+      let instrumentType = "";
+
+      if (d.includes("guitar")) instrumentType = "Guitar";
+      else if (d.includes("bass")) instrumentType = "Bass";
+      else if (d.includes("violin")) instrumentType = "Violin";
+      else if (d.includes("cello")) instrumentType = "Cello";
+      else if (d.includes("setup")) instrumentType = "Guitar";
+      else instrumentType = "Guitar";
 
       if (instrumentType) {
-        extracted.instruments = [{ type: instrumentType, description: extracted.repairDescription }];
+        extracted.instruments = [
+          { type: instrumentType, description: extracted.repairDescription },
+        ];
       }
     }
 
     return extracted;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('OCR Error:', errorMsg);
+    console.error("OCR Error:", errorMsg);
 
-    if (errorMsg.includes('Image failed to load')) {
-      throw new Error('Failed to load image. Please ensure the file is a valid image (JPG, PNG, etc.).');
-    } else if (errorMsg.includes('timeout')) {
-      throw new Error('Image processing took too long. Please try with a different image.');
-    } else if (errorMsg.includes('canvas')) {
-      throw new Error('Failed to process image. The file may be corrupted.');
-    } else if (errorMsg.includes('OCR')) {
-      throw new Error('Text recognition failed. Please try with a clearer image.');
+    if (errorMsg.includes("Image failed to load")) {
+      throw new Error(
+        "Failed to load image. Please ensure the file is a valid image (JPG, PNG, etc.).",
+      );
+    } else if (errorMsg.includes("timeout")) {
+      throw new Error(
+        "Image processing took too long. Please try with a different image.",
+      );
+    } else if (errorMsg.includes("canvas")) {
+      throw new Error("Failed to process image. The file may be corrupted.");
+    } else if (errorMsg.includes("OCR")) {
+      throw new Error(
+        "Text recognition failed. Please try with a clearer image.",
+      );
     } else {
-      throw new Error('Failed to extract invoice data: ' + errorMsg);
+      throw new Error("Failed to extract invoice data: " + errorMsg);
     }
   }
 };
