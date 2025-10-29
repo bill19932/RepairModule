@@ -323,26 +323,22 @@ export const extractInvoiceData = async (
 
     // Pattern 2: George's Music form format - get FIRST non-empty line after "CUSTOMER INFORMATION"
     if (!customerName) {
-      const lines = customerSection.split("\n");
-      let foundCustInfo = false;
+      const custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
+      if (custInfoIdx > -1) {
+        const afterCustInfo = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
+        const lines = afterCustInfo.split("\n");
 
-      for (let i = 0; i < lines.length; i++) {
-        if (/CUSTOMER\s+INFORMATION/i.test(lines[i])) {
-          foundCustInfo = true;
-          continue;
-        }
-
-        if (foundCustInfo) {
-          const trimmed = lines[i].trim();
+        for (const line of lines) {
+          const trimmed = line.trim();
           // Skip empty lines
           if (!trimmed) continue;
-          // Skip obvious non-name lines
-          if (/^SF\d|^[0-9]+\s+|Phone|Email|Address|Signature|Follow|Completed|Final/i.test(trimmed)) {
+          // Skip obvious non-name lines (SKU codes, phone labels, addresses, etc.)
+          if (/^SF\d|^[0-9]+\s+|Phone|Email|Address|Signature|Follow|Completed|Final|Second|Third|Customer|Ridley|Park|Lane|Street/i.test(trimmed)) {
             continue;
           }
-          // This should be the customer name - take it as-is (with minimal cleanup)
+          // This should be the customer name - take it (with minimal cleanup of OCR artifacts)
           let name = trimmed.replace(/[\|\[\]]+/g, "").trim();
-          // If it has any letters and reasonable length, use it
+          // If it has letters and reasonable length, use it
           if (name && name.length > 2 && /[A-Za-z]/.test(name)) {
             customerName = name;
             break;
