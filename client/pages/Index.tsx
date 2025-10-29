@@ -233,6 +233,7 @@ export default function Index() {
       setFormData((prev) => ({
         ...prev,
         invoiceNumber: extracted.invoiceNumber || prev.invoiceNumber,
+        dateReceived: extracted.dateReceived || prev.dateReceived,
         customerName: extracted.customerName || prev.customerName,
         customerPhone: phone || prev.customerPhone,
         customerEmail: email || prev.customerEmail,
