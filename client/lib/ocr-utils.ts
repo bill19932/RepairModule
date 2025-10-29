@@ -246,8 +246,8 @@ export const extractInvoiceData = async (
     // Extract the date that appears before "Trouble Reported" section
 
     // First, find where "Trouble Reported" starts
-    const troubleIndex = text.indexOf("Trouble");
-    const textBeforeTrouble = troubleIndex > 0 ? text.substring(0, troubleIndex) : text;
+    const troubleReportedIndex = text.indexOf("Trouble");
+    const textBeforeTrouble = troubleReportedIndex > 0 ? text.substring(0, troubleReportedIndex) : text;
 
     // Find the last date before "Trouble Reported" (this should be the service date)
     const dateMatches = Array.from(textBeforeTrouble.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
