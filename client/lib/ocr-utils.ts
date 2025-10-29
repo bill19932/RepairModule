@@ -366,24 +366,21 @@ export const extractInvoiceData = async (
     // Repair Description - try multiple patterns
     let repairDescription: string | undefined;
 
-    // Pattern 1: "Trouble Reported" section (George's Music forms)
-    const troubleMatch = text.match(/Trouble\s+Reported[\s\n]*([^\n]*?)(?:\nSpecial|Technician|$)/i);
+    // Pattern 1: "Trouble Reported" box (George's Music forms)
+    // This is a multi-line text block
+    const troubleMatch = text.match(/Trouble\s+Reported[\s\n]+([^]*?)(?:Special\s+Instructions|Technician|Item\s+is|$)/i);
     if (troubleMatch) {
-      repairDescription = troubleMatch[1].trim();
-    }
-
-    // Pattern 2: Extended "Trouble Reported" section with multiple lines
-    if (!repairDescription || repairDescription.length < 10) {
-      const troubleExtendedMatch = text.match(/Trouble\s+Reported[\s\n]+([^]*?)(?:\n(?:Special|Service Performed|Technician)|$)/i);
-      if (troubleExtendedMatch) {
-        let text = troubleExtendedMatch[1].trim();
-        // Clean up the text - remove extra line breaks and spaces
-        text = text.replace(/\n\s*\n/g, " ").replace(/\s+/g, " ");
-        repairDescription = text;
+      let desc = troubleMatch[1].trim();
+      // Clean up the text - remove excessive line breaks but keep the content
+      desc = desc.replace(/\n\s*\n/g, " ").replace(/\s{2,}/g, " ");
+      // Remove trailing common labels
+      desc = desc.replace(/Special\s+Instructions.*$/i, "").trim();
+      if (desc.length > 5) {
+        repairDescription = desc;
       }
     }
 
-    // Pattern 3: "Service" label (standard invoice format)
+    // Pattern 2: "Service" label (standard invoice format)
     if (!repairDescription) {
       const serviceMatch = text.match(/Service\s+([^\n\r]+?)(?:\n|Invoice|$)/i);
       if (serviceMatch) {
