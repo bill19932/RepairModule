@@ -290,46 +290,31 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - extract from TOP SECTION only
-    // For George's Music forms, the date is ALWAYS in the first position under "PRODUCT INFORMATION"
+    // Date Received - ALWAYS appears just ABOVE "Service Location"
     let dateReceived: string | undefined;
 
-    // Strategy 1: Find PRODUCT INFORMATION and get the next line, extract date from it
-    const prodIdx = text.indexOf("PRODUCT INFORMATION");
-    if (prodIdx > -1) {
-      // Get text after PRODUCT INFORMATION, look for date in next 100 chars
-      const afterProd = text.substring(prodIdx, prodIdx + 100);
-      // Split by newlines and get lines
-      const prodLines = afterProd.split("\n");
-      // Skip the PRODUCT INFORMATION line itself, look at next lines
-      for (let i = 1; i < Math.min(3, prodLines.length); i++) {
-        const dateMatch = prodLines[i].match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    // Primary method: Find "Service Location" and look backwards for the nearest date
+    const svcLocIdx = text.indexOf("Service Location");
+    if (svcLocIdx > -1) {
+      // Get text before Service Location (look back up to 100 chars)
+      const beforeSvcLoc = text.substring(Math.max(0, svcLocIdx - 100), svcLocIdx);
+      // Find all dates in this section
+      const dateMatches = Array.from(beforeSvcLoc.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+      if (dateMatches.length > 0) {
+        // Take the LAST (most recent) date found before Service Location
+        const lastMatch = dateMatches[dateMatches.length - 1];
+        dateReceived = `${lastMatch[3]}-${lastMatch[1].padStart(2, "0")}-${lastMatch[2].padStart(2, "0")}`;
+      }
+    }
+
+    // Fallback: Search for date near "Spoke w/" label
+    if (!dateReceived) {
+      const spokeMatch = text.match(/Spoke\s+w[.\/]*\s*([\d\/\-]+)/);
+      if (spokeMatch) {
+        const dateMatch = spokeMatch[1].match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
         if (dateMatch) {
           dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
-          break;
         }
-      }
-    }
-
-    // Fallback: Look for first date in top section that has "Spoke" nearby
-    if (!dateReceived) {
-      const allDatesInText = Array.from(text.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
-      for (const match of allDatesInText) {
-        const idx = match.index || 0;
-        const contextBefore = text.substring(Math.max(0, idx - 50), idx);
-        // Prefer dates that appear with "Spoke" or near PRODUCT INFORMATION
-        if (/Spoke|PRODUCT/i.test(contextBefore)) {
-          dateReceived = `${match[3]}-${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}`;
-          break;
-        }
-      }
-    }
-
-    // Last fallback: take the first date in the entire text
-    if (!dateReceived) {
-      const firstDateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (firstDateMatch) {
-        dateReceived = `${firstDateMatch[3]}-${firstDateMatch[1].padStart(2, "0")}-${firstDateMatch[2].padStart(2, "0")}`;
       }
     }
 
