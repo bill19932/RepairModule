@@ -291,26 +291,21 @@ export const extractInvoiceData = async (
     }
 
     // Date Received - extract from TOP SECTION only
-    // For George's Music forms, the date is always under "PRODUCT INFORMATION" header
-    // Look for dates that appear right after this label
+    // For George's Music forms, the date is ALWAYS in the first position under "PRODUCT INFORMATION"
     let dateReceived: string | undefined;
 
-    // Try to find date right after "PRODUCT INFORMATION" label
-    const prodInfoMatch = topSection.match(/PRODUCT\s+INFORMATION[^\n]*\n\s*([\d\s/\-]+)/i);
+    // Try to find date right after "PRODUCT INFORMATION" label - most reliable method
+    const prodInfoMatch = topSection.match(/PRODUCT\s+INFORMATION[^\n]*\n\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i);
     if (prodInfoMatch) {
-      const dateStr = prodInfoMatch[1].trim();
-      const dateMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (dateMatch) {
-        dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
-      }
+      dateReceived = `${prodInfoMatch[3]}-${prodInfoMatch[1].padStart(2, "0")}-${prodInfoMatch[2].padStart(2, "0")}`;
     }
 
-    // Fallback: look for date with "Spoke w/" context
+    // Fallback: search entire text for first occurrence after "PRODUCT INFORMATION"
     if (!dateReceived) {
-      const spokeMatch = topSection.match(/Spoke\s+w[.\/]*[\s:]*([\d\s/\-]+)/i);
-      if (spokeMatch) {
-        const dateStr = spokeMatch[1].trim();
-        const dateMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      const prodIdx = text.indexOf("PRODUCT INFORMATION");
+      if (prodIdx > -1) {
+        const afterProdInfo = text.substring(prodIdx, prodIdx + 200);
+        const dateMatch = afterProdInfo.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
         if (dateMatch) {
           dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
         }
