@@ -321,26 +321,26 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: George's Music form format - get FIRST non-empty line after "CUSTOMER INFORMATION"
+    // Pattern 2: Find the address first, then get the line BEFORE it (which is the customer name)
     if (!customerName) {
       const custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
       if (custInfoIdx > -1) {
         const afterCustInfo = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
         const lines = afterCustInfo.split("\n");
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          // Skip empty lines
-          if (!trimmed) continue;
-          // Skip obvious non-name lines (SKU codes, phone labels, addresses, etc.)
-          if (/^SF\d|^[0-9]+\s+|Phone|Email|Address|Signature|Follow|Completed|Final|Second|Third|Customer|Ridley|Park|Lane|Street/i.test(trimmed)) {
-            continue;
-          }
-          // This should be the customer name - take it (with minimal cleanup of OCR artifacts)
-          let name = trimmed.replace(/[\|\[\]]+/g, "").trim();
-          // If it has letters and reasonable length, use it
-          if (name && name.length > 2 && /[A-Za-z]/.test(name)) {
-            customerName = name;
+        // Look for the line that starts with a street address (number followed by street name)
+        for (let i = 0; i < lines.length; i++) {
+          const trimmed = lines[i].trim();
+          // Check if this line looks like a street address (starts with number, contains street keywords)
+          if (/^\d+\s+[A-Za-z].*(?:Street|St|Avenue|Ave|Lane|Ln|Road|Rd|Drive|Dr|Way|Blvd|Court|Ct|Place|Pl|Apt|Apt\.)/i.test(trimmed)) {
+            // Found the address! The customer name should be the non-empty line BEFORE this
+            for (let j = i - 1; j >= 0; j--) {
+              const nameLine = lines[j].trim();
+              if (nameLine && !/^SF\d|Phone|Email|Signature|Completed|Second|Third|Follow|Final/i.test(nameLine)) {
+                customerName = nameLine.replace(/[\|\[\]]+/g, "").trim();
+                break;
+              }
+            }
             break;
           }
         }
