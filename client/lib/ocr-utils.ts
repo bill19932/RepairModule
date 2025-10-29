@@ -29,6 +29,25 @@ const readFileAsDataURL = (file: File): Promise<string> => {
   });
 };
 
+// Convert HEIC/HEIF images to JPEG
+const convertHeicToJpeg = async (file: File): Promise<File> => {
+  if (!file.type.includes("heic") && !file.type.includes("heif")) {
+    return file;
+  }
+
+  try {
+    const blob = await heic2any({ blob: file }) as Blob;
+    return new File([blob], file.name.replace(/\.heic$/i, ".jpg"), {
+      type: "image/jpeg",
+    });
+  } catch (error) {
+    console.error("HEIC conversion failed:", error);
+    throw new Error(
+      "HEIC conversion failed. Please convert to JPG or PNG and try again.",
+    );
+  }
+};
+
 // Helper to find address patterns in text
 const extractAddressFromText = (text: string): string | undefined => {
   // First try to find address after "Address" label
