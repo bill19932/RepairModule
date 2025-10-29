@@ -91,8 +91,12 @@ export const extractInvoiceData = async (imageFile: File): Promise<ExtractedInvo
 
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => resolve();
-      img.onerror = () => reject(new Error('Image failed to load'));
+      img.onerror = (e) => {
+        console.error('Image load failed. File size:', imageFile.size, 'Type:', imageFile.type);
+        reject(new Error('Image failed to load - file may be corrupted or invalid format'));
+      };
       img.src = dataUrl;
     });
 
