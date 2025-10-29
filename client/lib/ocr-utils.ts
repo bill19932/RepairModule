@@ -52,12 +52,12 @@ const convertHeicToJpeg = async (file: File): Promise<File> => {
 // Helper to find customer address (not store address)
 const extractAddressFromText = (text: string): string | undefined => {
   // For George's Music forms, the customer address is in the bottom section after "CUSTOMER INFORMATION"
-  // Look for the section that comes AFTER "CUSTOMER INFORMATION" or after customer name
+  // Address format: street with apt, city name, state/zip on separate lines
 
   const lines = text.split("\n");
   let customerSectionStart = -1;
 
-  // Find where the customer information section starts (after thick bar or specific label)
+  // Find where the customer information section starts
   for (let i = 0; i < lines.length; i++) {
     if (/CUSTOMER\s+INFORMATION/i.test(lines[i])) {
       customerSectionStart = i + 1;
@@ -65,50 +65,79 @@ const extractAddressFromText = (text: string): string | undefined => {
     }
   }
 
-  // If we found the customer section, only search within that section
   const searchStart = customerSectionStart > 0 ? customerSectionStart : 0;
 
   // Look for street address in the customer section
   for (let i = searchStart; i < lines.length; i++) {
     const trimmed = lines[i].trim();
 
-    // Skip if this looks like the store address (contains "Woodland Ave" or similar store indicators)
+    // Skip store address indicators
     if (/Woodland|1025\s+E|George's\s+Music|Springfield/i.test(trimmed)) {
       continue;
     }
 
-    // Look for customer street address: number + street name + optional apt/unit
+    // Match street address: number + street name/type + optional apt
     if (/^\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl)/i.test(trimmed)) {
-      let addressParts = [trimmed];
+      const addressParts: string[] = [trimmed];
       let nextIdx = i + 1;
 
-      // Look for city on next line (e.g., "Ridley Park")
-      if (nextIdx < lines.length) {
-        const cityLine = lines[nextIdx].trim();
-        // Check if it looks like a city name (one or two words, capitalized, not "Phone" or "Email" etc)
-        if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?$/.test(cityLine) && !/Phone|Email|PA|Pennsylvania|Primary|Secondary|Signature/i.test(cityLine)) {
-          addressParts.push(cityLine);
+      // Collect the next 2-3 lines that look like city/state/zip
+      let cityFound = false;
+      let stateZipFound = false;
+
+      while (nextIdx < lines.length && (addressParts.length < 4)) {
+        const nextLine = lines[nextIdx].trim();
+
+        if (!nextLine) {
           nextIdx++;
+          continue;
         }
-      }
 
-      // Look for state/zip on next line
-      if (nextIdx < lines.length) {
-        const stateZipLine = lines[nextIdx].trim();
-        // Extract PA and zip code from this line, but NOT other lines
-        const stateMatch = stateZipLine.match(/\bPA\b/i);
-        const zipMatch = stateZipLine.match(/\b(\d{5})\b/);
-
-        if (stateMatch && zipMatch) {
-          addressParts.push("PA " + zipMatch[1]);
+        // Stop if we hit labels like "Phone", "Email", "Signature", etc
+        if (/Phone|Email|Signature|Primary|Second|Follow|Picked|Technician/i.test(nextLine)) {
+          break;
         }
+
+        // Try to match city name (capital letters, no numbers, 1-3 words)
+        if (!cityFound && /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:\s+[A-Z][a-z]+)?$/.test(nextLine) && !/PA|Pennsylvania|State|Zip/i.test(nextLine)) {
+          addressParts.push(nextLine);
+          cityFound = true;
+          nextIdx++;
+          continue;
+        }
+
+        // Try to match state and/or zip code
+        if (!stateZipFound && (/\bPA\b|\bPennsylvania\b/i.test(nextLine) || /\d{5}/.test(nextLine))) {
+          // Extract state and zip from this line
+          const stateMatch = nextLine.match(/\bPA\b/i);
+          const zipMatch = nextLine.match(/\b(\d{5})\b/);
+
+          if (stateMatch || zipMatch) {
+            const stateStr = stateMatch ? "PA" : "";
+            const zipStr = zipMatch ? zipMatch[1] : "";
+            const stateZipStr = [stateStr, zipStr].filter(Boolean).join(" ");
+            if (stateZipStr) {
+              addressParts.push(stateZipStr);
+            }
+            stateZipFound = true;
+          }
+          nextIdx++;
+          continue;
+        }
+
+        // If we've collected address parts and hit something unexpected, stop
+        if (addressParts.length >= 2) {
+          break;
+        }
+
+        nextIdx++;
       }
 
       // Construct full address
-      let fullAddress = addressParts.join(", ");
+      const fullAddress = addressParts.join(", ");
 
-      // Make sure it's not a table row
-      if (!/^\d+\s+\d+\s+\d+|Quantity|Cost|Price|Description/i.test(fullAddress)) {
+      // Validate it looks like an address
+      if (!/^\d+\s+\d+\s+\d+|Quantity|Cost|Price|Description/i.test(fullAddress) && addressParts.length >= 2) {
         return fullAddress;
       }
     }
