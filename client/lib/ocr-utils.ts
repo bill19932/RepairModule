@@ -282,17 +282,34 @@ export const extractInvoiceData = async (
     }
 
     // Date Received - extract from TOP SECTION only (before Trouble Reported)
-    // The service date always appears in the top portion of the form
+    // Look for dates with context clues like "Spoke w/" or in the product info section
+    // The service date (like 10/4) appears early; avoid the "Due date" which is later
     const dateMatches = Array.from(topSection.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
 
     if (dateMatches && dateMatches.length > 0) {
-      // Take the first date in the top section (this is the service date, not the current date)
-      const dateMatch = dateMatches[0];
+      let selectedDateMatch = null;
 
-      if (dateMatch) {
-        const month = dateMatch[1].padStart(2, "0");
-        const day = dateMatch[2].padStart(2, "0");
-        const year = dateMatch[3];
+      // If multiple dates found, prefer the one with "Spoke" context nearby (indicates service date)
+      if (dateMatches.length > 1) {
+        for (const match of dateMatches) {
+          const startIdx = match.index || 0;
+          const contextBefore = topSection.substring(Math.max(0, startIdx - 100), startIdx);
+          if (/Spoke|Service|Product|Item/i.test(contextBefore)) {
+            selectedDateMatch = match;
+            break;
+          }
+        }
+      }
+
+      // If no context match found, take the first date
+      if (!selectedDateMatch) {
+        selectedDateMatch = dateMatches[0];
+      }
+
+      if (selectedDateMatch) {
+        const month = selectedDateMatch[1].padStart(2, "0");
+        const day = selectedDateMatch[2].padStart(2, "0");
+        const year = selectedDateMatch[3];
         extracted.dateReceived = `${year}-${month}-${day}`;
       }
     }
