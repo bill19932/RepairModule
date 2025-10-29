@@ -381,12 +381,12 @@ export const extractInvoiceData = async (
       extracted.customerAddress = address;
     }
 
-    // Repair Description - extract from "Trouble Reported" box
+    // Repair Description - extract from TROUBLE SECTION only
     let repairDescription: string | undefined;
 
     // Find the "Trouble Reported:" label and extract the multi-line text that follows it
     // The pattern should capture text until we hit "Special Instructions" or "Technician Comments"
-    const troubleMatch = text.match(/Trouble\s+Reported\s*:?\s*([^]*?)(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i);
+    const troubleMatch = troubleSection.match(/Trouble\s+Reported\s*:?\s*([^]*?)(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i);
 
     if (troubleMatch) {
       let troubleText = troubleMatch[1].trim();
