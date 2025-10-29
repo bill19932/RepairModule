@@ -348,20 +348,35 @@ export const extractInvoiceData = async (
       extracted.customerAddress = address;
     }
 
-    // Repair Description - try multiple patterns
+    // Repair Description - extract from "Trouble Reported" section
     let repairDescription: string | undefined;
 
-    // Pattern 1: "Trouble Reported" box (George's Music forms)
-    // This is a multi-line text block
-    const troubleMatch = text.match(/Trouble\s+Reported[\s\n]+([^]*?)(?:Special\s+Instructions|Technician|Item\s+is|$)/i);
-    if (troubleMatch) {
-      let desc = troubleMatch[1].trim();
-      // Clean up the text - remove excessive line breaks but keep the content
-      desc = desc.replace(/\n\s*\n/g, " ").replace(/\s{2,}/g, " ");
-      // Remove trailing common labels
-      desc = desc.replace(/Special\s+Instructions.*$/i, "").trim();
-      if (desc.length > 5) {
-        repairDescription = desc;
+    // Find "Trouble Reported" label and extract the text in that box
+    const troubleIndex = text.indexOf(/Trouble\s+Reported/i);
+    if (troubleIndex !== -1) {
+      // Find the colon or end of label
+      const labelEndIndex = text.indexOf(":", troubleIndex);
+      const contentStartIndex = labelEndIndex !== -1 ? labelEndIndex + 1 : troubleIndex + 15;
+
+      // Find where the next section starts (Special Instructions or Technician Comments)
+      const nextSectionMatch = text.substring(contentStartIndex).match(/(?:Special\s+Instructions|Technician\s+Comments|Item\s+is|Service\s+Performed)/i);
+      const contentEndIndex = nextSectionMatch ? contentStartIndex + nextSectionMatch.index! : contentStartIndex + 500;
+
+      // Extract the trouble text
+      let troubleText = text.substring(contentStartIndex, contentEndIndex).trim();
+
+      // Clean up the text - remove excessive whitespace but preserve the content
+      troubleText = troubleText
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join(" ");
+
+      // Remove common trailing labels
+      troubleText = troubleText.replace(/(?:Special\s+Instructions.*)?$/i, "").trim();
+
+      if (troubleText.length > 5) {
+        repairDescription = troubleText;
       }
     }
 
