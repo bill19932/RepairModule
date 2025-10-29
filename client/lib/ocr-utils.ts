@@ -56,10 +56,37 @@ const extractAddressFromText = (text: string): string | undefined => {
     return labelMatch[1].trim();
   }
 
+  // Try to find multi-line address for George's Music forms
+  // Look for: street address, then city/state/zip on the next line(s)
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    // Look for street address pattern: number + street name + optional apt/unit
+    if (/^\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl)/i.test(trimmed)) {
+      let fullAddress = trimmed;
+
+      // Check next line for city/state/zip
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        // If next line has city and state pattern, append it
+        if (/^[A-Z][a-z\s]+,?\s+PA|Pennsylvania/.test(nextLine) ||
+            /^[A-Z][a-z\s]+\s+PA\s+\d{5}/.test(nextLine)) {
+          fullAddress += ", " + nextLine;
+          i++; // skip the city line we just processed
+        }
+      }
+
+      // Make sure it's not a table row
+      if (!/^\d+\s+\d+\s+\d+|Quantity|Cost|Price|Description/i.test(fullAddress)) {
+        return fullAddress;
+      }
+    }
+  }
+
   // Full sweep: Look for standard US address patterns
   // Pattern: number + street name + street type (Ave, St, Rd, etc.) + optional unit/apt + optional city/state
   const addressRegex =
-    /\b(\d{1,5}\s+[\w\s&,.'-]+?\s+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Place|Pl|Way|Circle|Way|Parkway|Pkwy|Highway|Hwy|Route|Rt|Terrace|Ter|Trail|Trl)\.?)\b[\w\s,#.'-]*(?:(?:Unit|Apt|Apartment|Suite|Ste|Floor|Fl|Bldg|Building)\s*[#A-Za-z0-9]+)?[\w\s,'-]*(?:(?:Wynnewood|Swarthmore|Glennolden|PA|Pennsylvania|01|02|03|04|05|06|07|08|09|10|11|12|13|14|15)[\w\s,'-]*)?/i;
+    /\b(\d{1,5}\s+[\w\s&,.'-]+?\s+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Court|Ct|Place|Pl|Way|Circle|Way|Parkway|Pkwy|Highway|Hwy|Route|Rt|Terrace|Ter|Trail|Trl)\.?)\b[\w\s,#.'-]*(?:(?:Unit|Apt|Apartment|Suite|Ste|Floor|Fl|Bldg|Building)\s*[#A-Za-z0-9]+)?[\w\s,'-]*(?:(?:Wynnewood|Swarthmore|Glennolden|Ridley Park|PA|Pennsylvania|01|02|03|04|05|06|07|08|09|10|11|12|13|14|15)[\w\s,'-]*)?/i;
 
   const streetMatch = text.match(addressRegex);
   if (streetMatch) {
@@ -67,7 +94,6 @@ const extractAddressFromText = (text: string): string | undefined => {
   }
 
   // Alternative: Look for lines with number + words that look like addresses
-  const lines = text.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
     // Look for lines starting with a number followed by text (typical address format)
