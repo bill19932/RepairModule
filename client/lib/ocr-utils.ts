@@ -323,15 +323,36 @@ export const extractInvoiceData = async (
       extracted.customerEmail = emailMatch[1].trim();
     }
 
-    // Phone Number - look for "Number" label followed by digits
-    const phoneMatch =
-      text.match(/Number\s+(\d{10,})/i) ||
-      text.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
-    if (phoneMatch) {
-      let phone = phoneMatch[1];
+    // Phone Number - look for various phone labels
+    let phone: string | undefined;
+
+    // Pattern 1: "Phone-Primary" or "Phone" label followed by number
+    const primaryPhoneMatch = text.match(/Phone[-\s]*Primary[\s:]*(\d{10,})/i);
+    if (primaryPhoneMatch) {
+      phone = primaryPhoneMatch[1];
+    }
+
+    // Pattern 2: "Phone" or "Number" label
+    if (!phone) {
+      const phoneMatch = text.match(/(?:Phone|Number)\s*[:\s]*(\d{3}[-.]?\d{3}[-.]?\d{4})/i);
+      if (phoneMatch) {
+        phone = phoneMatch[1];
+      }
+    }
+
+    // Pattern 3: Standalone 10-digit number (as fallback)
+    if (!phone) {
+      const numberMatch = text.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
+      if (numberMatch) {
+        phone = numberMatch[1];
+      }
+    }
+
+    if (phone) {
       // Format as (XXX) XXX-XXXX if not already formatted
-      if (phone.match(/^\d{10}$/)) {
-        phone = `(${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
+      const cleanPhone = phone.replace(/[-.\s]/g, "");
+      if (cleanPhone.match(/^\d{10}$/)) {
+        phone = `(${cleanPhone.slice(0, 3)}) ${cleanPhone.slice(3, 6)}-${cleanPhone.slice(6)}`;
       }
       extracted.customerPhone = phone;
     }
