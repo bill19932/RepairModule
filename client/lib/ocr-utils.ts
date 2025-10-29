@@ -294,30 +294,42 @@ export const extractInvoiceData = async (
     // For George's Music forms, the date is ALWAYS in the first position under "PRODUCT INFORMATION"
     let dateReceived: string | undefined;
 
-    // Try to find date right after "PRODUCT INFORMATION" label - most reliable method
-    const prodInfoMatch = topSection.match(/PRODUCT\s+INFORMATION[^\n]*\n\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i);
-    if (prodInfoMatch) {
-      dateReceived = `${prodInfoMatch[3]}-${prodInfoMatch[1].padStart(2, "0")}-${prodInfoMatch[2].padStart(2, "0")}`;
-    }
-
-    // Fallback: search entire text for first occurrence after "PRODUCT INFORMATION"
-    if (!dateReceived) {
-      const prodIdx = text.indexOf("PRODUCT INFORMATION");
-      if (prodIdx > -1) {
-        const afterProdInfo = text.substring(prodIdx, prodIdx + 200);
-        const dateMatch = afterProdInfo.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    // Strategy 1: Find PRODUCT INFORMATION and get the next line, extract date from it
+    const prodIdx = text.indexOf("PRODUCT INFORMATION");
+    if (prodIdx > -1) {
+      // Get text after PRODUCT INFORMATION, look for date in next 100 chars
+      const afterProd = text.substring(prodIdx, prodIdx + 100);
+      // Split by newlines and get lines
+      const prodLines = afterProd.split("\n");
+      // Skip the PRODUCT INFORMATION line itself, look at next lines
+      for (let i = 1; i < Math.min(3, prodLines.length); i++) {
+        const dateMatch = prodLines[i].match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
         if (dateMatch) {
           dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
+          break;
         }
       }
     }
 
-    // Last fallback: take the first date in the top section
+    // Fallback: Look for first date in top section that has "Spoke" nearby
     if (!dateReceived) {
-      const dateMatches = Array.from(topSection.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
-      if (dateMatches && dateMatches.length > 0) {
-        const firstMatch = dateMatches[0];
-        dateReceived = `${firstMatch[3]}-${firstMatch[1].padStart(2, "0")}-${firstMatch[2].padStart(2, "0")}`;
+      const allDatesInText = Array.from(text.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+      for (const match of allDatesInText) {
+        const idx = match.index || 0;
+        const contextBefore = text.substring(Math.max(0, idx - 50), idx);
+        // Prefer dates that appear with "Spoke" or near PRODUCT INFORMATION
+        if (/Spoke|PRODUCT/i.test(contextBefore)) {
+          dateReceived = `${match[3]}-${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}`;
+          break;
+        }
+      }
+    }
+
+    // Last fallback: take the first date in the entire text
+    if (!dateReceived) {
+      const firstDateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (firstDateMatch) {
+        dateReceived = `${firstDateMatch[3]}-${firstDateMatch[1].padStart(2, "0")}-${firstDateMatch[2].padStart(2, "0")}`;
       }
     }
 
@@ -334,7 +346,8 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: George's Music form format - look for first line after "CUSTOMER INFORMATION" that looks like a name
+    // Pattern 2: George's Music form format - find the line directly after CUSTOMER INFORMATION
+    // This should be the customer name (before any address/city/state lines)
     if (!customerName) {
       const custInfoIdx = customerSection.indexOf("CUSTOMER INFORMATION");
       if (custInfoIdx > -1) {
@@ -343,12 +356,18 @@ export const extractInvoiceData = async (
 
         for (const line of lines) {
           const trimmed = line.trim();
-          // Skip empty lines and labels
-          if (!trimmed || /Phone|Email|Address|Signature|Picked|Follow|Technician|CC|SF|Completed|Third|Customer\s+Signature/i.test(trimmed)) {
+          // Skip empty lines
+          if (!trimmed) continue;
+          // Skip if it's a label, location word, address, or state code
+          if (/Phone|Email|Address|Signature|Picked|Follow|Technician|CC|SF|Completed|Third|Customer|Ridley|Springfield|Park|Lane|Street|Road|Ave|Drive|^PA$|^PA\s+|Pennsylvania|FL|NY|CA|NJ|DE|VA|OH/i.test(trimmed)) {
             continue;
           }
-          // Take first line that looks like a name (starts with capital, mostly letters and spaces)
-          if (/^[A-Z][a-zA-Z\s]{2,}$/.test(trimmed) && trimmed.split(/\s+/).length <= 3) {
+          // Skip if it looks like an address (starts with number)
+          if (/^\d+/.test(trimmed)) continue;
+          // Skip if it contains only numbers/zip codes
+          if (/^\d{5}/.test(trimmed)) continue;
+          // Take first remaining line that looks like a name
+          if (/^[A-Z][a-zA-Z\s]+$/.test(trimmed) && trimmed.split(/\s+/).length >= 1 && trimmed.split(/\s+/).length <= 3 && trimmed.length > 2) {
             customerName = trimmed;
             break;
           }
@@ -363,7 +382,7 @@ export const extractInvoiceData = async (
         const line = lines[i].trim();
         const nextLine = lines[i + 1].trim();
         // If current line looks like a name and next line looks like an address
-        if (/^[A-Z][a-zA-Z\s]{3,30}$/.test(line) && /^\d+\s+[A-Z]/.test(nextLine)) {
+        if (/^[A-Z][a-zA-Z\s]{2,}$/.test(line) && /^\d+\s+[A-Z]/.test(nextLine) && !/(Ridley|Springfield|Park|Lane|Street|Road|Ave)/i.test(line)) {
           customerName = line;
           break;
         }
@@ -374,9 +393,9 @@ export const extractInvoiceData = async (
       extracted.customerName = customerName;
     }
 
-    // Email - look for email address in CUSTOMER SECTION
-    // Find all email addresses and pick the one that's most likely the customer's (not store email)
-    const allEmails = Array.from(customerSection.matchAll(
+    // Email - look for email address in ENTIRE TEXT (not just customer section)
+    // The email might be in customer section or other parts of form
+    const allEmails = Array.from(text.matchAll(
       /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi,
     ));
 
@@ -391,8 +410,12 @@ export const extractInvoiceData = async (
         }
       }
 
-      // If all emails are store emails, just use the first one
-      // (shouldn't happen in well-formed documents)
+      // If all emails are store emails, use the first non-store one found later
+      if (!selectedEmail && allEmails.length > 1) {
+        selectedEmail = allEmails[1][1];
+      }
+
+      // Last resort: use first email
       if (!selectedEmail) {
         selectedEmail = allEmails[0][1];
       }
