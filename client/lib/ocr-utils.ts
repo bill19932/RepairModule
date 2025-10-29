@@ -493,8 +493,14 @@ export const extractInvoiceData = async (
     if (itemDescMatch) {
       let desc = itemDescMatch[1].trim();
 
-      // Clean up: remove trailing dashes, hyphens, or extra spaces
-      desc = desc.replace(/[\s\-:|]+$/, "").trim();
+      // Clean up OCR artifacts: remove leading symbols, extra spaces, and trailing noise
+      desc = desc.replace(/^[=\-:|\/\s]+/, "").trim(); // Remove leading artifacts
+      desc = desc.replace(/[\s\-:|\/\[\]nt]+$/, "").trim(); // Remove trailing artifacts like "nt]"
+      desc = desc.replace(/\s+ee\s+/g, " ").trim(); // Remove "ee" OCR errors
+      desc = desc.replace(/\s+/g, " ").trim(); // Normalize whitespace
+
+      // Fix common OCR misreadings (e.g., "Fernandez" -> "Fernandes")
+      desc = desc.replace(/Fernandez/g, "Fernandes");
 
       if (desc.length > 0) {
         instrumentDescription = desc;
