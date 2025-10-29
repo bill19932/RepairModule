@@ -241,20 +241,25 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Date Received - look for the service date in top section of form, before "Trouble Reported"
-    // George's forms have the service date early in the form, near the item description section
-    // Extract the date that appears before "Trouble Reported" section
+    // Date Received - look for the service date on the form
+    // The form has a date field in the top section (before "Trouble Reported")
+    // Usually appears near "Service Location" or "Item Description" area
 
-    // First, find where "Trouble Reported" starts
-    const troubleReportedIndex = text.indexOf("Trouble");
-    const textBeforeTrouble = troubleReportedIndex > 0 ? text.substring(0, troubleReportedIndex) : text;
+    // Look for date pattern that appears before "Item Description" or "Trouble Reported"
+    const itemDescIndex = text.indexOf("Item");
+    const troubleIndex = text.indexOf("Trouble");
+    const searchEndIndex = itemDescIndex > 0 ? itemDescIndex : (troubleIndex > 0 ? troubleIndex : text.length);
 
-    // Find the last date before "Trouble Reported" (this should be the service date)
-    const dateMatches = Array.from(textBeforeTrouble.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+    const textSearchArea = text.substring(0, searchEndIndex);
 
-    if (dateMatches && dateMatches.length > 0) {
-      // Use the last date found before "Trouble Reported" (most likely the service date)
-      const dateMatch = dateMatches[dateMatches.length - 1];
+    // Find all dates in the search area
+    const allDateMatches = Array.from(textSearchArea.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g));
+
+    if (allDateMatches && allDateMatches.length > 0) {
+      // Look for the earliest date in this section (usually the service date comes before other dates)
+      // But prefer one that has numbers close together (likely single date field)
+      const dateMatch = allDateMatches[0]; // Take first date in the search area
+
       if (dateMatch) {
         const month = dateMatch[1].padStart(2, "0");
         const day = dateMatch[2].padStart(2, "0");
