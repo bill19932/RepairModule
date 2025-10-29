@@ -360,21 +360,27 @@ export const extractInvoiceData = async (
       /([a-zA-Z0-9][a-zA-Z0-9._%+\-]*@[a-zA-Z0-9][a-zA-Z0-9.\-]*\.[a-zA-Z]{2,})/gi,
     ));
 
+    console.log("[OCR] Found emails:", allEmails.map(m => m[1]));
+
     if (allEmails.length > 0) {
       // Strategy: Look for customer email by skipping known store domains
       for (const emailMatch of allEmails) {
         const email = emailMatch[1];
+        console.log("[OCR] Checking email:", email);
         // Skip if it's clearly a store email
         if (email.toLowerCase().includes("springfield") || email.toLowerCase().includes("george")) {
+          console.log("[OCR] Skipping store email:", email);
           continue;
         }
         // Use first non-store email
+        console.log("[OCR] Using customer email:", email);
         selectedEmail = email;
         break;
       }
 
       // If no customer email found (all are store emails), use any email
       if (!selectedEmail && allEmails.length > 0) {
+        console.log("[OCR] Using fallback email (all were store):", allEmails[0][1]);
         selectedEmail = allEmails[0][1];
       }
     }
