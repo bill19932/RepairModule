@@ -321,25 +321,32 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: Get the FIRST non-empty line after "CUSTOMER INFORMATION"
+    // Pattern 2: Find "CUSTOMER INFORMATION" and get the line that has a person's name (2 words, starts with capital)
     if (!customerName) {
-      const custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
+      // Find the LAST occurrence of CUSTOMER INFORMATION (should be the customer section, not address header)
+      let custInfoIdx = text.lastIndexOf("CUSTOMER INFORMATION");
+      if (custInfoIdx === -1) {
+        custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
+      }
+
       if (custInfoIdx > -1) {
         const afterCustInfo = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
         const lines = afterCustInfo.split("\n");
 
-        // Get first non-empty line - this should be the customer name
+        // Look for first line that looks like a person's name (letters, possibly 2+ words)
         for (const line of lines) {
           const trimmed = line.trim();
-          // Skip completely empty lines only
+          // Skip empty lines
           if (!trimmed) continue;
-          // Skip obvious section labels
-          if (/^Second|^Third|^Final|Phone-Primary|Phone|Completed|Customer Signature|Picked Up/i.test(trimmed)) {
+          // Skip lines that are clearly not names (single letters, codes, labels, addresses)
+          if (/^[A-Za-z]$|^SF\d|^[0-9]+|Phone|Email|Address|Signature|Completed|Second|Third|Final|Picked|Follow/i.test(trimmed)) {
             continue;
           }
-          // Take this line as the name - clean up OCR artifacts
-          customerName = trimmed.replace(/\s+pw\s*$/i, "").replace(/[\|\[\]]+/g, "").trim();
-          break;
+          // Check if line looks like a name: has letters, no numbers at start, reasonable length
+          if (/^[A-Z][A-Za-z]/.test(trimmed) && trimmed.length > 3 && trimmed.length < 50) {
+            customerName = trimmed.replace(/\s+pw\s*$/i, "").replace(/[\|\[\]]+/g, "").trim();
+            break;
+          }
         }
       }
     }
