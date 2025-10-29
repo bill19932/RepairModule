@@ -250,10 +250,40 @@ export const extractInvoiceData = async (
       (extracted as any).invoiceNumber = invoiceNum;
     }
 
-    // Attention (Customer Name)
+    // Customer Name - try multiple patterns
+    let customerName: string | undefined;
+
+    // Pattern 1: "Attention" label (standard invoice format)
     const attentionMatch = text.match(/Attention\s+([^\n\r]+?)(?:\n|Email|$)/i);
     if (attentionMatch) {
-      extracted.customerName = attentionMatch[1].trim();
+      customerName = attentionMatch[1].trim();
+    }
+
+    // Pattern 2: George's Music form format - look for customer name after "CUSTOMER INFORMATION" section
+    // The name appears after a thick black bar/section divider
+    if (!customerName) {
+      const customerInfoMatch = text.match(/(?:CUSTOMER\s+INFORMATION|Service\s+Location)[^\n]*\n\s*([A-Z][a-zA-Z\s]+?)(?:\n|Address|Street)/i);
+      if (customerInfoMatch) {
+        customerName = customerInfoMatch[1].trim();
+      }
+    }
+
+    // Pattern 3: Look for name before address (common in repair forms)
+    if (!customerName) {
+      const lines = text.split("\n");
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i].trim();
+        const nextLine = lines[i + 1].trim();
+        // If current line looks like a name and next line looks like an address
+        if (/^[A-Z][a-zA-Z\s]{3,30}$/.test(line) && /^\d+\s+[A-Z]/.test(nextLine)) {
+          customerName = line;
+          break;
+        }
+      }
+    }
+
+    if (customerName) {
+      extracted.customerName = customerName;
     }
 
     // Email
