@@ -357,31 +357,35 @@ export const extractInvoiceData = async (
       extracted.customerName = customerName;
     }
 
-    // Email - look for email address in ENTIRE TEXT (not just customer section)
-    // The email might be in customer section or other parts of form
-    const allEmails = Array.from(text.matchAll(
-      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi,
-    ));
-
+    // Email - look for email address in CUSTOMER SECTION (under "CUSTOMER INFORMATION")
+    // Customer email appears after the name and phone in the customer info section
     let selectedEmail: string | undefined;
 
-    if (allEmails.length > 0) {
-      // If we have multiple emails, skip store emails (george, music, springfield)
+    // Search for email in customer section first
+    const emailInCustSection = customerSection.match(
+      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+    );
+
+    if (emailInCustSection) {
+      const email = emailInCustSection[1];
+      // Skip if it's a store email
+      if (!/springfield@|georgesmusic|george.*music/i.test(email)) {
+        selectedEmail = email;
+      }
+    }
+
+    // If no email found in customer section, search entire text
+    if (!selectedEmail) {
+      const allEmails = Array.from(text.matchAll(
+        /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi,
+      ));
+
+      // Find first non-store email
       for (const emailMatch of allEmails) {
-        if (!/george|music|springfield/i.test(emailMatch[1])) {
+        if (!/springfield@|georgesmusic|george.*music/i.test(emailMatch[1])) {
           selectedEmail = emailMatch[1];
           break;
         }
-      }
-
-      // If all emails are store emails, use the first non-store one found later
-      if (!selectedEmail && allEmails.length > 1) {
-        selectedEmail = allEmails[1][1];
-      }
-
-      // Last resort: use first email
-      if (!selectedEmail) {
-        selectedEmail = allEmails[0][1];
       }
     }
 
