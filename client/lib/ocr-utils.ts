@@ -351,9 +351,21 @@ export const extractInvoiceData = async (
     }
 
     // Email - look for email address in CUSTOMER SECTION
-    const emailMatch = customerSection.match(
+    // Prefer email that comes AFTER the customer name and phone (likely the customer's email)
+    // Skip the first email if it mentions "george" or "music" (store email)
+    let emailMatch = customerSection.match(
       /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
     );
+
+    if (emailMatch && /george|music|springfield/i.test(emailMatch[1])) {
+      // Skip store email, look for next email
+      const firstEmailEnd = (emailMatch.index || 0) + emailMatch[0].length;
+      const remainingSection = customerSection.substring(firstEmailEnd);
+      emailMatch = remainingSection.match(
+        /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+      );
+    }
+
     if (emailMatch) {
       extracted.customerEmail = emailMatch[1].trim();
     }
