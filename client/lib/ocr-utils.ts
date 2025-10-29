@@ -121,7 +121,15 @@ export const extractInvoiceData = async (
   imageFile: File,
 ): Promise<ExtractedInvoiceData> => {
   try {
-    const dataUrl = await readFileAsDataURL(imageFile);
+    // Convert HEIC/HEIF to JPEG if needed
+    let processFile = imageFile;
+    if (imageFile.type.includes("heic") || imageFile.type.includes("heif")) {
+      console.log("Converting HEIC/HEIF to JPEG...");
+      processFile = await convertHeicToJpeg(imageFile);
+      console.log("HEIC conversion successful");
+    }
+
+    const dataUrl = await readFileAsDataURL(processFile);
 
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
