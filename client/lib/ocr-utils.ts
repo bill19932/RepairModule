@@ -452,13 +452,21 @@ export const extractInvoiceData = async (
     let instrumentDescription = "";
 
     // Pattern 1: Look for "Item Description" field (George's Music forms)
-    const itemDescMatch = text.match(/Item\s+Description[\s:]*([^\n]*?)(?:\nQty|Quantity|$)/i);
+    // This should capture the full description like "Fernandes Ravelle deluxe"
+    const itemDescMatch = text.match(/Item\s+Description[\s:]*([^\n]+?)(?:\nQty|Quantity|SKU|Serial|$)/i);
     if (itemDescMatch) {
-      instrumentDescription = itemDescMatch[1].trim();
+      let desc = itemDescMatch[1].trim();
 
-      // Try to extract serial number if present in the same area
-      const serialMatch = text.match(/Serial\s*#\s*([A-Z0-9]+)/i);
-      if (serialMatch && instrumentDescription.length < 50) {
+      // Clean up: remove trailing dashes or extra spaces
+      desc = desc.replace(/\s*-+\s*$/, "").trim();
+
+      if (desc.length > 0) {
+        instrumentDescription = desc;
+      }
+
+      // Also try to extract serial number and append if found
+      const serialMatch = text.match(/Serial\s*#[\s:]*([A-Z0-9]+)/i);
+      if (serialMatch && instrumentDescription.length < 80) {
         instrumentDescription += " (Serial: " + serialMatch[1] + ")";
       }
     }
