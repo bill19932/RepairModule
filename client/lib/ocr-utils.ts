@@ -321,30 +321,22 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: Find "CUSTOMER INFORMATION" and get the line that has a person's name (2 words, starts with capital)
+    // Pattern 2: Find "CUSTOMER INFORMATION" - the FIRST non-empty line after it is the customer name
     if (!customerName) {
-      // Find the LAST occurrence of CUSTOMER INFORMATION (should be the customer section, not address header)
-      let custInfoIdx = text.lastIndexOf("CUSTOMER INFORMATION");
-      if (custInfoIdx === -1) {
-        custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
-      }
-
+      const custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
       if (custInfoIdx > -1) {
-        const afterCustInfo = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
-        const lines = afterCustInfo.split("\n");
+        // Get everything after CUSTOMER INFORMATION
+        const afterMarker = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
+        const lines = afterMarker.split("\n");
 
-        // Look for first line that looks like a person's name (letters, possibly 2+ words)
+        // Get the first non-empty line after CUSTOMER INFORMATION
         for (const line of lines) {
           const trimmed = line.trim();
-          // Skip empty lines
-          if (!trimmed) continue;
-          // Skip lines that are clearly not names (single letters, codes, labels, addresses)
-          if (/^[A-Za-z]$|^SF\d|^[0-9]+|Phone|Email|Address|Signature|Completed|Second|Third|Final|Picked|Follow/i.test(trimmed)) {
-            continue;
-          }
-          // Check if line looks like a name: has letters, no numbers at start, reasonable length
-          if (/^[A-Z][A-Za-z]/.test(trimmed) && trimmed.length > 3 && trimmed.length < 50) {
-            customerName = trimmed.replace(/\s+pw\s*$/i, "").replace(/[\|\[\]]+/g, "").trim();
+          if (trimmed && trimmed.length > 0) {
+            // This is the first non-empty line - it should be the customer name
+            // Clean up any OCR artifacts but keep the name intact
+            customerName = trimmed.replace(/[\|\[\]]+/g, "").trim();
+            // Stop at first non-empty line
             break;
           }
         }
