@@ -352,35 +352,24 @@ export const extractInvoiceData = async (
     let repairDescription: string | undefined;
 
     // Find "Trouble Reported" label and extract the text in that box
-    const troubleIndex = text.indexOf(/Trouble\s+Reported/i);
-    if (troubleIndex !== -1) {
-      // Find the colon or end of label
-      const labelEndIndex = text.indexOf(":", troubleIndex);
-      const contentStartIndex = labelEndIndex !== -1 ? labelEndIndex + 1 : troubleIndex + 15;
+    const troubleMatch = text.match(/Trouble\s+Reported\s*:?\s*\n([^]*?)(?=\n(?:Special\s+Instructions|Technician|Item\s+is|Service\s+Performed)|$)/i);
 
-      // Find where the next section starts (Special Instructions or Technician Comments)
-      const nextSectionMatch = text.substring(contentStartIndex).match(/(?:Special\s+Instructions|Technician\s+Comments|Item\s+is|Service\s+Performed)/i);
-      const contentEndIndex = nextSectionMatch ? contentStartIndex + nextSectionMatch.index! : contentStartIndex + 500;
-
-      // Extract the trouble text
-      let troubleText = text.substring(contentStartIndex, contentEndIndex).trim();
+    if (troubleMatch) {
+      let troubleText = troubleMatch[1].trim();
 
       // Clean up the text - remove excessive whitespace but preserve the content
       troubleText = troubleText
         .split("\n")
         .map(line => line.trim())
-        .filter(line => line.length > 0)
+        .filter(line => line.length > 0 && !/^-+$/.test(line)) // Remove separator lines
         .join(" ");
-
-      // Remove common trailing labels
-      troubleText = troubleText.replace(/(?:Special\s+Instructions.*)?$/i, "").trim();
 
       if (troubleText.length > 5) {
         repairDescription = troubleText;
       }
     }
 
-    // Pattern 2: "Service" label (standard invoice format)
+    // Pattern 2: "Service" label (standard invoice format) - fallback
     if (!repairDescription) {
       const serviceMatch = text.match(/Service\s+([^\n\r]+?)(?:\n|Invoice|$)/i);
       if (serviceMatch) {
