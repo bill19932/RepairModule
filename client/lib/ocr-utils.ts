@@ -321,28 +321,25 @@ export const extractInvoiceData = async (
       customerName = attentionMatch[1].trim();
     }
 
-    // Pattern 2: Find the address first, then get the line BEFORE it (which is the customer name)
+    // Pattern 2: Get the FIRST non-empty line after "CUSTOMER INFORMATION"
     if (!customerName) {
       const custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
       if (custInfoIdx > -1) {
         const afterCustInfo = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
         const lines = afterCustInfo.split("\n");
 
-        // Look for the line that starts with a street address (number followed by street name)
-        for (let i = 0; i < lines.length; i++) {
-          const trimmed = lines[i].trim();
-          // Check if this line looks like a street address (starts with number, contains street keywords)
-          if (/^\d+\s+[A-Za-z].*(?:Street|St|Avenue|Ave|Lane|Ln|Road|Rd|Drive|Dr|Way|Blvd|Court|Ct|Place|Pl|Apt|Apt\.)/i.test(trimmed)) {
-            // Found the address! The customer name should be the non-empty line BEFORE this
-            for (let j = i - 1; j >= 0; j--) {
-              const nameLine = lines[j].trim();
-              if (nameLine && !/^SF\d|Phone|Email|Signature|Completed|Second|Third|Follow|Final/i.test(nameLine)) {
-                customerName = nameLine.replace(/[\|\[\]]+/g, "").trim();
-                break;
-              }
-            }
-            break;
+        // Get first non-empty line - this should be the customer name
+        for (const line of lines) {
+          const trimmed = line.trim();
+          // Skip completely empty lines only
+          if (!trimmed) continue;
+          // Skip obvious section labels
+          if (/^Second|^Third|^Final|Phone-Primary|Phone|Completed|Customer Signature|Picked Up/i.test(trimmed)) {
+            continue;
           }
+          // Take this line as the name - clean up OCR artifacts
+          customerName = trimmed.replace(/\s+pw\s*$/i, "").replace(/[\|\[\]]+/g, "").trim();
+          break;
         }
       }
     }
