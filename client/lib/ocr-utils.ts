@@ -264,6 +264,26 @@ export const extractInvoiceData = async (
     const text = ocrResult?.data?.text || "";
     const extracted: ExtractedInvoiceData = {};
 
+    // For George's Music forms, divide the text into sections based on form layout
+    // This helps extract data from the correct locations
+    const lines = text.split("\n");
+
+    // Find key section markers to divide the form
+    let troubleReportedIdx = -1;
+    let customerInfoIdx = -1;
+    let itemDescIdx = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (/^Trouble\s+Reported/i.test(lines[i])) troubleReportedIdx = i;
+      if (/^CUSTOMER\s+INFORMATION/i.test(lines[i])) customerInfoIdx = i;
+      if (/^Item\s+Description/i.test(lines[i])) itemDescIdx = i;
+    }
+
+    // Define sections
+    const topSection = troubleReportedIdx > 0 ? lines.slice(0, troubleReportedIdx).join("\n") : text.substring(0, text.indexOf("Trouble") > 0 ? text.indexOf("Trouble") : text.length);
+    const troubleSection = troubleReportedIdx > 0 ? lines.slice(troubleReportedIdx, customerInfoIdx > troubleReportedIdx ? customerInfoIdx : lines.length).join("\n") : "";
+    const customerSection = customerInfoIdx > 0 ? lines.slice(customerInfoIdx).join("\n") : text;
+
     // Invoice Number - with full sweep logic
     const invoiceNum = extractInvoiceNumber(text);
     if (invoiceNum) {
