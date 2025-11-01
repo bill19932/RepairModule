@@ -76,6 +76,7 @@ export default function Index() {
   const [isOldRepairFormat, setIsOldRepairFormat] = useState(false);
   const [batchRepairs, setBatchRepairs] = useState<any[]>([]);
   const [batchFormData, setBatchFormData] = useState<{ [key: string]: any }>({});
+  const [showRecentModal, setShowRecentModal] = useState(false);
   const alert = useAlert();
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -653,6 +654,12 @@ export default function Index() {
                 {showForm ? "Hide Form" : "Show Form"}
               </button>
               <button
+                onClick={() => setShowRecentModal(true)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-foreground font-semibold rounded-sm transition-colors text-sm"
+              >
+                Recent Invoices
+              </button>
+              <button
                 onClick={() => navigate("/records")}
                 className="btn-primary flex items-center gap-2"
               >
@@ -1223,66 +1230,15 @@ export default function Index() {
             <div className="card-modern p-6 space-y-4">
               <div className="pt-3 border-t">
                 <h4 className="text-sm font-semibold mb-2">Recent Invoices</h4>
-                <div className="max-h-48 overflow-auto space-y-2">
-                  {savedInvoices.length === 0 ? (
-                    <div className="text-xs text-muted-foreground">
-                      No invoices yet
-                    </div>
-                  ) : (
-                    savedInvoices
-                      .slice()
-                      .reverse()
-                      .slice(0, 8)
-                      .map((inv) => (
-                        <div
-                          key={`${inv.invoiceNumber}-${inv.dateReceived}`}
-                          className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded border"
-                        >
-                          <div>
-                            <div className="font-semibold">
-                              #{inv.invoiceNumber}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {inv.customerName}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {inv.dateReceived}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                try {
-                                  downloadInvoicePDF(inv);
-                                } catch (e) {
-                                  console.error(e);
-                                }
-                              }}
-                              className="text-primary hover:underline text-xs font-semibold"
-                            >
-                              PDF
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDeleteInvoice(inv.invoiceNumber)
-                              }
-                              className="text-red-600 hover:text-red-900 text-xs font-semibold"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                  )}
-                </div>
+                <div className="text-xs text-muted-foreground">Use the Recent Invoices button at the top to view and manage recent invoices.</div>
               </div>
 
               <div className="pt-3">
                 <button
-                  onClick={() => exportAllInvoicesToCSV()}
+                  onClick={() => setShowRecentModal(true)}
                   className="btn-secondary w-full text-sm"
                 >
-                  Export CSV
+                  Open Recent Invoices
                 </button>
               </div>
             </div>
@@ -1297,6 +1253,52 @@ export default function Index() {
         onClose={alert.close}
         type={alert.type}
       />
+
+      {showRecentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black opacity-40" onClick={() => setShowRecentModal(false)}></div>
+          <div className="relative bg-white rounded shadow-lg w-[90%] max-w-2xl p-6 z-10">
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-bold">Recent Invoices</h3>
+              <button onClick={() => setShowRecentModal(false)} className="text-sm text-red-600 font-semibold">Close</button>
+            </div>
+            <div className="max-h-[60vh] overflow-auto space-y-3">
+              {savedInvoices.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No invoices yet</div>
+              ) : (
+                savedInvoices.slice().reverse().map((inv) => (
+                  <div key={`${inv.invoiceNumber}-${inv.dateReceived}`} className="border rounded p-3 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">#{inv.invoiceNumber} {inv.customerName}</div>
+                      <div className="text-xs text-muted-foreground">{inv.dateReceived}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => { try { downloadInvoicePDF(inv); } catch (e) { console.error(e); } }}
+                        className="text-primary hover:underline text-sm font-semibold"
+                      >
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => { downloadCSV([inv]); }}
+                        className="text-primary hover:underline text-sm font-semibold"
+                      >
+                        Export CSV
+                      </button>
+                      <button
+                        onClick={() => handleDeleteInvoice(inv.invoiceNumber)}
+                        className="text-red-600 hover:text-red-900 text-sm font-semibold"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
