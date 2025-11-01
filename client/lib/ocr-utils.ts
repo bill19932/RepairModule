@@ -896,6 +896,18 @@ export const extractInvoiceData = async (
 
     if (materials.length > 0) {
       extracted.materials = materials;
+
+      // If any material line contains 'delivery' assume delivery already accounted for
+      if (materials.some(m => /delivery/i.test(m.description))) {
+        extracted.isNoDeliveryFee = true;
+        addLog('Detected material containing "delivery"; setting isNoDeliveryFee');
+      }
+    } else {
+      // Also check repairDescription for delivery mention
+      if (repairDescription && /delivery/i.test(repairDescription)) {
+        extracted.isNoDeliveryFee = true;
+        addLog('Detected "delivery" in repair description; setting isNoDeliveryFee');
+      }
     }
 
     // Instruments
