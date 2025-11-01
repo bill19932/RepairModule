@@ -22,6 +22,7 @@ export interface RepairInvoice {
   deliveryFee?: number;
   instruments: Instrument[];
   repairDescription: string;
+  workDone?: string;
   materials: RepairMaterial[];
   laborHours: number;
   hourlyRate: number;
