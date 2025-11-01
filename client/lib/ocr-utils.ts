@@ -469,13 +469,20 @@ export const extractInvoiceData = async (
       extracted.customerPhone = phone;
     }
 
-    // ADDRESS - try direct "Address:" label first, then fall back to generic extraction
+    // ADDRESS - extract from "Address:" label and ensure it has PA suffix
     let address = undefined;
 
-    // Pattern 1: "Address: ..." format
+    // Pattern 1: "Address: ..." format (primary method for old repair forms)
     const addressLabelMatch = text.match(/Address\s*:\s*([^\n]+)/i);
     if (addressLabelMatch) {
       address = addressLabelMatch[1].trim().replace(/[|\\]+/g, "").trim();
+
+      // If address doesn't already contain PA/Pennsylvania, add it
+      if (address && !/(PA|Pennsylvania|\b19[0-9]{3}\b)/.test(address)) {
+        // Try to find city and zip from the full text to add proper PA suffix
+        // For now, append ", PA" to the address
+        address = address + ", PA";
+      }
     }
 
     // Pattern 2: Generic address extraction from customer section
