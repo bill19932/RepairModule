@@ -542,10 +542,12 @@ export const extractInvoiceData = async (
 
     // Pattern 2: look after CUSTOMER INFORMATION marker and pick first plausible name line
     if (!customerName && customerInfoIdx > -1) {
+      addLog(`Found CUSTOMER INFORMATION at line ${customerInfoIdx}`);
       const afterMarkerLines = lines.slice(
         customerInfoIdx + 1,
         customerInfoIdx + 8,
       );
+      addLog(`Checking next ${afterMarkerLines.length} lines for customer name`);
 
       const isLikelyName = (s: string) => {
         if (!s) return false;
@@ -553,13 +555,25 @@ export const extractInvoiceData = async (
         const clean = s.replace(/[^A-Za-z\s'\-]/g, "").trim();
         if (!clean) return false;
         const parts = clean.split(/\s+/).filter(Boolean);
-        if (parts.length < 2) return false;
-        // require each part to have at least 2 letters
-        if (parts.some((p) => p.replace(/[\-' ]/g, "").length < 2))
+        if (parts.length < 2) {
+          addLog(`  Line "${s}" has only ${parts.length} parts, skipping`);
           return false;
+        }
+        // require each part to have at least 2 letters
+        if (parts.some((p) => p.replace(/[\-' ]/g, "").length < 2)) {
+          addLog(`  Line "${s}" has a part with <2 letters, skipping`);
+          return false;
+        }
         // avoid lines that are all uppercase codes or contain digits
-        if (/\d/.test(s)) return false;
-        if (/^[A-Z0-9]{3,}$/.test(s.replace(/\s+/g, ""))) return false;
+        if (/\d/.test(s)) {
+          addLog(`  Line "${s}" contains digits, skipping`);
+          return false;
+        }
+        if (/^[A-Z0-9]{3,}$/.test(s.replace(/\s+/g, ""))) {
+          addLog(`  Line "${s}" is all uppercase code, skipping`);
+          return false;
+        }
+        addLog(`  Line "${s}" looks like a name!`);
         return true;
       };
 
@@ -569,6 +583,7 @@ export const extractInvoiceData = async (
         // Some OCR outputs include lines like 'SF8855' above name — skip those that include digits or are short
         if (isLikelyName(t)) {
           customerName = t.replace(/[|\[\]]+/g, "").trim();
+          addLog(`Selected customer name from marker: "${customerName}"`);
           break;
         }
       }
