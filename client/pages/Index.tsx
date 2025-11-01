@@ -133,6 +133,13 @@ export default function Index() {
         });
 
         setBatchFormData((prev) => ({ ...prev, [id]: newFormData }));
+
+        // Calculate delivery fee if address was extracted
+        if (newFormData.customerAddress && !newFormData.isGeorgesMusic && !newFormData.isNoDeliveryFee) {
+          setTimeout(() => {
+            calculateBatchDeliveryFee(id, newFormData.customerAddress);
+          }, 100);
+        }
       } catch (err) {
         console.error("Error processing file:", err);
       }
