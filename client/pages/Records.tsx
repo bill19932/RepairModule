@@ -162,25 +162,25 @@ export default function Records() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3">
             <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-3 text-muted-foreground" size={16} />
-              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search" className="input-modern h-10 w-full text-sm pl-10 border-2 border-gray-300 rounded" />
+              <Search className="absolute left-2 top-2 text-muted-foreground" size={14} />
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search" className="input-modern h-8 w-full text-xs pl-8 border-2 border-gray-300 rounded" />
             </div>
             <div className="flex flex-col items-center">
-              <label className="text-xs text-muted-foreground mb-1">From</label>
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="input-modern text-sm text-center w-full" />
+              <label className="text-xs text-muted-foreground mb-0.5">From</label>
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="input-modern text-xs text-center w-full h-8" />
             </div>
             <div className="flex flex-col items-center">
-              <label className="text-xs text-muted-foreground mb-1">To</label>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="input-modern text-sm text-center w-full" />
+              <label className="text-xs text-muted-foreground mb-0.5">To</label>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="input-modern text-xs text-center w-full h-8" />
             </div>
             <div className="flex flex-col items-center">
-              <label className="text-xs text-muted-foreground mb-1">Repair Location</label>
-              <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value as any)} className="input-modern text-sm border-2 border-gray-300 rounded text-center w-full">
+              <label className="text-xs text-muted-foreground mb-0.5">Location</label>
+              <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value as any)} className="input-modern text-xs border-2 border-gray-300 rounded text-center w-full h-8">
                 <option value="all">All</option>
-                <option value="dmc">Delco Music Co (Your Repair)</option>
-                <option value="georges">George's Music</option>
+                <option value="dmc">DMC</option>
+                <option value="georges">George's</option>
               </select>
             </div>
           </div>
