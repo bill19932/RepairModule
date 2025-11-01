@@ -294,6 +294,10 @@ export const extractInvoiceData = async (
 
     const lines = text.split("\n");
 
+    // Detect format (old repair vs George's Music)
+    const isOldFormat = isOldRepairFormat(text);
+    extracted.isOldRepairFormat = isOldFormat;
+
     // Find key markers
     let troubleReportedIdx = -1;
     let customerInfoIdx = -1;
