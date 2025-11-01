@@ -77,16 +77,25 @@ export default function Index() {
       .filter((n) => !isNaN(n) && n > 0);
     const maxFromSaved = numericInvoiceNumbers.length > 0 ? Math.max(...numericInvoiceNumbers) : 0;
 
-    if (maxFromSaved > lastAssignedInvoiceNumber) {
-      setLastAssignedInvoiceNumber(maxFromSaved);
-      localStorage.setItem("lastAssignedInvoiceNumber", String(maxFromSaved));
-    }
+    const storedVal = parseInt(localStorage.getItem("lastAssignedInvoiceNumber") || "0", 10) || 0;
+    const defaultStart = 33757;
 
-    // If nothing found anywhere, default to 33757 as starting point (per user request)
-    if (maxFromSaved === 0 && lastAssignedInvoiceNumber === 0) {
-      const defaultStart = 33757;
+    // If there are no saved invoices but localStorage has a larger counter (from another run),
+    // reset to defaultStart to allow next invoice to be defaultStart+1 (33758) — prevents accidental gap.
+    if (invoices.length === 0 && storedVal > defaultStart) {
       setLastAssignedInvoiceNumber(defaultStart);
       localStorage.setItem("lastAssignedInvoiceNumber", String(defaultStart));
+    } else {
+      if (maxFromSaved > lastAssignedInvoiceNumber) {
+        setLastAssignedInvoiceNumber(maxFromSaved);
+        localStorage.setItem("lastAssignedInvoiceNumber", String(maxFromSaved));
+      }
+
+      // If nothing found anywhere, default to 33757 as starting point
+      if (maxFromSaved === 0 && lastAssignedInvoiceNumber === 0) {
+        setLastAssignedInvoiceNumber(defaultStart);
+        localStorage.setItem("lastAssignedInvoiceNumber", String(defaultStart));
+      }
     }
 
     setSavedInvoices(invoices);
