@@ -50,6 +50,7 @@ export default function Index() {
     laborHours: 0 as number,
     hourlyRate: 0 as number,
     isGeorgesMusic: false as boolean,
+    isNoDeliveryFee: false as boolean,
     notes: "" as string,
   });
 
