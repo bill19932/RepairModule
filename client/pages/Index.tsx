@@ -88,13 +88,18 @@ export default function Index() {
         const id = `batch_${Date.now()}_${Math.random()}`;
 
         // Create form data for this repair
+        // Sanitize extracted email/phone to avoid using our own contact info as customer data
+        const rawEmail = (extracted.customerEmail || '').toString().trim();
+        const normalizedEmail = rawEmail ? rawEmail.toLowerCase() : '';
+        const customerEmail = normalizedEmail && BILL_EMAILS.includes(normalizedEmail) ? '' : rawEmail;
+
         const newFormData = {
           invoiceNumber: extracted.invoiceNumber || String(lastAssignedInvoiceNumber + results.length + 1),
           dateReceived: extracted.dateReceived || new Date().toISOString().split('T')[0],
           date: extracted.date || new Date().toISOString().split('T')[0],
           customerName: extracted.customerName || '',
           customerPhone: extracted.customerPhone || '',
-          customerEmail: extracted.customerEmail || '',
+          customerEmail: customerEmail || '',
           customerAddress: extracted.customerAddress || '',
           repairDescription: extracted.repairDescription || '',
           laborHours: 0,
@@ -321,7 +326,7 @@ export default function Index() {
       setOcrProgress(80);
 
       let phone = extracted.customerPhone || "";
-      let email = extracted.customerEmail || "";
+      let email = (extracted.customerEmail || "").toString().trim();
 
       const phoneDigitsOnly = phone.replace(/\D/g, "");
       if (
@@ -330,7 +335,8 @@ export default function Index() {
         phone = "";
       }
 
-      if (BILL_EMAILS.includes(email.toLowerCase())) {
+      const normalizedEmail = email.toLowerCase();
+      if (normalizedEmail && BILL_EMAILS.includes(normalizedEmail)) {
         email = "";
       }
 
