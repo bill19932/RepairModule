@@ -137,7 +137,12 @@ export default function Index() {
         // Calculate delivery fee if address was extracted
         if (newFormData.customerAddress && !newFormData.isGeorgesMusic && !newFormData.isNoDeliveryFee) {
           setTimeout(() => {
-            calculateBatchDeliveryFee(id, newFormData.customerAddress);
+            calculateBatchDeliveryFee(
+              id,
+              newFormData.customerAddress,
+              newFormData.isGeorgesMusic,
+              newFormData.isNoDeliveryFee,
+            );
           }, 100);
         }
       } catch (err) {
