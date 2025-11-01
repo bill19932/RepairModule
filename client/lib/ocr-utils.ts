@@ -742,7 +742,11 @@ export const extractInvoiceData = async (
 
     // REPAIR DESCRIPTION - try "Service:" label first, then fall back to trouble section
     let repairDescription: string | undefined;
-    addLog(`Trouble section (first 200 chars): ${troubleSection.substring(0, 200)}`);
+    addLog(`troubleReportedIdx: ${troubleReportedIdx}, customerInfoIdx: ${customerInfoIdx}, itemDescIdx: ${itemDescIdx}`);
+    addLog(`Trouble section length: ${troubleSection.length} chars`);
+    if (troubleSection) {
+      addLog(`Trouble section (first 200 chars): ${troubleSection.substring(0, 200)}`);
+    }
 
     // Pattern 1: "Service: ..." format (old repair form)
     let serviceLabelMatch = text.match(/Service\s*:\s*([^\n]+)/i);
