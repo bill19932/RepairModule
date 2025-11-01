@@ -223,11 +223,8 @@ export const extractInvoiceData = async (
         ocrResult = await globalT.recognize(normalizedDataUrl, 'eng', { logger: logProgress });
       } else {
         const { createWorker } = await import('tesseract.js');
-        const worker = createWorker({ logger: logProgress });
-        await worker.load();
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
-        ocrResult = await worker.recognize(normalizedDataUrl);
+        const worker = await createWorker({ logger: logProgress });
+        ocrResult = await worker.recognize(normalizedDataUrl, 'eng');
         await worker.terminate();
       }
 
