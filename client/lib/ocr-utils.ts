@@ -267,29 +267,40 @@ export const extractInvoiceData = async (
     const invoiceNum = extractInvoiceNumber(text);
     if (invoiceNum) extracted.invoiceNumber = invoiceNum;
 
-    // DATE - prefer date directly above or on the same line as "Service Location"
-    const dateRegex = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/g;
+    // DATE - try direct "Date:" label first, then fall back to generic extraction
     let dateReceived: string | undefined;
 
-    const svcLineIndex = lines.findIndex(l => /Service\s+Location/i.test(l));
-    if (svcLineIndex > -1) {
-      // search the same line and up to 5 lines above for a date, nearest first
-      for (let offset = 0; offset <= 5; offset++) {
-        const idx = svcLineIndex - offset;
-        if (idx < 0) break;
-        const line = lines[idx];
-        const m = line.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-        if (m) {
-          const month = m[1].padStart(2, "0");
-          const day = m[2].padStart(2, "0");
-          const year = m[3].length === 2 ? ("20" + m[3]) : m[3];
-          dateReceived = `${year}-${month}-${day}`;
-          break;
+    // Pattern 1: "Date: MM/DD/YY" format
+    const dateLabelMatch = text.match(/Date\s*:\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/i);
+    if (dateLabelMatch) {
+      const month = dateLabelMatch[1].padStart(2, "0");
+      const day = dateLabelMatch[2].padStart(2, "0");
+      const year = dateLabelMatch[3].length === 2 ? ("20" + dateLabelMatch[3]) : dateLabelMatch[3];
+      dateReceived = `${year}-${month}-${day}`;
+    }
+
+    // Pattern 2: date near "Service Location" label (George's Music format)
+    if (!dateReceived) {
+      const svcLineIndex = lines.findIndex(l => /Service\s+Location/i.test(l));
+      if (svcLineIndex > -1) {
+        // search the same line and up to 5 lines above for a date, nearest first
+        for (let offset = 0; offset <= 5; offset++) {
+          const idx = svcLineIndex - offset;
+          if (idx < 0) break;
+          const line = lines[idx];
+          const m = line.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+          if (m) {
+            const month = m[1].padStart(2, "0");
+            const day = m[2].padStart(2, "0");
+            const year = m[3].length === 2 ? ("20" + m[3]) : m[3];
+            dateReceived = `${year}-${month}-${day}`;
+            break;
+          }
         }
       }
     }
 
-    // Fallback: find earliest date in the top section (above Trouble Reported)
+    // Pattern 3: find earliest date in the top section (above Trouble Reported)
     if (!dateReceived) {
       const topLines = topSection.split("\n");
       for (let i = 0; i < topLines.length; i++) {
