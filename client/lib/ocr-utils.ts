@@ -966,16 +966,27 @@ export const extractInvoiceData = async (
     );
     if (itemDescMatch) {
       let desc = itemDescMatch[1].trim();
+      // Remove leading special characters but preserve the actual description
       desc = desc.replace(/^[=\-:|\/\s]+/, "").trim();
-      desc = desc.replace(/[\s\-:|\/\[\]nt]+$/, "").trim();
+      // Only trim trailing special characters that aren't part of common instrument names
+      desc = desc.replace(/[\s\-:|\[\]nt]+$/, "").trim();
+      // Remove leading/trailing slashes and "RETURN ORDER" completely
+      desc = desc.replace(/\s*\/\s*RETURN\s+ORDER\s*$/i, "").trim();
+      desc = desc.replace(/^[\/\s]+/, "").trim();
       desc = desc.replace(/\s+ee\s+/g, " ").trim();
       desc = desc.replace(/\s+/g, " ").trim();
       desc = desc.replace(/Fernandez/g, "Fernandes");
-      if (desc.length > 0) instrumentDescription = desc;
 
-      const serialMatch = topSection.match(/Serial\s*#[\s:]*([A-Z0-9]+)/i);
+      // Only use if it's not just "RETURN ORDER" or empty
+      if (desc.length > 2 && !/^RETURN\s+ORDER$/i.test(desc)) {
+        instrumentDescription = desc;
+        addLog(`Instrument description: ${instrumentDescription}`);
+      }
+
+      const serialMatch = topSection.match(/Serial\s*#?[\s:]*([A-Z0-9;]+)/i);
       if (serialMatch && instrumentDescription.length < 80) {
         instrumentDescription += " (Serial: " + serialMatch[1] + ")";
+        addLog(`Added serial number: ${serialMatch[1]}`);
       }
     }
 
