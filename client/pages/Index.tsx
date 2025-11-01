@@ -334,6 +334,7 @@ export default function Index() {
       deliveryFee: repair.deliveryFee || 0,
       instruments: repair.instruments,
       repairDescription: data.repairDescription,
+      workDone: data.workDone || '',
       materials: repair.materials,
       laborHours: data.laborHours || 0,
       hourlyRate: data.hourlyRate || 0,
