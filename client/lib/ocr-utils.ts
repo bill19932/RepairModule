@@ -475,12 +475,28 @@ export const extractInvoiceData = async (
     // Pattern 1: "Address: ..." format
     const addressLabelMatch = text.match(/Address\s*:\s*([^\n]+)/i);
     if (addressLabelMatch) {
-      address = addressLabelMatch[1].trim().replace(/[|\\]+/g, "").trim();
+      const extractedAddr = addressLabelMatch[1].trim().replace(/[|\\]+/g, "").trim();
+      // For old repair format, validate address is in Delco/Montco PA
+      if (isOldFormat) {
+        if (isValidPAAddress(extractedAddr)) {
+          address = extractedAddr;
+        }
+      } else {
+        address = extractedAddr;
+      }
     }
 
     // Pattern 2: Generic address extraction from customer section
     if (!address) {
-      address = extractAddressFromText(customerSection);
+      const extractedAddr = extractAddressFromText(customerSection);
+      // For old repair format, validate address is in Delco/Montco PA
+      if (extractedAddr && isOldFormat) {
+        if (isValidPAAddress(extractedAddr)) {
+          address = extractedAddr;
+        }
+      } else {
+        address = extractedAddr;
+      }
     }
 
     if (address) extracted.customerAddress = address;
