@@ -561,7 +561,50 @@ export default function Index() {
             </div>
           )}
 
-          {/* Sidebar summary / totals - omitted for brevity in edits */}
+          {/* Sidebar summary / totals */}
+          <div className="lg:col-span-1">
+            <div className="card-modern p-6 space-y-4">
+              <h3 className="text-lg font-semibold">Summary</h3>
+              <div className="text-sm">
+                <div className="flex justify-between"><div>Services</div><div>${totals.servicesTotal.toFixed(2)}</div></div>
+                <div className="flex justify-between"><div>Delivery</div><div>${totals.delivery.toFixed(2)}</div></div>
+                <div className="flex justify-between"><div>Tax (6%)</div><div>${totals.tax.toFixed(2)}</div></div>
+                <div className="flex justify-between font-bold mt-2"><div>Total</div><div>${totals.total.toFixed(2)}</div></div>
+
+                {formData.isGeorgesMusic && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded">
+                    <div className="text-xs text-blue-900 font-semibold">George's Music Invoice (1.54x)</div>
+                    <div className="text-sm mt-1">Your Charge: ${totals.subtotal.toFixed(2)}</div>
+                    <div className="text-sm">George's Markup (1.54x): ${totals.georgesSubtotal.toFixed(2)}</div>
+                    <div className="text-sm">George's Total (incl. tax): ${totals.georgesTotal.toFixed(2)}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3">
+                <h4 className="text-sm font-semibold">Recent Invoices</h4>
+                <div className="max-h-48 overflow-auto mt-2 space-y-2">
+                  {savedInvoices.slice().reverse().slice(0, 8).map((inv) => (
+                    <div key={inv.invoiceNumber} className="flex items-center justify-between text-sm border rounded p-2">
+                      <div>
+                        <div className="font-semibold">#{inv.invoiceNumber}</div>
+                        <div className="text-xs text-muted-foreground">{inv.customerName} • {inv.dateReceived}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => { try { downloadInvoicePDF(inv); } catch(e){console.error(e);} }} className="text-primary underline text-xs">PDF</button>
+                        <button onClick={() => handleDeleteInvoice(inv.invoiceNumber)} className="text-red-600 text-xs">Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                  {savedInvoices.length === 0 && <div className="text-xs text-muted-foreground">No invoices yet</div>}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button onClick={() => exportAllInvoicesToCSV()} className="btn-secondary w-full">Export CSV</button>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
