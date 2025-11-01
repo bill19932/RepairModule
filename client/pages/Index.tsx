@@ -852,7 +852,7 @@ export default function Index() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">
-                        George's Music Repair?
+                        George's Music
                       </label>
                       <div className="flex items-center gap-4 mt-2">
                         <label className="flex items-center gap-2">
@@ -863,7 +863,7 @@ export default function Index() {
                             onChange={handleFormChange}
                             className="w-4 h-4"
                           />
-                          <span className="text-xs">Yes, George's Music</span>
+                          <span className="text-xs">George's Music</span>
                         </label>
                         <label className="flex items-center gap-2">
                           <input
