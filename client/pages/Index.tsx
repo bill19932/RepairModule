@@ -80,6 +80,7 @@ export default function Index() {
     {},
   );
   const [showRecentModal, setShowRecentModal] = useState(false);
+  const [ocrDebugLog, setOcrDebugLog] = useState<string[]>([]);
   const alert = useAlert();
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
