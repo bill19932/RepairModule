@@ -596,13 +596,36 @@ export const extractInvoiceData = async (
       let price = 0;
 
       if (plainNumberMatches.length > 0) {
-        // If we have a plain number, use it as quantity
-        qty = plainNumberMatches[0];
-        price = priceMatches[0];
+        // If we have a plain number between 1-999, likely the quantity
+        const candidateQty = plainNumberMatches[0];
+        // Verify it makes sense: total should equal qty * unitPrice
+        // Try each price as unit price
+        const unitPrice = priceMatches[priceMatches.length - 2] || priceMatches[0];
+        const totalPrice = priceMatches[priceMatches.length - 1] || priceMatches[0];
+        const calcQty = Math.round(totalPrice / unitPrice);
+
+        if (calcQty === candidateQty || candidateQty === 1) {
+          qty = candidateQty;
+          price = unitPrice;
+        } else {
+          // Candidate qty doesn't match, might be part of description
+          // Default to qty=1 and use the calculated quantity instead
+          qty = Math.max(1, Math.round(totalPrice / unitPrice));
+          price = unitPrice;
+        }
       } else {
-        // No plain number, so implied qty=1 and first price is unit price
-        qty = 1;
-        price = priceMatches[0];
+        // No explicit plain number
+        // If we have 2+ prices, calculate qty from them
+        if (priceMatches.length >= 2) {
+          const unitPrice = priceMatches[priceMatches.length - 2];
+          const totalPrice = priceMatches[priceMatches.length - 1];
+          qty = Math.max(1, Math.round(totalPrice / unitPrice));
+          price = unitPrice;
+        } else {
+          // Only 1 price, default qty=1
+          qty = 1;
+          price = priceMatches[0];
+        }
       }
 
       // Extract description: keep everything except numbers and prices
