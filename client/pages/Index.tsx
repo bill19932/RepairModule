@@ -705,41 +705,63 @@ export default function Index() {
                         <button type="button" onClick={saveAllBatch} className="text-xs text-primary font-semibold">Save All</button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 w-full">
+                      <div ref={batchContainerRef} className="flex gap-6 overflow-x-auto py-4 pb-8">
                         {batchRepairs.map((b, idx) => (
-                          <div key={b.id} className="bg-white rounded shadow p-4 border">
-                            <div className="flex items-start gap-3 mb-3">
+                          <div key={b.id} className="min-w-[900px] bg-white rounded shadow p-6 border">
+                            <div className="flex items-start gap-4 mb-4">
                               {b.preview ? (
-                                <img src={b.preview} alt={b.fileName} className="w-28 h-20 object-cover rounded" />
+                                <img src={b.preview} alt={b.fileName} className="w-40 h-32 object-cover rounded" />
                               ) : (
-                                <div className="w-28 h-20 bg-gray-100 rounded" />
+                                <div className="w-40 h-32 bg-gray-100 rounded" />
                               )}
                               <div className="flex-1">
-                                <div className="text-sm font-semibold">{b.extracted?.customerName || 'Unnamed'}</div>
-                                <div className="text-xs text-muted-foreground">{b.extracted?.customerAddress || ''}</div>
-                                <div className="text-xs mt-2">{b.extracted?.repairDescription || 'No description'}</div>
+                                <div className="text-lg font-bold">{b.extracted?.customerName || 'Unnamed'}</div>
+                                <div className="text-sm text-muted-foreground">{b.extracted?.customerPhone || ''}</div>
+                                <div className="text-sm text-muted-foreground">{b.extracted?.customerEmail || ''}</div>
+                                <div className="text-sm text-muted-foreground mt-1">{b.extracted?.customerAddress || ''}</div>
+                                <div className="text-sm mt-3 whitespace-pre-wrap">{b.extracted?.repairDescription || 'No description'}</div>
                               </div>
                             </div>
 
-                            <div className="mb-2">
-                              <div className="text-xs font-semibold mb-1">Materials</div>
-                              <div className="text-xs">
+                            <div className="mb-4 border-t pt-4">
+                              <div className="text-sm font-bold mb-2">Service and Materials</div>
+                              <div className="text-sm">
                                 {b.extracted?.materials?.length > 0 ? (
-                                  b.extracted.materials.map((m: any) => (
-                                    <div key={m.description} className="flex justify-between py-1 border-b">
-                                      <div className="truncate">{m.description}</div>
-                                      <div className="ml-2">{m.quantity} × ${m.unitCost?.toFixed(2) || '0.00'}</div>
-                                    </div>
-                                  ))
+                                  <table className="w-full">
+                                    <thead>
+                                      <tr className="border-b">
+                                        <th className="text-left py-2">Description</th>
+                                        <th className="text-center py-2">Qty</th>
+                                        <th className="text-right py-2">Unit Cost</th>
+                                        <th className="text-right py-2">Total</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {b.extracted.materials.map((m: any) => (
+                                        <tr key={m.description} className="border-b">
+                                          <td className="py-2">{m.description}</td>
+                                          <td className="text-center py-2">{m.quantity}</td>
+                                          <td className="text-right py-2">${m.unitCost?.toFixed(2) || '0.00'}</td>
+                                          <td className="text-right py-2 font-semibold">${(m.quantity * m.unitCost).toFixed(2)}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
                                 ) : (
-                                  <div className="text-xs text-muted-foreground">No materials</div>
+                                  <div className="text-sm text-muted-foreground">No materials</div>
                                 )}
                               </div>
                             </div>
 
-                            <div className="flex justify-between items-center mt-3">
-                              <button type="button" onClick={() => saveBatchItemAsInvoice(idx)} disabled={b.saved} className="text-xs px-3 py-1 bg-primary text-white rounded">{b.saved ? 'Saved' : 'Save'}</button>
-                              <div className="text-sm font-semibold">Total: ${(b.extracted?.materials?.reduce((s: any, m: any) => s + (m.quantity*m.unitCost), 0) || 0).toFixed(2)}</div>
+                            <div className="border-t pt-4">
+                              <div className="flex justify-between text-sm font-semibold mb-3">
+                                <span>Total</span>
+                                <span>${(b.extracted?.materials?.reduce((s: any, m: any) => s + (m.quantity*m.unitCost), 0) || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => saveBatchItemAsInvoice(idx)} disabled={b.saved} className="flex-1 px-4 py-2 bg-primary text-white rounded font-semibold">{b.saved ? 'Saved ✓' : 'Save Repair'}</button>
+                                <button type="button" onClick={() => removeBatchItem(idx)} className="px-4 py-2 bg-red-50 text-red-600 rounded">Remove</button>
+                              </div>
                             </div>
                           </div>
                         ))}
