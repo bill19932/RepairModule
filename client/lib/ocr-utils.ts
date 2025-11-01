@@ -520,7 +520,10 @@ export const extractInvoiceData = async (
       }
     }
 
-    if (dateReceived) extracted.dateReceived = dateReceived;
+    if (dateReceived) {
+      extracted.dateReceived = dateReceived;
+      extracted.date = dateReceived;
+    }
 
     // CUSTOMER NAME - robust extraction from CUSTOMER INFORMATION
     let customerName: string | undefined;
