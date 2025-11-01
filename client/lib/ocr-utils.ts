@@ -799,6 +799,8 @@ export const extractInvoiceData = async (
             addLog(`Trouble: Extracted from troubled section: ${joined.substring(0, 80)}`);
           }
         }
+      } else {
+        addLog(`No trouble match found in section`);
       }
     }
 
