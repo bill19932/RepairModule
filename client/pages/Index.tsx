@@ -659,8 +659,9 @@ export default function Index() {
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={handleOCRUpload}
-                        disabled={isProcessingOCR}
+                        disabled={isProcessingOCR || isProcessingBatch}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                       <div className="text-center">
