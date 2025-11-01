@@ -417,6 +417,7 @@ export default function Index() {
         laborHours: 0,
         hourlyRate: 0,
         isGeorgesMusic: false,
+        isNoDeliveryFee: false,
         notes: "",
       });
 
