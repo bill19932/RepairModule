@@ -1,11 +1,17 @@
-import { RepairInvoice } from './invoice-types';
+import { RepairInvoice } from "./invoice-types";
 
-import { RepairInvoice } from './invoice-types';
+import { RepairInvoice } from "./invoice-types";
 
 export const generateInvoicePDF = (invoice: RepairInvoice): string => {
-  const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
+  const servicesTotal = invoice.materials.reduce(
+    (sum, mat) => sum + mat.quantity * mat.unitCost,
+    0,
+  );
   const subtotal = servicesTotal;
-  const delivery = invoice.isGeorgesMusic || invoice.isNoDeliveryFee ? 0 : (invoice.deliveryFee || 0);
+  const delivery =
+    invoice.isGeorgesMusic || invoice.isNoDeliveryFee
+      ? 0
+      : invoice.deliveryFee || 0;
   const subtotalWithDelivery = subtotal + delivery;
   const tax = subtotalWithDelivery * 0.06;
   const customerTotal = subtotalWithDelivery + tax;
@@ -14,17 +20,25 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   const yourTax = subtotal * 0.06;
   const yourChargeWithTax = subtotal + yourTax;
   const georgesSubtotal = yourChargeWithTax * 1.54;
-  const georgesTax = 0;  // Tax already included in the 1.54 multiplier
+  const georgesTax = 0; // Tax already included in the 1.54 multiplier
   const georgesCustomerTotal = georgesSubtotal;
 
-  const finalTotal = invoice.isGeorgesMusic ? georgesCustomerTotal : customerTotal;
-  const finalSubtotal = invoice.isGeorgesMusic ? georgesSubtotal : subtotalWithDelivery;
+  const finalTotal = invoice.isGeorgesMusic
+    ? georgesCustomerTotal
+    : customerTotal;
+  const finalSubtotal = invoice.isGeorgesMusic
+    ? georgesSubtotal
+    : subtotalWithDelivery;
   const finalTax = invoice.isGeorgesMusic ? georgesTax : tax;
 
-  const logoUrl = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F9753a3ec93ee4d5dba7a86a75c0f457f?format=webp&width=800';
-  const qrGoogle = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F16d28bb1a7c144dca4fe83ccf654b8bf?format=webp&width=800';
-  const qrFacebook = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F3957d5a2405340f381789e3736f4ae23?format=webp&width=800';
-  const qrWebsite = 'https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F3dab77482ef04753a6e15fd4bed20dac?format=webp&width=800';
+  const logoUrl =
+    "https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F9753a3ec93ee4d5dba7a86a75c0f457f?format=webp&width=800";
+  const qrGoogle =
+    "https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F16d28bb1a7c144dca4fe83ccf654b8bf?format=webp&width=800";
+  const qrFacebook =
+    "https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F3957d5a2405340f381789e3736f4ae23?format=webp&width=800";
+  const qrWebsite =
+    "https://cdn.builder.io/api/v1/image/assets%2F99d159038b9d45ab8f72730367c1abf4%2F3dab77482ef04753a6e15fd4bed20dac?format=webp&width=800";
 
   const html = `
 <!doctype html>
@@ -169,13 +183,25 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
       <div class="meta">
         <div style="font-weight:700; color:#0066cc; font-size:16px;">${invoice.invoiceNumber}</div>
         <div style="margin-top:6px;">Date Received: ${(() => {
-          const [y, m, d] = invoice.dateReceived.split('-');
-          return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('en-US');
+          const [y, m, d] = invoice.dateReceived.split("-");
+          return new Date(
+            parseInt(y),
+            parseInt(m) - 1,
+            parseInt(d),
+          ).toLocaleDateString("en-US");
         })()}</div>
-        ${invoice.dateCompleted ? `<div style="margin-top:4px;">Date Completed: ${(() => {
-          const [y, m, d] = invoice.dateCompleted.split('-');
-          return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('en-US');
-        })()}</div>` : ''}
+        ${
+          invoice.dateCompleted
+            ? `<div style="margin-top:4px;">Date Completed: ${(() => {
+                const [y, m, d] = invoice.dateCompleted.split("-");
+                return new Date(
+                  parseInt(y),
+                  parseInt(m) - 1,
+                  parseInt(d),
+                ).toLocaleDateString("en-US");
+              })()}</div>`
+            : ""
+        }
       </div>
     </div>
 
@@ -185,20 +211,24 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
         <div class="value">${invoice.customerName}</div>
         <div style="height:8px"></div>
         <div class="label">Phone</div>
-        <div class="value">${invoice.customerPhone || '—'}</div>
+        <div class="value">${invoice.customerPhone || "—"}</div>
         <div style="height:8px"></div>
         <div class="label">Email</div>
-        <div class="value">${invoice.customerEmail || '—'}</div>
+        <div class="value">${invoice.customerEmail || "—"}</div>
       </div>
       <div class="right">
         <div class="label">Date Received</div>
         <div class="value">${(() => {
-          const [y, m, d] = invoice.dateReceived.split('-');
-          return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('en-US');
+          const [y, m, d] = invoice.dateReceived.split("-");
+          return new Date(
+            parseInt(y),
+            parseInt(m) - 1,
+            parseInt(d),
+          ).toLocaleDateString("en-US");
         })()}</div>
         <div style="height:8px"></div>
         <div class="label">Instruments</div>
-        <div class="value">${invoice.instruments.map(i => `${i.type}${i.description ? ' (Instrument Model: ' + i.description + ')' : ''}`).join(', ')}</div>
+        <div class="value">${invoice.instruments.map((i) => `${i.type}${i.description ? " (Instrument Model: " + i.description + ")" : ""}`).join(", ")}</div>
         <div style="height:8px"></div>
         <div class="label">Repair Work</div>
         <div class="value">${invoice.repairDescription}</div>
@@ -215,31 +245,39 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
         </tr>
       </thead>
       <tbody>
-        ${invoice.materials.map(m => `
+        ${invoice.materials
+          .map(
+            (m) => `
           <tr>
             <td>${m.description}</td>
             <td>${m.quantity}</td>
             <td style="text-align:right">$${m.unitCost.toFixed(2)}</td>
             <td style="text-align:right">$${(m.quantity * m.unitCost).toFixed(2)}</td>
           </tr>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </tbody>
     </table>
 
     <div class="totals">
       <div class="block">
-          <div class="row"><div>Services Total</div><div>$${(invoice.materials.reduce((s, m) => s + m.quantity * m.unitCost, 0)).toFixed(2)}</div></div>
-        ${invoice.isGeorgesMusic ? `
+          <div class="row"><div>Services Total</div><div>$${invoice.materials.reduce((s, m) => s + m.quantity * m.unitCost, 0).toFixed(2)}</div></div>
+        ${
+          invoice.isGeorgesMusic
+            ? `
           <div class="row"><div>Repair Total</div><div>$${subtotal.toFixed(2)}</div></div>
           <div class="row"><div>6% Tax (on Repair Total)</div><div>$${yourTax.toFixed(2)}</div></div>
           <div class="row"><div>Repair Total + Tax</div><div>$${yourChargeWithTax.toFixed(2)}</div></div>
           <div class="row"><div>George's Markup (1.54x)</div><div>$${georgesSubtotal.toFixed(2)}</div></div>
           <div class="row total"><div>George's Total</div><div>$${georgesCustomerTotal.toFixed(2)}</div></div>
-        ` : `
+        `
+            : `
           <div class="row"><div>Subtotal</div><div>$${finalSubtotal.toFixed(2)}</div></div>
           <div class="row"><div>6% Tax</div><div>$${finalTax.toFixed(2)}</div></div>
           <div class="row total"><div>Customer Total</div><div>$${finalTotal.toFixed(2)}</div></div>
-        `}
+        `
+        }
       </div>
     </div>
 
@@ -274,17 +312,17 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
 
 export const downloadInvoicePDF = (invoice: RepairInvoice) => {
   const html = generateInvoicePDF(invoice);
-  
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
+
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
   document.body.appendChild(iframe);
-  
+
   const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
   if (iframeDoc) {
     iframeDoc.open();
     iframeDoc.write(html);
     iframeDoc.close();
-    
+
     iframe.onload = () => {
       setTimeout(() => {
         iframe.contentWindow?.print();

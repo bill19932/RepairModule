@@ -31,6 +31,6 @@ export interface RepairInvoice {
   invoiceHtml: string;
 }
 
-export type RepairInvoiceFormData = Omit<RepairInvoice, 'materials'> & {
+export type RepairInvoiceFormData = Omit<RepairInvoice, "materials"> & {
   materialsJson: string;
 };

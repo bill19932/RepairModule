@@ -75,7 +75,9 @@ export default function Index() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOldRepairFormat, setIsOldRepairFormat] = useState(false);
   const [batchRepairs, setBatchRepairs] = useState<any[]>([]);
-  const [batchFormData, setBatchFormData] = useState<{ [key: string]: any }>({});
+  const [batchFormData, setBatchFormData] = useState<{ [key: string]: any }>(
+    {},
+  );
   const [showRecentModal, setShowRecentModal] = useState(false);
   const alert = useAlert();
 
@@ -91,24 +93,30 @@ export default function Index() {
 
         // Create form data for this repair
         // Sanitize extracted email/phone to avoid using our own contact info as customer data
-        const rawEmail = (extracted.customerEmail || '').toString().trim();
-        const normalizedEmail = rawEmail ? rawEmail.toLowerCase() : '';
-        const customerEmail = normalizedEmail && BILL_EMAILS.includes(normalizedEmail) ? '' : rawEmail;
+        const rawEmail = (extracted.customerEmail || "").toString().trim();
+        const normalizedEmail = rawEmail ? rawEmail.toLowerCase() : "";
+        const customerEmail =
+          normalizedEmail && BILL_EMAILS.includes(normalizedEmail)
+            ? ""
+            : rawEmail;
 
         const newFormData = {
-          invoiceNumber: extracted.invoiceNumber || String(lastAssignedInvoiceNumber + results.length + 1),
-          dateReceived: extracted.dateReceived || new Date().toISOString().split('T')[0],
-          date: extracted.date || new Date().toISOString().split('T')[0],
-          customerName: extracted.customerName || '',
-          customerPhone: extracted.customerPhone || '',
-          customerEmail: customerEmail || '',
-          customerAddress: extracted.customerAddress || '',
-          repairDescription: extracted.repairDescription || '',
+          invoiceNumber:
+            extracted.invoiceNumber ||
+            String(lastAssignedInvoiceNumber + results.length + 1),
+          dateReceived:
+            extracted.dateReceived || new Date().toISOString().split("T")[0],
+          date: extracted.date || new Date().toISOString().split("T")[0],
+          customerName: extracted.customerName || "",
+          customerPhone: extracted.customerPhone || "",
+          customerEmail: customerEmail || "",
+          customerAddress: extracted.customerAddress || "",
+          repairDescription: extracted.repairDescription || "",
           laborHours: 0,
           hourlyRate: 0,
           isGeorgesMusic: extracted.isGeorgesMusic || false,
           isNoDeliveryFee: extracted.isNoDeliveryFee || false,
-          notes: '',
+          notes: "",
         };
 
         results.push({
@@ -117,19 +125,19 @@ export default function Index() {
           extracted,
           formData: newFormData,
           materials: extracted.materials || [],
-          instruments: extracted.instruments || [{ type: '', description: '' }],
+          instruments: extracted.instruments || [{ type: "", description: "" }],
           deliveryMiles: null,
           deliveryFee: 0,
         });
 
         setBatchFormData((prev) => ({ ...prev, [id]: newFormData }));
       } catch (err) {
-        console.error('Error processing file:', err);
+        console.error("Error processing file:", err);
       }
     }
 
     setBatchRepairs((prev) => [...prev, ...results]);
-    e.target.value = '';
+    e.target.value = "";
   };
 
   // Initialize lastAssignedInvoiceNumber, load invoices, and sync across tabs
@@ -185,7 +193,12 @@ export default function Index() {
   }, [lastAssignedInvoiceNumber]);
 
   const calculateDeliveryFee = async (address: string) => {
-    if (!address || !address.trim() || formData.isGeorgesMusic || formData.isNoDeliveryFee) {
+    if (
+      !address ||
+      !address.trim() ||
+      formData.isGeorgesMusic ||
+      formData.isNoDeliveryFee
+    ) {
       setDeliveryMiles(null);
       setDeliveryFee(0);
       return;
@@ -251,7 +264,11 @@ export default function Index() {
     }
   };
 
-  const handleBatchRepairFormChange = (repairId: string, field: string, value: any) => {
+  const handleBatchRepairFormChange = (
+    repairId: string,
+    field: string,
+    value: any,
+  ) => {
     setBatchFormData((prev) => ({
       ...prev,
       [repairId]: { ...prev[repairId], [field]: value },
@@ -260,18 +277,33 @@ export default function Index() {
     const repair = batchRepairs.find((r) => r.id === repairId);
     if (repair) {
       setBatchRepairs((prev) =>
-        prev.map((r) => (r.id === repairId ? { ...r, formData: batchFormData[repairId] } : r))
+        prev.map((r) =>
+          r.id === repairId ? { ...r, formData: batchFormData[repairId] } : r,
+        ),
       );
     }
   };
 
-  const handleBatchMaterialChange = (repairId: string, index: number, field: keyof RepairMaterial, value: any) => {
+  const handleBatchMaterialChange = (
+    repairId: string,
+    index: number,
+    field: keyof RepairMaterial,
+    value: any,
+  ) => {
     setBatchRepairs((prev) =>
       prev.map((r) => {
         if (r.id !== repairId) return r;
         const materials = Array.isArray(r.materials) ? [...r.materials] : [];
-        const existing = materials[index] || { description: '', quantity: 1, unitCost: 0 };
-        const updated = { ...existing, [field]: field === 'description' ? String(value) : parseFloat(value) || 0 };
+        const existing = materials[index] || {
+          description: "",
+          quantity: 1,
+          unitCost: 0,
+        };
+        const updated = {
+          ...existing,
+          [field]:
+            field === "description" ? String(value) : parseFloat(value) || 0,
+        };
         materials[index] = updated;
         // Ensure batchFormData also reflects materials
         setBatchFormData((prevForm) => ({
@@ -295,7 +327,7 @@ export default function Index() {
       customerName: data.customerName,
       customerPhone: data.customerPhone,
       customerEmail: data.customerEmail,
-      customerAddress: data.customerAddress || '',
+      customerAddress: data.customerAddress || "",
       deliveryMiles: repair.deliveryMiles || 0,
       deliveryFee: repair.deliveryFee || 0,
       instruments: repair.instruments,
@@ -303,18 +335,20 @@ export default function Index() {
       materials: repair.materials,
       laborHours: data.laborHours || 0,
       hourlyRate: data.hourlyRate || 0,
-      notes: data.notes || '',
+      notes: data.notes || "",
       isGeorgesMusic: data.isGeorgesMusic || false,
       isNoDeliveryFee: data.isNoDeliveryFee || false,
-      invoiceHtml: '',
+      invoiceHtml: "",
     } as any;
 
     addInvoiceToLocalStorage(invoice);
     setSavedInvoices(getAllInvoicesFromLocalStorage());
-    setLastAssignedInvoiceNumber(parseInt(data.invoiceNumber) || lastAssignedInvoiceNumber + 1);
+    setLastAssignedInvoiceNumber(
+      parseInt(data.invoiceNumber) || lastAssignedInvoiceNumber + 1,
+    );
 
     setBatchRepairs((prev) => prev.filter((r) => r.id !== repairId));
-    alert.show(`Saved invoice ${invoice.invoiceNumber}`, 'success');
+    alert.show(`Saved invoice ${invoice.invoiceNumber}`, "success");
   };
 
   const removeBatchRepair = (repairId: string) => {
@@ -597,7 +631,10 @@ export default function Index() {
     );
     const subtotal = servicesTotal;
 
-    const deliveryAmount = formData.isGeorgesMusic || formData.isNoDeliveryFee ? 0 : deliveryFee || 0;
+    const deliveryAmount =
+      formData.isGeorgesMusic || formData.isNoDeliveryFee
+        ? 0
+        : deliveryFee || 0;
     const subtotalWithDelivery = subtotal + deliveryAmount;
     const tax = subtotalWithDelivery * 0.06;
     const total = subtotalWithDelivery + tax;
@@ -722,149 +759,378 @@ export default function Index() {
 
                   {batchRepairs.length > 0 && (
                     <div className="mt-6 border-t pt-6">
-                      <h3 className="text-lg font-bold mb-4">Batch Repairs ({batchRepairs.length})</h3>
+                      <h3 className="text-lg font-bold mb-4">
+                        Batch Repairs ({batchRepairs.length})
+                      </h3>
                       <div className="flex gap-6 overflow-x-auto pb-4">
                         {batchRepairs.map((repair) => {
-                          const data = batchFormData[repair.id] || repair.formData;
-                          const subtotal = repair.materials.reduce((sum: number, m: any) => sum + (m.quantity * m.unitCost), 0);
-                          const delivery = data.isGeorgesMusic || data.isNoDeliveryFee ? 0 : (repair.deliveryFee || 0);
+                          const data =
+                            batchFormData[repair.id] || repair.formData;
+                          const subtotal = repair.materials.reduce(
+                            (sum: number, m: any) =>
+                              sum + m.quantity * m.unitCost,
+                            0,
+                          );
+                          const delivery =
+                            data.isGeorgesMusic || data.isNoDeliveryFee
+                              ? 0
+                              : repair.deliveryFee || 0;
                           const subtotalWithDelivery = subtotal + delivery;
                           const tax = subtotalWithDelivery * 0.06;
                           const total = subtotalWithDelivery + tax;
 
                           return (
-                            <div key={repair.id} className="min-w-[900px] bg-white rounded shadow border p-6">
-                              <div className="text-sm font-semibold mb-4 text-primary">New Invoice 📸 Auto-Fill from Image</div>
+                            <div
+                              key={repair.id}
+                              className="min-w-[900px] bg-white rounded shadow border p-6"
+                            >
+                              <div className="text-sm font-semibold mb-4 text-primary">
+                                New Invoice 📸 Auto-Fill from Image
+                              </div>
 
                               <div className="grid grid-cols-3 gap-3 mb-4">
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1">Invoice # *</label>
-                                  <input type="text" value={data.invoiceNumber} onChange={(e) => handleBatchRepairFormChange(repair.id, 'invoiceNumber', e.target.value)} className="input-modern text-sm w-full" />
+                                  <label className="block text-xs font-semibold mb-1">
+                                    Invoice # *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={data.invoiceNumber}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "invoiceNumber",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="input-modern text-sm w-full"
+                                  />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1">Date Received</label>
-                                  <input type="date" value={data.dateReceived} onChange={(e) => handleBatchRepairFormChange(repair.id, 'dateReceived', e.target.value)} className="input-modern text-sm w-full" />
+                                  <label className="block text-xs font-semibold mb-1">
+                                    Date Received
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={data.dateReceived}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "dateReceived",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="input-modern text-sm w-full"
+                                  />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1">Invoice Date</label>
-                                  <input type="date" value={data.date} onChange={(e) => handleBatchRepairFormChange(repair.id, 'date', e.target.value)} className="input-modern text-sm w-full" />
+                                  <label className="block text-xs font-semibold mb-1">
+                                    Invoice Date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={data.date}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "date",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="input-modern text-sm w-full"
+                                  />
                                 </div>
                               </div>
 
                               <div className="grid grid-cols-3 gap-3 mb-4">
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1">Customer Name *</label>
-                                  <input type="text" value={data.customerName} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerName', e.target.value)} className="input-modern text-sm w-full" />
+                                  <label className="block text-xs font-semibold mb-1">
+                                    Customer Name *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={data.customerName}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "customerName",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="input-modern text-sm w-full"
+                                  />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1">Phone</label>
-                                  <input type="tel" value={data.customerPhone} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerPhone', e.target.value)} className="input-modern text-sm w-full" />
+                                  <label className="block text-xs font-semibold mb-1">
+                                    Phone
+                                  </label>
+                                  <input
+                                    type="tel"
+                                    value={data.customerPhone}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "customerPhone",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="input-modern text-sm w-full"
+                                  />
                                 </div>
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1">Email</label>
-                                  <input type="email" value={data.customerEmail} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerEmail', e.target.value)} className="input-modern text-sm w-full" />
+                                  <label className="block text-xs font-semibold mb-1">
+                                    Email
+                                  </label>
+                                  <input
+                                    type="email"
+                                    value={data.customerEmail}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "customerEmail",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="input-modern text-sm w-full"
+                                  />
                                 </div>
                               </div>
 
                               <div className="mb-4">
-                                <label className="block text-xs font-semibold mb-1">Address</label>
-                                <input type="text" value={data.customerAddress} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerAddress', e.target.value)} className="input-modern text-sm w-full" />
+                                <label className="block text-xs font-semibold mb-1">
+                                  Address
+                                </label>
+                                <input
+                                  type="text"
+                                  value={data.customerAddress}
+                                  onChange={(e) =>
+                                    handleBatchRepairFormChange(
+                                      repair.id,
+                                      "customerAddress",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="input-modern text-sm w-full"
+                                />
                               </div>
 
                               <div className="flex items-center gap-4 mb-4">
                                 <label className="flex items-center gap-2">
-                                  <input type="checkbox" checked={data.isGeorgesMusic} onChange={(e) => handleBatchRepairFormChange(repair.id, 'isGeorgesMusic', e.target.checked)} className="w-4 h-4" />
-                                  <span className="text-xs">George's Music</span>
+                                  <input
+                                    type="checkbox"
+                                    checked={data.isGeorgesMusic}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "isGeorgesMusic",
+                                        e.target.checked,
+                                      )
+                                    }
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-xs">
+                                    George's Music
+                                  </span>
                                 </label>
                                 <label className="flex items-center gap-2">
-                                  <input type="checkbox" checked={data.isNoDeliveryFee} onChange={(e) => handleBatchRepairFormChange(repair.id, 'isNoDeliveryFee', e.target.checked)} className="w-4 h-4" />
-                                  <span className="text-xs">No Delivery Fee</span>
+                                  <input
+                                    type="checkbox"
+                                    checked={data.isNoDeliveryFee}
+                                    onChange={(e) =>
+                                      handleBatchRepairFormChange(
+                                        repair.id,
+                                        "isNoDeliveryFee",
+                                        e.target.checked,
+                                      )
+                                    }
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-xs">
+                                    No Delivery Fee
+                                  </span>
                                 </label>
                               </div>
 
                               <div className="mb-4 pb-4 border-t pt-4">
-                                <label className="block text-xs font-semibold mb-2">Instruments *</label>
+                                <label className="block text-xs font-semibold mb-2">
+                                  Instruments *
+                                </label>
                                 <div className="space-y-2">
-                                  {repair.instruments.map((inst: any, idx: number) => (
-                                    <div key={idx} className="grid grid-cols-2 gap-2">
-                                      <select
-                                        value={inst.type || ''}
-                                        onChange={(e) => {
-                                          const updated = [...repair.instruments];
-                                          updated[idx].type = e.target.value;
-                                          setBatchRepairs((prev) => prev.map((r) => r.id === repair.id ? { ...r, instruments: updated } : r));
-                                        }}
-                                        className="input-modern text-sm"
+                                  {repair.instruments.map(
+                                    (inst: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className="grid grid-cols-2 gap-2"
                                       >
-                                        <option value="">Select Type</option>
-                                        <option value="Guitar">Guitar</option>
-                                        <option value="Bass">Bass</option>
-                                        <option value="Violin">Violin</option>
-                                        <option value="Other">Other</option>
-                                      </select>
-                                      <input
-                                        type="text"
-                                        value={inst.description || ''}
-                                        onChange={(e) => {
-                                          const updated = [...repair.instruments];
-                                          updated[idx].description = e.target.value;
-                                          setBatchRepairs((prev) => prev.map((r) => r.id === repair.id ? { ...r, instruments: updated } : r));
-                                        }}
-                                        placeholder="Description"
-                                        className="input-modern text-sm"
-                                      />
-                                    </div>
-                                  ))}
+                                        <select
+                                          value={inst.type || ""}
+                                          onChange={(e) => {
+                                            const updated = [
+                                              ...repair.instruments,
+                                            ];
+                                            updated[idx].type = e.target.value;
+                                            setBatchRepairs((prev) =>
+                                              prev.map((r) =>
+                                                r.id === repair.id
+                                                  ? {
+                                                      ...r,
+                                                      instruments: updated,
+                                                    }
+                                                  : r,
+                                              ),
+                                            );
+                                          }}
+                                          className="input-modern text-sm"
+                                        >
+                                          <option value="">Select Type</option>
+                                          <option value="Guitar">Guitar</option>
+                                          <option value="Bass">Bass</option>
+                                          <option value="Violin">Violin</option>
+                                          <option value="Other">Other</option>
+                                        </select>
+                                        <input
+                                          type="text"
+                                          value={inst.description || ""}
+                                          onChange={(e) => {
+                                            const updated = [
+                                              ...repair.instruments,
+                                            ];
+                                            updated[idx].description =
+                                              e.target.value;
+                                            setBatchRepairs((prev) =>
+                                              prev.map((r) =>
+                                                r.id === repair.id
+                                                  ? {
+                                                      ...r,
+                                                      instruments: updated,
+                                                    }
+                                                  : r,
+                                              ),
+                                            );
+                                          }}
+                                          placeholder="Description"
+                                          className="input-modern text-sm"
+                                        />
+                                      </div>
+                                    ),
+                                  )}
                                 </div>
                               </div>
 
                               <div className="mb-4">
-                                <label className="block text-xs font-semibold mb-1">Repair Work Description *</label>
-                                <textarea value={data.repairDescription} onChange={(e) => handleBatchRepairFormChange(repair.id, 'repairDescription', e.target.value)} className="input-modern text-sm w-full min-h-16" />
+                                <label className="block text-xs font-semibold mb-1">
+                                  Repair Work Description *
+                                </label>
+                                <textarea
+                                  value={data.repairDescription}
+                                  onChange={(e) =>
+                                    handleBatchRepairFormChange(
+                                      repair.id,
+                                      "repairDescription",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="input-modern text-sm w-full min-h-16"
+                                />
                               </div>
 
                               <div className="mb-4 pb-4 border-t pt-4">
-                                <label className="block text-xs font-semibold mb-2">Services & Materials</label>
+                                <label className="block text-xs font-semibold mb-2">
+                                  Services & Materials
+                                </label>
                                 <div className="space-y-2 text-xs">
-                                  {(repair.materials || []).map((m: any, mi: number) => (
-                                    <div key={`${mi}-${m.description || 'mat'}`} className="grid grid-cols-4 gap-2 items-center">
-                                      <input
-                                        type="text"
-                                        value={m.description || ''}
-                                        onChange={(e) => handleBatchMaterialChange(repair.id, mi, 'description', e.target.value)}
-                                        className="input-modern text-xs col-span-2"
-                                        placeholder="Description"
-                                      />
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        value={m.quantity}
-                                        onChange={(e) => handleBatchMaterialChange(repair.id, mi, 'quantity', e.target.value)}
-                                        className="input-modern text-xs"
-                                      />
-                                      <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={m.unitCost}
-                                        onChange={(e) => handleBatchMaterialChange(repair.id, mi, 'unitCost', e.target.value)}
-                                        className="input-modern text-xs"
-                                      />
-                                    </div>
-                                  ))}
+                                  {(repair.materials || []).map(
+                                    (m: any, mi: number) => (
+                                      <div
+                                        key={`${mi}-${m.description || "mat"}`}
+                                        className="grid grid-cols-4 gap-2 items-center"
+                                      >
+                                        <input
+                                          type="text"
+                                          value={m.description || ""}
+                                          onChange={(e) =>
+                                            handleBatchMaterialChange(
+                                              repair.id,
+                                              mi,
+                                              "description",
+                                              e.target.value,
+                                            )
+                                          }
+                                          className="input-modern text-xs col-span-2"
+                                          placeholder="Description"
+                                        />
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          value={m.quantity}
+                                          onChange={(e) =>
+                                            handleBatchMaterialChange(
+                                              repair.id,
+                                              mi,
+                                              "quantity",
+                                              e.target.value,
+                                            )
+                                          }
+                                          className="input-modern text-xs"
+                                        />
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          min="0"
+                                          value={m.unitCost}
+                                          onChange={(e) =>
+                                            handleBatchMaterialChange(
+                                              repair.id,
+                                              mi,
+                                              "unitCost",
+                                              e.target.value,
+                                            )
+                                          }
+                                          className="input-modern text-xs"
+                                        />
+                                      </div>
+                                    ),
+                                  )}
                                 </div>
                               </div>
 
                               <div className="bg-gray-50 p-3 rounded mb-4">
-                                <div className="flex justify-between text-xs mb-1"><span>Services</span><span>${subtotal.toFixed(2)}</span></div>
-                                {!data.isGeorgesMusic && !data.isNoDeliveryFee && <div className="flex justify-between text-xs mb-1"><span>Delivery</span><span>${delivery.toFixed(2)}</span></div>}
-                                <div className="flex justify-between text-xs mb-1"><span>Tax (6%)</span><span>${tax.toFixed(2)}</span></div>
-                                <div className="flex justify-between text-xs font-bold"><span>Total</span><span>${total.toFixed(2)}</span></div>
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span>Services</span>
+                                  <span>${subtotal.toFixed(2)}</span>
+                                </div>
+                                {!data.isGeorgesMusic &&
+                                  !data.isNoDeliveryFee && (
+                                    <div className="flex justify-between text-xs mb-1">
+                                      <span>Delivery</span>
+                                      <span>${delivery.toFixed(2)}</span>
+                                    </div>
+                                  )}
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span>Tax (6%)</span>
+                                  <span>${tax.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs font-bold">
+                                  <span>Total</span>
+                                  <span>${total.toFixed(2)}</span>
+                                </div>
                               </div>
 
                               <div className="flex gap-2">
-                                <button type="button" onClick={() => saveBatchRepair(repair.id)} className="flex-1 px-4 py-2 bg-primary text-white rounded font-semibold text-sm">Print & Save</button>
-                                <button type="button" onClick={() => removeBatchRepair(repair.id)} className="px-4 py-2 bg-red-50 text-red-600 rounded text-sm">Remove</button>
+                                <button
+                                  type="button"
+                                  onClick={() => saveBatchRepair(repair.id)}
+                                  className="flex-1 px-4 py-2 bg-primary text-white rounded font-semibold text-sm"
+                                >
+                                  Print & Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeBatchRepair(repair.id)}
+                                  className="px-4 py-2 bg-red-50 text-red-600 rounded text-sm"
+                                >
+                                  Remove
+                                </button>
                               </div>
                             </div>
                           );
@@ -875,357 +1141,364 @@ export default function Index() {
 
                   {batchRepairs.length === 0 && (
                     <>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
-                        Invoice # *
-                      </label>
-                      <input
-                        type="text"
-                        name="invoiceNumber"
-                        value={formData.invoiceNumber}
-                        onChange={handleFormChange}
-                        placeholder="e.g., 33758"
-                        className="input-modern text-sm"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
-                        Date Received
-                      </label>
-                      <input
-                        type="date"
-                        name="dateReceived"
-                        value={formData.dateReceived}
-                        onChange={handleFormChange}
-                        className="input-modern text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
-                        Invoice Date
-                      </label>
-                      <input
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleFormChange}
-                        className="input-modern text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
-                        Customer Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="customerName"
-                        value={formData.customerName}
-                        onChange={handleFormChange}
-                        placeholder="Name"
-                        className="input-modern text-sm"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        name="customerPhone"
-                        value={formData.customerPhone}
-                        onChange={handleFormChange}
-                        placeholder="Phone"
-                        className="input-modern text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="customerEmail"
-                        value={formData.customerEmail}
-                        onChange={handleFormChange}
-                        placeholder="Email"
-                        className="input-modern text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        name="customerAddress"
-                        value={formData.customerAddress}
-                        onChange={handleFormChange}
-                        placeholder="Address"
-                        className="input-modern text-sm"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-4 mt-2">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            name="isGeorgesMusic"
-                            checked={formData.isGeorgesMusic}
-                            onChange={handleFormChange}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-xs">George's Music</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            name="isNoDeliveryFee"
-                            checked={formData.isNoDeliveryFee}
-                            onChange={handleFormChange}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-xs">No Delivery Fee</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-foreground mb-2">
-                      Instruments *
-                    </label>
-                    <div className="space-y-2">
-                      {instruments.map((instrument, index) => (
-                        <div
-                          key={`instr-${index}`}
-                          className="grid grid-cols-4 gap-2"
-                        >
-                          <select
-                            value={instrument.type}
-                            onChange={(e) =>
-                              handleInstrumentChange(
-                                index,
-                                "type",
-                                e.target.value,
-                              )
-                            }
-                            className="input-modern text-sm"
-                          >
-                            <option value="">Select Type</option>
-                            <option value="Guitar">Guitar</option>
-                            <option value="Bass">Bass</option>
-                            <option value="Violin">Violin</option>
-                            <option value="Cello">Cello</option>
-                            <option value="Other">Other</option>
-                          </select>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Invoice # *
+                          </label>
                           <input
                             type="text"
-                            placeholder="Description"
-                            value={instrument.description}
-                            onChange={(e) =>
-                              handleInstrumentChange(
-                                index,
-                                "description",
-                                e.target.value,
-                              )
-                            }
-                            className="input-modern col-span-2 text-sm"
+                            name="invoiceNumber"
+                            value={formData.invoiceNumber}
+                            onChange={handleFormChange}
+                            placeholder="e.g., 33758"
+                            className="input-modern text-sm"
+                            required
                           />
-                          <button
-                            type="button"
-                            onClick={() => removeInstrument(index)}
-                            className="text-red-600 hover:text-red-900 font-semibold text-sm"
-                          >
-                            Remove
-                          </button>
                         </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addInstrument}
-                        className="text-xs text-primary font-semibold"
-                      >
-                        + Add Instrument
-                      </button>
-                    </div>
-                  </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Date Received
+                          </label>
+                          <input
+                            type="date"
+                            name="dateReceived"
+                            value={formData.dateReceived}
+                            onChange={handleFormChange}
+                            className="input-modern text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Invoice Date
+                          </label>
+                          <input
+                            type="date"
+                            name="date"
+                            value={formData.date}
+                            onChange={handleFormChange}
+                            className="input-modern text-sm"
+                            required
+                          />
+                        </div>
+                      </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-foreground mb-1">
-                      Repair Work Description *
-                    </label>
-                    <textarea
-                      name="repairDescription"
-                      value={formData.repairDescription}
-                      onChange={handleFormChange}
-                      placeholder="Describe the repair work"
-                      className="input-modern text-sm min-h-24 resize-none"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-foreground mb-2">
-                      Services & Materials
-                    </label>
-                    <div className="space-y-2">
-                      {materials.map((material, index) => (
-                        <div
-                          key={`mat-${index}`}
-                          className="grid grid-cols-4 gap-2"
-                        >
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Customer Name *
+                          </label>
                           <input
                             type="text"
-                            placeholder="Description"
-                            value={material.description}
-                            onChange={(e) =>
-                              handleMaterialChange(
-                                index,
-                                "description",
-                                e.target.value,
-                              )
-                            }
-                            className="input-modern col-span-2 text-sm"
+                            name="customerName"
+                            value={formData.customerName}
+                            onChange={handleFormChange}
+                            placeholder="Name"
+                            className="input-modern text-sm"
+                            required
                           />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Phone
+                          </label>
                           <input
-                            type="number"
-                            placeholder="Qty"
-                            min="1"
-                            value={material.quantity}
-                            onChange={(e) =>
-                              handleMaterialChange(
-                                index,
-                                "quantity",
-                                e.target.value,
-                              )
-                            }
+                            type="tel"
+                            name="customerPhone"
+                            value={formData.customerPhone}
+                            onChange={handleFormChange}
+                            placeholder="Phone"
                             className="input-modern text-sm"
                           />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Email
+                          </label>
                           <input
-                            type="number"
-                            placeholder="Cost"
-                            min="0"
-                            step="0.01"
-                            value={material.unitCost}
-                            onChange={(e) =>
-                              handleMaterialChange(
-                                index,
-                                "unitCost",
-                                e.target.value,
-                              )
-                            }
+                            type="email"
+                            name="customerEmail"
+                            value={formData.customerEmail}
+                            onChange={handleFormChange}
+                            placeholder="Email"
                             className="input-modern text-sm"
                           />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Address
+                          </label>
+                          <input
+                            type="text"
+                            name="customerAddress"
+                            value={formData.customerAddress}
+                            onChange={handleFormChange}
+                            placeholder="Address"
+                            className="input-modern text-sm"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-4 mt-2">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                name="isGeorgesMusic"
+                                checked={formData.isGeorgesMusic}
+                                onChange={handleFormChange}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-xs">George's Music</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                name="isNoDeliveryFee"
+                                checked={formData.isNoDeliveryFee}
+                                onChange={handleFormChange}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-xs">No Delivery Fee</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-foreground mb-2">
+                          Instruments *
+                        </label>
+                        <div className="space-y-2">
+                          {instruments.map((instrument, index) => (
+                            <div
+                              key={`instr-${index}`}
+                              className="grid grid-cols-4 gap-2"
+                            >
+                              <select
+                                value={instrument.type}
+                                onChange={(e) =>
+                                  handleInstrumentChange(
+                                    index,
+                                    "type",
+                                    e.target.value,
+                                  )
+                                }
+                                className="input-modern text-sm"
+                              >
+                                <option value="">Select Type</option>
+                                <option value="Guitar">Guitar</option>
+                                <option value="Bass">Bass</option>
+                                <option value="Violin">Violin</option>
+                                <option value="Cello">Cello</option>
+                                <option value="Other">Other</option>
+                              </select>
+                              <input
+                                type="text"
+                                placeholder="Description"
+                                value={instrument.description}
+                                onChange={(e) =>
+                                  handleInstrumentChange(
+                                    index,
+                                    "description",
+                                    e.target.value,
+                                  )
+                                }
+                                className="input-modern col-span-2 text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeInstrument(index)}
+                                className="text-red-600 hover:text-red-900 font-semibold text-sm"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
                           <button
                             type="button"
-                            onClick={() => removeMaterial(index)}
-                            className="text-red-600 text-xs col-span-4"
+                            onClick={addInstrument}
+                            className="text-xs text-primary font-semibold"
                           >
-                            Remove
+                            + Add Instrument
                           </button>
                         </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addMaterial}
-                        className="text-xs text-primary font-semibold"
-                      >
-                        + Add Item
-                      </button>
-                    </div>
-                  </div>
-
-                  {deliveryMiles !== null && !formData.isGeorgesMusic && !formData.isNoDeliveryFee && (
-                    <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-semibold text-blue-900">
-                          Delivery Fee ({deliveryMiles} miles × 2 trips)
-                        </span>
-                        <span className="font-semibold text-blue-900">
-                          ${deliveryFee.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="card-modern p-4 bg-gray-50">
-                    <h3 className="text-sm font-semibold mb-3">Summary</h3>
-                    <div className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <div>Services</div>
-                        <div>${totals.servicesTotal.toFixed(2)}</div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div>Delivery</div>
-                        <div>${totals.delivery.toFixed(2)}</div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div>Tax (6%)</div>
-                        <div>${totals.tax.toFixed(2)}</div>
-                      </div>
-                      <div className="flex justify-between font-bold border-t pt-1 mt-1">
-                        <div>Total</div>
-                        <div>${totals.total.toFixed(2)}</div>
                       </div>
 
-                      {formData.isGeorgesMusic && (
-                        <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-                          <div className="text-xs text-blue-900 font-semibold mb-2">
-                            George's Music Invoice (1.54x)
-                          </div>
-                          <div className="text-xs space-y-1">
-                            <div className="flex justify-between">
-                              <div>Repair Total</div>
-                              <div>${totals.subtotal.toFixed(2)}</div>
+                      <div>
+                        <label className="block text-xs font-semibold text-foreground mb-1">
+                          Repair Work Description *
+                        </label>
+                        <textarea
+                          name="repairDescription"
+                          value={formData.repairDescription}
+                          onChange={handleFormChange}
+                          placeholder="Describe the repair work"
+                          className="input-modern text-sm min-h-24 resize-none"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-foreground mb-2">
+                          Services & Materials
+                        </label>
+                        <div className="space-y-2">
+                          {materials.map((material, index) => (
+                            <div
+                              key={`mat-${index}`}
+                              className="grid grid-cols-4 gap-2"
+                            >
+                              <input
+                                type="text"
+                                placeholder="Description"
+                                value={material.description}
+                                onChange={(e) =>
+                                  handleMaterialChange(
+                                    index,
+                                    "description",
+                                    e.target.value,
+                                  )
+                                }
+                                className="input-modern col-span-2 text-sm"
+                              />
+                              <input
+                                type="number"
+                                placeholder="Qty"
+                                min="1"
+                                value={material.quantity}
+                                onChange={(e) =>
+                                  handleMaterialChange(
+                                    index,
+                                    "quantity",
+                                    e.target.value,
+                                  )
+                                }
+                                className="input-modern text-sm"
+                              />
+                              <input
+                                type="number"
+                                placeholder="Cost"
+                                min="0"
+                                step="0.01"
+                                value={material.unitCost}
+                                onChange={(e) =>
+                                  handleMaterialChange(
+                                    index,
+                                    "unitCost",
+                                    e.target.value,
+                                  )
+                                }
+                                className="input-modern text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeMaterial(index)}
+                                className="text-red-600 text-xs col-span-4"
+                              >
+                                Remove
+                              </button>
                             </div>
-                            <div className="flex justify-between">
-                              <div>6% Tax (on Repair Total)</div>
-                              <div>${totals.yourTax.toFixed(2)}</div>
-                            </div>
-                            <div className="flex justify-between">
-                              <div>Repair Total + Tax</div>
-                              <div>${totals.yourChargeWithTax.toFixed(2)}</div>
-                            </div>
-                            <div className="flex justify-between">
-                              <div>George's Markup (1.54x)</div>
-                              <div>${totals.georgesSubtotal.toFixed(2)}</div>
-                            </div>
-                            <div className="flex justify-between font-semibold border-t pt-1 mt-1">
-                              <div>George's Total</div>
-                              <div>${totals.georgesTotal.toFixed(2)}</div>
-                            </div>
-                          </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={addMaterial}
+                            className="text-xs text-primary font-semibold"
+                          >
+                            + Add Item
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  </div>
+                      </div>
 
-                  <div className="pt-4">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? "Printing & Saving..." : "Print & Save"}
-                    </button>
-                  </div>
+                      {deliveryMiles !== null &&
+                        !formData.isGeorgesMusic &&
+                        !formData.isNoDeliveryFee && (
+                          <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                            <div className="flex justify-between text-sm">
+                              <span className="font-semibold text-blue-900">
+                                Delivery Fee ({deliveryMiles} miles × 2 trips)
+                              </span>
+                              <span className="font-semibold text-blue-900">
+                                ${deliveryFee.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                      <div className="card-modern p-4 bg-gray-50">
+                        <h3 className="text-sm font-semibold mb-3">Summary</h3>
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <div>Services</div>
+                            <div>${totals.servicesTotal.toFixed(2)}</div>
+                          </div>
+                          <div className="flex justify-between">
+                            <div>Delivery</div>
+                            <div>${totals.delivery.toFixed(2)}</div>
+                          </div>
+                          <div className="flex justify-between">
+                            <div>Tax (6%)</div>
+                            <div>${totals.tax.toFixed(2)}</div>
+                          </div>
+                          <div className="flex justify-between font-bold border-t pt-1 mt-1">
+                            <div>Total</div>
+                            <div>${totals.total.toFixed(2)}</div>
+                          </div>
+
+                          {formData.isGeorgesMusic && (
+                            <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
+                              <div className="text-xs text-blue-900 font-semibold mb-2">
+                                George's Music Invoice (1.54x)
+                              </div>
+                              <div className="text-xs space-y-1">
+                                <div className="flex justify-between">
+                                  <div>Repair Total</div>
+                                  <div>${totals.subtotal.toFixed(2)}</div>
+                                </div>
+                                <div className="flex justify-between">
+                                  <div>6% Tax (on Repair Total)</div>
+                                  <div>${totals.yourTax.toFixed(2)}</div>
+                                </div>
+                                <div className="flex justify-between">
+                                  <div>Repair Total + Tax</div>
+                                  <div>
+                                    ${totals.yourChargeWithTax.toFixed(2)}
+                                  </div>
+                                </div>
+                                <div className="flex justify-between">
+                                  <div>George's Markup (1.54x)</div>
+                                  <div>
+                                    ${totals.georgesSubtotal.toFixed(2)}
+                                  </div>
+                                </div>
+                                <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+                                  <div>George's Total</div>
+                                  <div>${totals.georgesTotal.toFixed(2)}</div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-4">
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSubmitting
+                            ? "Printing & Saving..."
+                            : "Print & Save"}
+                        </button>
+                      </div>
                     </>
                   )}
                 </form>
               </div>
             </div>
           )}
-
         </div>
       </main>
 
@@ -1239,44 +1512,72 @@ export default function Index() {
 
       {showRecentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-40" onClick={() => setShowRecentModal(false)}></div>
+          <div
+            className="absolute inset-0 bg-black opacity-40"
+            onClick={() => setShowRecentModal(false)}
+          ></div>
           <div className="relative bg-white rounded shadow-lg w-[90%] max-w-2xl p-6 z-10">
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-lg font-bold">Recent Invoices</h3>
-              <button onClick={() => setShowRecentModal(false)} className="text-sm text-red-600 font-semibold">Close</button>
+              <button
+                onClick={() => setShowRecentModal(false)}
+                className="text-sm text-red-600 font-semibold"
+              >
+                Close
+              </button>
             </div>
             <div className="max-h-[60vh] overflow-auto space-y-3">
               {savedInvoices.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No invoices yet</div>
+                <div className="text-sm text-muted-foreground">
+                  No invoices yet
+                </div>
               ) : (
-                savedInvoices.slice().reverse().map((inv) => (
-                  <div key={`${inv.invoiceNumber}-${inv.dateReceived}`} className="border rounded p-3 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold">#{inv.invoiceNumber} {inv.customerName}</div>
-                      <div className="text-xs text-muted-foreground">{inv.dateReceived}</div>
+                savedInvoices
+                  .slice()
+                  .reverse()
+                  .map((inv) => (
+                    <div
+                      key={`${inv.invoiceNumber}-${inv.dateReceived}`}
+                      className="border rounded p-3 flex items-center justify-between"
+                    >
+                      <div>
+                        <div className="font-semibold">
+                          #{inv.invoiceNumber} {inv.customerName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {inv.dateReceived}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => {
+                            try {
+                              downloadInvoicePDF(inv);
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }}
+                          className="text-primary hover:underline text-sm font-semibold"
+                        >
+                          PDF
+                        </button>
+                        <button
+                          onClick={() => {
+                            downloadCSV([inv]);
+                          }}
+                          className="text-primary hover:underline text-sm font-semibold"
+                        >
+                          Export CSV
+                        </button>
+                        <button
+                          onClick={() => handleDeleteInvoice(inv.invoiceNumber)}
+                          className="text-red-600 hover:text-red-900 text-sm font-semibold"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => { try { downloadInvoicePDF(inv); } catch (e) { console.error(e); } }}
-                        className="text-primary hover:underline text-sm font-semibold"
-                      >
-                        PDF
-                      </button>
-                      <button
-                        onClick={() => { downloadCSV([inv]); }}
-                        className="text-primary hover:underline text-sm font-semibold"
-                      >
-                        Export CSV
-                      </button>
-                      <button
-                        onClick={() => handleDeleteInvoice(inv.invoiceNumber)}
-                        className="text-red-600 hover:text-red-900 text-sm font-semibold"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
           </div>
