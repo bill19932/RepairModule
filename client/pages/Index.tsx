@@ -18,7 +18,7 @@ import {
   Search,
 } from "lucide-react";
 import { AlertDialog, useAlert } from "@/components/AlertDialog";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 const BILL_PHONE_NUMBERS = [
   "610-505-6096",
