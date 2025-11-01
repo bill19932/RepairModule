@@ -539,12 +539,8 @@ export const extractInvoiceData = async (
       console.log("[OCR] Repair description:", repairDescription);
     }
 
-    // MATERIALS - extract from table format using direct pattern matching
+    // MATERIALS - extract from table format
     const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
-
-    // Strategy 1: Look for lines with known repair service patterns
-    // Common patterns: "Pickup Swap", "Setup", "Restring", "Fret", "Bridge", etc.
-    const knownServices = ['pickup', 'swap', 'setup', 'restring', 'fret', 'bridge', 'nut', 'tune', 'intonation', 'adjustment', 'cleaning'];
 
     addLog(`Materials: Starting extraction from ${lines.length} lines`);
 
@@ -554,84 +550,84 @@ export const extractInvoiceData = async (
         continue;
       }
 
-      // Check if this line contains a known service
-      const hasKnownService = knownServices.some(service => trimmed.toLowerCase().includes(service));
-      if (hasKnownService) {
-        addLog(`Materials: Found service line: "${trimmed}"`);
-      }
-      if (!hasKnownService) continue;
+      // Skip headers and metadata rows
+      if (/^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention|Subtotal|Item)/i.test(trimmed)) continue;
 
-      // Check if line contains numbers (qty and price)
-      if (!trimmed.match(/\d/)) continue;
+      // Must contain at least one price pattern ($X.XX or number pattern)
+      if (!trimmed.match(/\$[\d.]+|\d+\.\d{2}/)) continue;
 
-      // Skip if it's a header or metadata
-      if (/^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention)/i.test(trimmed)) continue;
+      addLog(`Materials: Processing line: "${trimmed}"`);
 
-      // Try to parse this line as a material
-      // Strategy: Extract all numbers/prices first, then everything else is description
+      // Extract all dollar amounts and plain numbers from the line
+      // Look for patterns: $123.45 or 123.45 or plain numbers
+      const dollarPattern = /\$?([\d.]+)/g;
+      const matches: Array<{ value: number; index: number; isDollar: boolean }> = [];
+      let match;
 
-      let parts: string[] = [];
-
-      if (trimmed.includes('|')) {
-        parts = trimmed.split('|').map(p => p.trim()).filter(p => p);
-      } else {
-        // Split on any whitespace
-        parts = trimmed.split(/\s+/).filter(p => p);
+      while ((match = dollarPattern.exec(trimmed)) !== null) {
+        const value = parseFloat(match[1]);
+        const isDollar = trimmed[match.index - 1] === '$' || trimmed[match.index + match[0].length] === undefined || /[,\s]/.test(trimmed[match.index + match[0].length]);
+        matches.push({ value, index: match.index, isDollar: true });
       }
 
-      addLog(`Materials: Parsing line, split into ${parts.length} parts: ${JSON.stringify(parts)}`);
-
-      // Find all numbers in the line
-      const numbers: number[] = [];
-      const numberIndices: number[] = [];
-
-      for (let i = 0; i < parts.length; i++) {
-        const numMatch = parts[i].match(/^[\d.]+$|^\$[\d.]+$/);
-        if (numMatch) {
-          const num = parseFloat(parts[i].replace('$', ''));
-          numbers.push(num);
-          numberIndices.push(i);
-          addLog(`Materials: Found number ${num} at index ${i}`);
-        }
-      }
-
-      // We need at least 2 numbers (qty and price)
-      if (numbers.length < 2) {
-        addLog(`Materials: Not enough numbers (${numbers.length} < 2)`);
+      if (matches.length < 2) {
+        addLog(`Materials: Not enough prices found (${matches.length} < 2)`);
         continue;
       }
 
-      // Strategy: assume format is "Description ... Qty Price [Cost]"
-      // Last number is usually cost, second-to-last is unit price, third-to-last is qty
-      let qty = 0;
+      // For a typical invoice line: "Description qty $price $total"
+      // We need at least 2 numbers to work with
+      // Strategy: last 2 are usually $unitPrice and $totalPrice
+      //           or second-to-last is qty, last 2 are prices
+
+      const nums = matches.map(m => m.value);
+      let qty = 1; // default quantity
       let price = 0;
 
-      if (numbers.length >= 3) {
-        // Format: Qty Price Cost
-        qty = Math.round(numbers[numbers.length - 3]);
-        price = numbers[numbers.length - 2];
-      } else if (numbers.length === 2) {
-        // Format: Qty Price
-        qty = Math.round(numbers[0]);
-        price = numbers[1];
+      if (nums.length >= 3) {
+        // Try: qty $price $total (most common)
+        // Check if first non-price number is a reasonable qty (1-999)
+        const potentialQty = Math.round(nums[0]);
+        if (potentialQty > 0 && potentialQty < 1000) {
+          qty = potentialQty;
+          price = nums[nums.length - 2]; // second to last is unit price
+        } else {
+          // Fall back to: $price $total with implied qty=1
+          price = nums[nums.length - 2];
+        }
+      } else if (nums.length === 2) {
+        // Only 2 numbers: could be price and total, or qty and price
+        // If first number is 1-999, assume it's qty; otherwise assume prices
+        const first = nums[0];
+        if (first > 0 && first < 1000 && Math.round(first) === first) {
+          qty = Math.round(first);
+          price = nums[1];
+        } else {
+          // Both are prices, qty=1
+          qty = 1;
+          price = nums[0];
+        }
       }
 
-      // Description is everything before the first number
-      const firstNumberIdx = numberIndices[0];
-      const desc = parts.slice(0, firstNumberIdx).join(' ');
+      // Extract description: everything up to the first number in the line
+      const firstNumIndex = trimmed.search(/\d+(?:\.\d+)?/);
+      let desc = trimmed.substring(0, firstNumIndex).trim();
 
-      addLog(`Materials: Extracted - desc='${desc}', qty=${qty}, price=${price}`);
+      // Remove trailing punctuation and symbols
+      desc = desc.replace(/[\-:;|]+\s*$/, '').trim();
 
-      // Add if we found valid quantity and price
+      addLog(`Materials: Parsed - desc='${desc}', qty=${qty}, price=${price}`);
+
+      // Validate and add
       if (qty > 0 && price > 0 && desc && desc.length > 2) {
         materials.push({
           description: desc,
           quantity: qty,
           unitCost: price
         });
-        addLog(`✅ Materials: ADDED material: ${desc} x${qty} @ $${price}`);
+        addLog(`✅ Materials: ADDED - ${desc} × ${qty} @ $${price.toFixed(2)}`);
       } else {
-        addLog(`❌ Materials: FAILED - qty=${qty}, price=${price}, desc='${desc}' (len=${desc.length})`);
+        addLog(`❌ Materials: SKIPPED - qty=${qty}, price=${price}, desc_len=${desc.length}`);
       }
     }
 
