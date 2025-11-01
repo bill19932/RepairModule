@@ -371,8 +371,11 @@ export default function Index() {
         console.error("Download/print error:", err);
       }
 
+      // Calculate next invoice number
+      const nextInvoiceNum = isOldRepairFormat ? lastAssignedInvoiceNumber + 1 : assignedNum + 1;
+
       setFormData({
-        invoiceNumber: String(assignedNum + 1),
+        invoiceNumber: String(nextInvoiceNum),
         dateReceived: formData.dateReceived,
         date: formData.date,
         customerName: "",
@@ -390,6 +393,7 @@ export default function Index() {
       setMaterials([{ description: "", quantity: 1, unitCost: 0 }]);
       setDeliveryMiles(null);
       setDeliveryFee(0);
+      setIsOldRepairFormat(false);
       alert.show("Invoice created and saved! PDF ready to print.", "success");
     } finally {
       setIsSubmitting(false);
