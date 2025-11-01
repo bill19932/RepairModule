@@ -16,6 +16,7 @@ export default function Records() {
   const [dateTo, setDateTo] = useState('');
   const [ownerFilter, setOwnerFilter] = useState<'all' | 'dmc' | 'georges'>('all');
   const [selected, setSelected] = useState<string[]>([]);
+  const [amountReceivedEdits, setAmountReceivedEdits] = useState<{ [key: string]: number | undefined }>({});
 
   useEffect(() => {
     const load = () => setInvoices(getAllInvoicesFromLocalStorage());
