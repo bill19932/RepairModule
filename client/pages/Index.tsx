@@ -67,6 +67,7 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deliveryMiles, setDeliveryMiles] = useState<number | null>(null);
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const alert = useAlert();
 
   // Initialize lastAssignedInvoiceNumber, load invoices, and sync across tabs
