@@ -130,10 +130,18 @@ const extractAddressFromText = (customerSectionText: string): string | undefined
 
 // Helper to find invoice number
 const extractInvoiceNumber = (text: string): string | undefined => {
-  const labelMatch = text.match(/Invoice\s*#\s*([A-Z0-9-]+)/i);
-  if (labelMatch && !labelMatch[1].match(/^\d{5}$/)) {
-    return labelMatch[1];
+  // Pattern 1: "Invoice Number: XXXXX" format (old repair form)
+  const numberLabelMatch = text.match(/Invoice\s+Number\s*:\s*(\d+)/i);
+  if (numberLabelMatch) {
+    return numberLabelMatch[1];
   }
+
+  // Pattern 2: "Invoice #XXXXX" or "Invoice# XXXXX" format
+  const hashMatch = text.match(/Invoice\s*#\s*([A-Z0-9-]+)/i);
+  if (hashMatch && !hashMatch[1].match(/^\d{5}$/)) {
+    return hashMatch[1];
+  }
+
   return undefined;
 };
 
