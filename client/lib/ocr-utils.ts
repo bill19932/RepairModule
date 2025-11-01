@@ -654,10 +654,10 @@ export const extractInvoiceData = async (
     const numberLabelMatch = text.match(/Number\s*:\s*(\d{7,})/i);
     if (numberLabelMatch) phone = numberLabelMatch[1];
 
-    // Pattern 2: "Phone Primary" or similar format
+    // Pattern 2: "Phone Primary" or "Phone-Primary" with dashes or spaces
     if (!phone) {
       const primaryPhoneMatch = customerSection.match(
-        /Phone[-\s]*Primary[\s:\s]*(\d{10,})/i,
+        /Phone[-\s]*Primary\s+(\d{3}[-.]?\d{3}[-.]?\d{4})/i,
       );
       if (primaryPhoneMatch) phone = primaryPhoneMatch[1];
     }
@@ -674,6 +674,10 @@ export const extractInvoiceData = async (
         /(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/,
       );
       if (numberMatch) phone = numberMatch[1];
+    }
+
+    if (phone) {
+      addLog(`Found phone: ${phone}`);
     }
 
     if (phone) {
