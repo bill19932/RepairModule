@@ -410,10 +410,12 @@ export default function Index() {
     const tax = subtotalWithDelivery * 0.06;
     const total = subtotalWithDelivery + tax;
 
-    const georgesUpcharge = formData.isGeorgesMusic ? 1.54 : 1;
-    const georgesSubtotal = subtotal * georgesUpcharge;
-    const georgesTax = georgesSubtotal * 0.06;
-    const georgesTotal = georgesSubtotal + georgesTax;
+    // George's: upcharge applied AFTER tax on your charge
+    const yourTax = subtotal * 0.06;
+    const yourChargeWithTax = subtotal + yourTax;
+    const georgesSubtotal = yourChargeWithTax * 1.54;
+    const georgesTax = 0;  // Tax already included in the 1.54 multiplier
+    const georgesTotal = georgesSubtotal;
 
     return {
       servicesTotal,
@@ -421,6 +423,8 @@ export default function Index() {
       delivery: deliveryAmount,
       tax,
       total,
+      yourTax,
+      yourChargeWithTax,
       georgesSubtotal,
       georgesTax,
       georgesTotal,
