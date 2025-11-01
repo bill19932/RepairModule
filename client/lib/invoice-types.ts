@@ -27,6 +27,7 @@ export interface RepairInvoice {
   hourlyRate: number;
   notes: string;
   isGeorgesMusic: boolean;
+  isNoDeliveryFee?: boolean;
   invoiceHtml: string;
 }
 
