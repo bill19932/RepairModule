@@ -206,20 +206,39 @@ export const extractInvoiceData = async (
     let ocrResult;
     try {
       console.log("Starting OCR with image size:", imageFile.size, "bytes");
-      ocrResult = await Tesseract.recognize(normalizedDataUrl, "eng", {
-        logger: (m: any) => {
-          if (m.status === "recognizing") {
-            console.log("OCR progress:", Math.round(m.progress * 100) + "%");
+
+      const logProgress = (m: any) => {
+        if (m && m.status === "recognizing") {
+          try {
+            console.log("OCR progress:", Math.round((m.progress || 0) * 100) + "%");
+          } catch (e) {
+            // ignore
           }
-        },
-      });
-      console.log("OCR completed successfully");
+        }
+      };
+
+      // Prefer global Tesseract if present (CDN or earlier bundle). Otherwise dynamically create a worker.
+      const globalT = (typeof window !== 'undefined' ? (window as any).Tesseract : undefined);
+      if (globalT && typeof globalT.recognize === 'function') {
+        ocrResult = await globalT.recognize(normalizedDataUrl, 'eng', { logger: logProgress });
+      } else {
+        const { createWorker } = await import('tesseract.js');
+        const worker = createWorker({ logger: logProgress });
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        ocrResult = await worker.recognize(normalizedDataUrl);
+        await worker.terminate();
+      }
+
+      console.log('OCR completed successfully');
     } catch (err) {
-      console.error("Tesseract failed:", err);
-      throw new Error("OCR processing failed: " + (err as Error).message);
+      console.error('Tesseract failed:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error('OCR processing failed: ' + msg);
     }
 
-    const text = ocrResult?.data?.text || "";
+    const text = (ocrResult && (ocrResult.data || (ocrResult as any).text)) ? (ocrResult.data?.text || (ocrResult as any).text || '') : '';
     const extracted: ExtractedInvoiceData = {};
 
     const lines = text.split("\n");
