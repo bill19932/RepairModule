@@ -77,11 +77,6 @@ export default function Index() {
   useEffect(() => {
     const invoices = getAllInvoicesFromLocalStorage();
 
-    // Ensure storage is clean (deduplicated)
-    localStorage.setItem('delco-invoices', JSON.stringify(invoices));
-
-    setSavedInvoices(invoices);
-
     const numericInvoiceNumbers = invoices
       .map((inv) => parseInt(String(inv.invoiceNumber).replace(/[^0-9]/g, ""), 10))
       .filter((n) => !isNaN(n) && n > 0);
