@@ -488,10 +488,11 @@ export const extractInvoiceData = async (
     // REPAIR DESCRIPTION - try "Service:" label first, then fall back to trouble section
     let repairDescription: string | undefined;
 
-    // Pattern 1: "Service: ..." format
-    const serviceLabelMatch = text.match(/Service\s*:\s*([^\n]+)/i);
+    // Pattern 1: "Service: ..." format (old repair form)
+    let serviceLabelMatch = text.match(/Service\s*:\s*([^\n]+)/i);
     if (serviceLabelMatch) {
       repairDescription = serviceLabelMatch[1].trim().replace(/[|\\]+/g, "").trim();
+      console.log("[OCR] Service extracted from label:", repairDescription);
     }
 
     // Pattern 2: from trouble section (George's Music format)
@@ -517,7 +518,10 @@ export const extractInvoiceData = async (
       if (serviceMatch) repairDescription = serviceMatch[1].trim();
     }
 
-    if (repairDescription) extracted.repairDescription = repairDescription;
+    if (repairDescription) {
+      extracted.repairDescription = repairDescription;
+      console.log("[OCR] Repair description:", repairDescription);
+    }
 
     // MATERIALS - extract from table format (Description | Quantity | Unit Price | Cost)
     const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
