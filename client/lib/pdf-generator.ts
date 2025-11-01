@@ -5,7 +5,7 @@ import { RepairInvoice } from './invoice-types';
 export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   const servicesTotal = invoice.materials.reduce((sum, mat) => sum + (mat.quantity * mat.unitCost), 0);
   const subtotal = servicesTotal;
-  const delivery = invoice.isGeorgesMusic ? 0 : (invoice.deliveryFee || 0);
+  const delivery = invoice.isGeorgesMusic || invoice.isNoDeliveryFee ? 0 : (invoice.deliveryFee || 0);
   const subtotalWithDelivery = subtotal + delivery;
   const tax = subtotalWithDelivery * 0.06;
   const customerTotal = subtotalWithDelivery + tax;
