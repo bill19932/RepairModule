@@ -689,6 +689,66 @@ export default function Index() {
                     </div>
                   </div>
 
+                  <div className="mt-3">
+                    <label className="block text-sm font-semibold text-foreground mb-2">📂 Bulk Upload Repairs</label>
+                    <div className="relative border-2 border-dashed border-primary/30 rounded-sm p-4 bg-white">
+                      <input type="file" accept="image/*" multiple onChange={handleBulkUpload} disabled={isProcessingBatch} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      <div className="text-center">
+                        {isProcessingBatch ? (
+                          <p className="text-xs font-semibold text-foreground">Processing images...</p>
+                        ) : (
+                          <>
+                            <p className="text-xs font-semibold text-foreground">Drop or click to select multiple repair images</p>
+                            <p className="text-xs text-muted-foreground">Each image will become a separate repair ticket</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {batchRepairs.length > 0 && (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm font-semibold">Imported Repairs ({batchRepairs.length})</div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => scrollBatch('left')} className="px-2 py-1 bg-gray-100 rounded">◀</button>
+                            <button type="button" onClick={() => scrollBatch('right')} className="px-2 py-1 bg-gray-100 rounded">▶</button>
+                            <button type="button" onClick={saveAllBatch} className="text-xs text-primary font-semibold">Save All</button>
+                          </div>
+                        </div>
+
+                        <div ref={batchContainerRef} className="flex gap-4 overflow-x-auto py-2">
+                          {batchRepairs.map((b, idx) => (
+                            <div key={b.id} className="min-w-[320px] bg-white rounded shadow p-3 border">
+                              <div className="flex items-center gap-3 mb-2">
+                                {b.preview ? <img src={b.preview} alt={b.fileName} className="w-16 h-12 object-cover rounded" /> : <div className="w-16 h-12 bg-gray-100 rounded" />}
+                                <div>
+                                  <div className="text-sm font-semibold">{b.extracted?.customerName || 'Unnamed'}</div>
+                                  <div className="text-xs text-muted-foreground">{b.fileName}</div>
+                                </div>
+                              </div>
+                              <div className="text-xs mb-2 h-12 overflow-hidden">
+                                {b.extracted?.repairDescription || 'No description extracted'}
+                              </div>
+                              <div className="text-xs mb-2">
+                                {b.extracted?.materials?.slice(0,2).map((m: any) => (
+                                  <div key={m.description} className="flex justify-between">
+                                    <div className="truncate">{m.description}</div>
+                                    <div className="ml-2">${(m.unitCost || 0).toFixed(2)}</div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex gap-2 mt-2">
+                                <button type="button" onClick={() => loadBatchIntoForm(b)} className="text-xs px-2 py-1 bg-gray-100 rounded">Load</button>
+                                <button type="button" onClick={() => saveBatchItemAsInvoice(idx)} disabled={b.saved} className="text-xs px-2 py-1 bg-primary text-white rounded">{b.saved ? 'Saved' : 'Save'}</button>
+                                <button type="button" onClick={() => removeBatchItem(idx)} className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded">Remove</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">
