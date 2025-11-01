@@ -797,6 +797,8 @@ export default function Index() {
                     </div>
                   )}
 
+                  {batchRepairs.length === 0 && (
+                    <>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">
@@ -1141,6 +1143,8 @@ export default function Index() {
                       {isSubmitting ? "Printing & Saving..." : "Print & Save"}
                     </button>
                   </div>
+                    </>
+                  )}
                 </form>
               </div>
             </div>
