@@ -469,6 +469,48 @@ export const extractInvoiceData = async (
 
     if (repairDescription) extracted.repairDescription = repairDescription;
 
+    // MATERIALS - extract from table format (Description | Quantity | Unit Price | Cost)
+    const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
+
+    // Look for table rows with format: description | quantity | price | cost
+    // Match patterns like: "Pickup Swap | 2 | $60.00 | $120.00"
+    const materialLines = lines.filter(l =>
+      l.trim() &&
+      !l.match(/Description|Quantity|Unit|Price|Cost|Subtotal|Tax|Total|Invoice|Date|Service|Address|Number|Attention/i) &&
+      l.match(/[\d.]/) // Must contain digits
+    );
+
+    for (const line of materialLines) {
+      // Split by pipe or multiple spaces
+      const parts = line.split(/\s*\|\s*|\s{2,}/).map(p => p.trim()).filter(p => p);
+
+      if (parts.length >= 3) {
+        const description = parts[0];
+        const quantityStr = parts[1];
+        const priceStr = parts[2];
+
+        // Try to parse quantity and price
+        const quantity = parseInt(quantityStr);
+        const priceMatch = priceStr.match(/[\d.]+/);
+        const unitCost = priceMatch ? parseFloat(priceMatch[0]) : 0;
+
+        if (description && !isNaN(quantity) && quantity > 0 && unitCost > 0) {
+          // Avoid extracting metadata rows
+          if (!/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Label|SKU|Invoice|Item)$/i.test(description)) {
+            materials.push({
+              description: description,
+              quantity: quantity,
+              unitCost: unitCost
+            });
+          }
+        }
+      }
+    }
+
+    if (materials.length > 0) {
+      extracted.materials = materials;
+    }
+
     // Instruments
     let instrumentType = "Guitar";
     let instrumentDescription = "";
