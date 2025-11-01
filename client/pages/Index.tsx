@@ -226,7 +226,10 @@ export default function Index() {
       }
 
       if (extracted.materials && extracted.materials.length > 0) {
+        console.log("[OCR HANDLER] Setting materials:", extracted.materials);
         setMaterials(extracted.materials);
+      } else {
+        console.log("[OCR HANDLER] No materials extracted:", extracted.materials);
       }
 
       if (extracted.customerAddress) {
