@@ -605,15 +605,16 @@ export const extractInvoiceData = async (
         price = priceMatches[0];
       }
 
-      // Extract description: remove numbers and prices from the beginning
-      let desc = trimmed;
-      // Remove leading numbers/quantities
-      desc = desc.replace(/^\s*(\d+\s+)?/, '').trim();
-      // Remove trailing prices and numbers
-      desc = desc.replace(/\s*[\d.,\-\$\s]+$/, '').trim();
-      // Clean up punctuation
-      desc = desc.replace(/[\-:;|]+\s*$/, '').trim();
+      // Extract description: keep everything except numbers and prices
+      // Remove dollar signs and amounts from the end
+      let desc = trimmed.replace(/\$[\d.]+/g, '').trim();
+      // Remove plain numbers that are at word boundaries (but keep those within words like "4-point")
+      desc = desc.replace(/\s+(\d+)(?=\s|$)/g, '').trim();
+      // Remove extra whitespace
+      desc = desc.replace(/\s+/g, ' ').trim();
+      // Clean up common punctuation at boundaries
       desc = desc.replace(/^[\-:;|]+\s*/, '').trim();
+      desc = desc.replace(/\s*[\-:;|]+$/, '').trim();
 
       addLog(`Materials: Parsed - qty=${qty}, price=$${price.toFixed(2)}, desc='${desc}'`);
 
