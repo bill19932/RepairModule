@@ -207,6 +207,7 @@ export default function Records() {
                   const yourTotal = (servicesTotal) * 1.06;
                   const georgesTotal = (servicesTotal * 1.54) * 1.06;
                   const displayTotal = inv.isGeorgesMusic ? georgesTotal : yourTotal;
+                  const amountReceivedValue = amountReceivedEdits[inv.invoiceNumber] !== undefined ? amountReceivedEdits[inv.invoiceNumber] : inv.amountReceived;
 
                   return (
                     <tr key={`${inv.invoiceNumber}-${inv.dateReceived}`} className={`border-b border-border hover:bg-gray-50 transition-colors ${inv.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
@@ -232,6 +233,17 @@ export default function Records() {
                       <td className="py-3 px-3 text-foreground text-xs">{inv.repairDescription.substring(0,40)}{inv.repairDescription.length>40?'...':''}</td>
                       <td className="py-3 px-3 text-center text-xs font-semibold">{inv.isGeorgesMusic ? <span className="bg-blue-200 text-blue-900 px-2 py-1 rounded">Yes</span> : <span className="text-muted-foreground">—</span>}</td>
                       <td className="py-3 px-3 text-right font-bold text-primary">${displayTotal.toFixed(2)}</td>
+                      <td className="py-3 px-3 text-right">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={amountReceivedValue !== undefined ? amountReceivedValue : ''}
+                          onChange={(e) => handleAmountReceivedChange(inv.invoiceNumber, e.target.value)}
+                          placeholder={`$${displayTotal.toFixed(2)}`}
+                          className="input-modern text-sm w-full text-right"
+                        />
+                      </td>
                       <td className="py-3 px-3 text-center">
                         <button onClick={() => handleDelete(inv.invoiceNumber)} className="text-destructive hover:text-destructive/80 transition-colors">
                           <Trash2 size={16} />
@@ -241,6 +253,29 @@ export default function Records() {
                   );
                 })}
               </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-primary bg-gray-50 font-bold">
+                  <td colSpan={8} className="py-3 px-3 text-right">
+                    Total:
+                  </td>
+                  <td className="py-3 px-3 text-right text-primary">
+                    $
+                    {filtered
+                      .reduce((sum, inv) => {
+                        const servicesTotal = inv.materials.reduce(
+                          (mat_sum, mat) => mat_sum + mat.quantity * mat.unitCost,
+                          0
+                        );
+                        const yourTotal = servicesTotal * 1.06;
+                        const georgesTotal = servicesTotal * 1.54 * 1.06;
+                        const displayTotal = inv.isGeorgesMusic ? georgesTotal : yourTotal;
+                        return sum + displayTotal;
+                      }, 0)
+                      .toFixed(2)}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
