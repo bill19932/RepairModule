@@ -211,8 +211,8 @@ export default function Records() {
 
                   return (
                     <tr key={`${inv.invoiceNumber}-${inv.dateReceived}`} className={`border-b border-border hover:bg-gray-50 transition-colors ${inv.isGeorgesMusic ? 'bg-blue-50' : ''}`}>
-                      <td className="py-3 px-3"><input type="checkbox" checked={selected.includes(inv.invoiceNumber)} onChange={() => toggleSelect(inv.invoiceNumber)} /></td>
-                      <td className="py-3 px-3 font-semibold text-primary">
+                      <td className="py-1.5 px-2"><input type="checkbox" checked={selected.includes(inv.invoiceNumber)} onChange={() => toggleSelect(inv.invoiceNumber)} /></td>
+                      <td className="py-1.5 px-2 font-semibold text-primary whitespace-nowrap">
                         <button onClick={() => {
                           const html = inv.invoiceHtml || generateInvoicePDF(inv);
                           const w = window.open('', '_blank');
@@ -227,13 +227,13 @@ export default function Records() {
                           {inv.invoiceNumber}
                         </button>
                       </td>
-                      <td className="py-3 px-3 text-muted-foreground">{new Date(inv.dateReceived).toLocaleDateString()}</td>
-                      <td className="py-3 px-3 text-foreground">{inv.customerName}</td>
-                      <td className="py-3 px-3 text-foreground">{inv.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join(', ')}</td>
-                      <td className="py-3 px-3 text-foreground text-xs">{inv.repairDescription.substring(0,40)}{inv.repairDescription.length>40?'...':''}</td>
-                      <td className="py-3 px-3 text-center text-xs font-semibold">{inv.isGeorgesMusic ? <span className="bg-blue-200 text-blue-900 px-2 py-1 rounded">Yes</span> : <span className="text-muted-foreground">—</span>}</td>
-                      <td className="py-3 px-3 text-right font-bold text-primary">${displayTotal.toFixed(2)}</td>
-                      <td className="py-3 px-3 text-right">
+                      <td className="py-1.5 px-2 text-muted-foreground whitespace-nowrap">{new Date(inv.dateReceived).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })}</td>
+                      <td className="py-1.5 px-2 text-foreground whitespace-nowrap">{inv.customerName}</td>
+                      <td className="py-1.5 px-2 text-foreground">{inv.instruments.map(i => `${i.type}${i.description ? ' (' + i.description + ')' : ''}`).join(', ')}</td>
+                      <td className="py-1.5 px-2 text-foreground">{inv.repairDescription.substring(0,30)}{inv.repairDescription.length>30?'...':''}</td>
+                      <td className="py-1.5 px-2 text-center font-semibold whitespace-nowrap">{inv.isGeorgesMusic ? <span className="bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded text-xs">GM</span> : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="py-1.5 px-2 text-right font-bold text-primary whitespace-nowrap">${displayTotal.toFixed(2)}</td>
+                      <td className="py-1.5 px-2 text-right">
                         <input
                           type="number"
                           step="0.01"
@@ -241,12 +241,12 @@ export default function Records() {
                           value={amountReceivedValue !== undefined ? amountReceivedValue : ''}
                           onChange={(e) => handleAmountReceivedChange(inv.invoiceNumber, e.target.value)}
                           placeholder={`$${displayTotal.toFixed(2)}`}
-                          className="input-modern text-sm w-full text-right"
+                          className="input-modern text-xs w-full text-right h-7"
                         />
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-1.5 px-2 text-center">
                         <button onClick={() => handleDelete(inv.invoiceNumber)} className="text-destructive hover:text-destructive/80 transition-colors">
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                         </button>
                       </td>
                     </tr>
@@ -254,11 +254,11 @@ export default function Records() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-primary bg-gray-50 font-bold">
-                  <td colSpan={8} className="py-3 px-3 text-right">
+                <tr className="border-t-2 border-primary bg-gray-50 font-bold text-xs">
+                  <td colSpan={8} className="py-2 px-2 text-right">
                     Total:
                   </td>
-                  <td className="py-3 px-3 text-right text-primary">
+                  <td className="py-2 px-2 text-right text-primary whitespace-nowrap">
                     $
                     {filtered
                       .reduce((sum, inv) => {
