@@ -88,8 +88,10 @@ export const downloadCSV = (invoices: RepairInvoice[]) => {
 
 export const addInvoiceToLocalStorage = (invoice: RepairInvoice) => {
   const invoices: RepairInvoice[] = JSON.parse(localStorage.getItem('delco-invoices') || '[]');
-  invoices.push(invoice);
-  localStorage.setItem('delco-invoices', JSON.stringify(invoices));
+  // Replace any existing invoice with same invoiceNumber
+  const filtered = invoices.filter(i => String(i.invoiceNumber) !== String(invoice.invoiceNumber));
+  filtered.push(invoice);
+  localStorage.setItem('delco-invoices', JSON.stringify(filtered));
 };
 
 export const getAllInvoicesFromLocalStorage = (): RepairInvoice[] => {
