@@ -1,4 +1,3 @@
-import Tesseract from "tesseract.js";
 import heic2any from "heic2any";
 
 export interface ExtractedInvoiceData {
@@ -52,44 +51,35 @@ const convertHeicToJpeg = async (file: File): Promise<File> => {
 // Helper to find customer address (not store address)
 // Now receives the customerSection text already isolated
 const extractAddressFromText = (customerSectionText: string): string | undefined => {
-  // For George's Music forms, the customer address is in the CUSTOMER INFORMATION section
-  // Address format: street with apt, city name, state/zip on separate lines
-
   const lines = customerSectionText.split("\n");
-  const searchStart = 0; // We're already in the customer section, so start from beginning
 
-  // Look for street address in the customer section
-  for (let i = searchStart; i < lines.length; i++) {
+  for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
 
-    // Skip store address indicators
+    // Skip obvious store lines
     if (/Woodland|1025\s+E|George's\s+Music|Springfield/i.test(trimmed)) {
       continue;
     }
 
     // Match street address: number + street name/type + optional apt
-    if (/^\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl)/i.test(trimmed)) {
+    if (/^\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl|Terrace|Terr)*/i.test(trimmed)) {
       const addressParts: string[] = [trimmed];
       let nextIdx = i + 1;
 
-      // Collect the next 2-3 lines that look like city/state/zip
       let cityFound = false;
       let stateZipFound = false;
 
-      while (nextIdx < lines.length && (addressParts.length < 4)) {
+      while (nextIdx < lines.length && addressParts.length < 4) {
         const nextLine = lines[nextIdx].trim();
-
         if (!nextLine) {
           nextIdx++;
           continue;
         }
 
-        // Stop if we hit labels like "Phone", "Email", "Signature", etc
         if (/Phone|Email|Signature|Primary|Second|Follow|Picked|Technician/i.test(nextLine)) {
           break;
         }
 
-        // Try to match city name (capital letters, no numbers, 1-3 words)
         if (!cityFound && /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:\s+[A-Z][a-z]+)?$/.test(nextLine) && !/PA|Pennsylvania|State|Zip/i.test(nextLine)) {
           addressParts.push(nextLine);
           cityFound = true;
@@ -97,10 +87,8 @@ const extractAddressFromText = (customerSectionText: string): string | undefined
           continue;
         }
 
-        // Try to match state and/or zip code
-        if (!stateZipFound && (/\bPA\b|\bPennsylvania\b/i.test(nextLine) || /\d{5}/.test(nextLine))) {
-          // Extract state and zip from this line, being careful to only capture valid values
-          const cleanLine = nextLine.replace(/Pc(?!\w)/gi, "").trim(); // Remove OCR artifact "Pc" that might appear before PA
+        if (!stateZipFound && ( /\bPA\b|\bPennsylvania\b/i.test(nextLine) || /\d{5}/.test(nextLine) )) {
+          const cleanLine = nextLine.replace(/Pc(?!\w)/gi, "").trim();
           const stateMatch = cleanLine.match(/\bPA\b/i);
           const zipMatch = cleanLine.match(/\b(\d{5})\b/);
 
@@ -108,38 +96,25 @@ const extractAddressFromText = (customerSectionText: string): string | undefined
             const stateStr = stateMatch ? "PA" : "";
             const zipStr = zipMatch ? zipMatch[1] : "";
             const stateZipStr = [stateStr, zipStr].filter(Boolean).join(" ");
-            if (stateZipStr) {
-              addressParts.push(stateZipStr);
-            }
+            if (stateZipStr) addressParts.push(stateZipStr);
             stateZipFound = true;
           }
           nextIdx++;
           continue;
         }
 
-        // Stop collecting if we see labels or lines that don't look like address parts
         if (/Phone|Email|Signature|Primary|Second|Follow|Picked|Technician|[A-Z]{2,}\s*(?:\d{5})?$/.test(nextLine) && stateZipFound) {
           break;
         }
 
-        // If we've collected address parts and hit something unexpected, stop
-        if (addressParts.length >= 2) {
-          break;
-        }
-
+        if (addressParts.length >= 2) break;
         nextIdx++;
       }
 
-      // Construct full address
       let fullAddress = addressParts.join(", ");
-
-      // Final cleanup: remove any remaining OCR artifacts like "Pc"
       fullAddress = fullAddress.replace(/\bPc\b/g, "").replace(/,\s*,/g, ",").trim();
 
-      // Validate it looks like an address
-      if (!/^\d+\s+\d+\s+\d+|Quantity|Cost|Price|Description/i.test(fullAddress) && addressParts.length >= 2) {
-        return fullAddress;
-      }
+      if (addressParts.length >= 2) return fullAddress;
     }
   }
 
@@ -148,18 +123,10 @@ const extractAddressFromText = (customerSectionText: string): string | undefined
 
 // Helper to find invoice number
 const extractInvoiceNumber = (text: string): string | undefined => {
-  // Only extract invoice number if it's explicitly labeled "Invoice" or "Invoice #"
-  // Don't extract random 5-digit numbers as they might be zip codes
-
-  // Look for explicit "Invoice #" or "Invoice Number" format
-  const labelMatch = text.match(/Invoice\s*#\s*([A-Z0-9]+)/i);
+  const labelMatch = text.match(/Invoice\s*#\s*([A-Z0-9-]+)/i);
   if (labelMatch && !labelMatch[1].match(/^\d{5}$/)) {
-    // Don't return if it's just 5 digits (likely a zip code)
     return labelMatch[1];
   }
-
-  // For George's Music forms, invoice number might not be present
-  // Return undefined if we can't confidently extract it
   return undefined;
 };
 
@@ -167,7 +134,6 @@ export const extractInvoiceData = async (
   imageFile: File,
 ): Promise<ExtractedInvoiceData> => {
   try {
-    // Convert HEIC/HEIF to JPEG if needed
     let processFile = imageFile;
     if (imageFile.type.includes("heic") || imageFile.type.includes("heif")) {
       console.log("Converting HEIC/HEIF to JPEG...");
@@ -182,17 +148,8 @@ export const extractInvoiceData = async (
       img.crossOrigin = "anonymous";
       img.onload = () => resolve();
       img.onerror = (e) => {
-        console.error(
-          "Image load failed. File size:",
-          processFile.size,
-          "Type:",
-          processFile.type,
-        );
-        reject(
-          new Error(
-            "Image failed to load - file may be corrupted or invalid format",
-          ),
-        );
+        console.error("Image load failed. File size:", processFile.size, "Type:", processFile.type);
+        reject(new Error("Image failed to load - file may be corrupted or invalid format"));
       };
       img.src = dataUrl;
     });
@@ -229,11 +186,7 @@ export const extractInvoiceData = async (
           ctx.drawImage(img, 0, 0, w, h);
           resolve(canvas.toDataURL("image/png"));
         } catch (err) {
-          reject(
-            new Error(
-              "Failed to process image canvas: " + (err as Error).message,
-            ),
-          );
+          reject(new Error("Failed to process image canvas: " + (err as Error).message));
         }
       };
 
@@ -264,11 +217,9 @@ export const extractInvoiceData = async (
     const text = ocrResult?.data?.text || "";
     const extracted: ExtractedInvoiceData = {};
 
-    // For George's Music forms, divide the text into sections based on form layout
-    // This helps extract data from the correct locations
     const lines = text.split("\n");
 
-    // Find key section markers to divide the form
+    // Find key markers
     let troubleReportedIdx = -1;
     let customerInfoIdx = -1;
     let itemDescIdx = -1;
@@ -279,143 +230,138 @@ export const extractInvoiceData = async (
       if (/Item\s+Description/i.test(lines[i])) itemDescIdx = i;
     }
 
-    // Define sections
     const topSection = troubleReportedIdx > 0 ? lines.slice(0, troubleReportedIdx).join("\n") : text.substring(0, text.indexOf("Trouble") > 0 ? text.indexOf("Trouble") : text.length);
     const troubleSection = troubleReportedIdx > 0 ? lines.slice(troubleReportedIdx, customerInfoIdx > troubleReportedIdx ? customerInfoIdx : lines.length).join("\n") : "";
     const customerSection = customerInfoIdx > 0 ? lines.slice(customerInfoIdx).join("\n") : text;
 
-    // Invoice Number - with full sweep logic
+    // Invoice Number
     const invoiceNum = extractInvoiceNumber(text);
-    if (invoiceNum) {
-      (extracted as any).invoiceNumber = invoiceNum;
-    }
+    if (invoiceNum) extracted.invoiceNumber = invoiceNum;
 
-    // Date Received - ALWAYS appears just ABOVE "Service Location"
+    // DATE - prefer date directly above or on the same line as "Service Location"
+    const dateRegex = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/g;
     let dateReceived: string | undefined;
 
-    // Strategy: Date is ON THE SAME LINE as "Service Location"
-    const svcLocIdx = text.indexOf("Service Location");
-    if (svcLocIdx > -1) {
-      // Get the line containing "Service Location"
-      const lineStart = Math.max(0, text.lastIndexOf("\n", svcLocIdx) + 1);
-      const lineEnd = text.indexOf("\n", svcLocIdx);
-      const svcLine = text.substring(lineStart, lineEnd > -1 ? lineEnd : svcLocIdx + 100);
-
-      // Extract first date from this line
-      const dateMatch = svcLine.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (dateMatch) {
-        dateReceived = `${dateMatch[3]}-${dateMatch[1].padStart(2, "0")}-${dateMatch[2].padStart(2, "0")}`;
+    const svcLineIndex = lines.findIndex(l => /Service\s+Location/i.test(l));
+    if (svcLineIndex > -1) {
+      // search the same line and up to 5 lines above for a date, nearest first
+      for (let offset = 0; offset <= 5; offset++) {
+        const idx = svcLineIndex - offset;
+        if (idx < 0) break;
+        const line = lines[idx];
+        const m = line.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+        if (m) {
+          const month = m[1].padStart(2, "0");
+          const day = m[2].padStart(2, "0");
+          const year = m[3].length === 2 ? ("20" + m[3]) : m[3];
+          dateReceived = `${year}-${month}-${day}`;
+          break;
+        }
       }
     }
 
-    if (dateReceived) {
-      extracted.dateReceived = dateReceived;
+    // Fallback: find earliest date in the top section (above Trouble Reported)
+    if (!dateReceived) {
+      const topLines = topSection.split("\n");
+      for (let i = 0; i < topLines.length; i++) {
+        const m = topLines[i].match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+        if (m) {
+          const month = m[1].padStart(2, "0");
+          const day = m[2].padStart(2, "0");
+          const year = m[3].length === 2 ? ("20" + m[3]) : m[3];
+          dateReceived = `${year}-${month}-${day}`;
+          break;
+        }
+      }
     }
 
-    // Customer Name - extract from CUSTOMER SECTION only
+    if (dateReceived) extracted.dateReceived = dateReceived;
+
+    // CUSTOMER NAME - robust extraction from CUSTOMER INFORMATION
     let customerName: string | undefined;
 
-    // Pattern 1: "Attention" label (standard invoice format)
+    // Pattern 1: 'Attention' label inside customer section
     const attentionMatch = customerSection.match(/Attention\s+([^\n\r]+?)(?:\n|Email|$)/i);
-    if (attentionMatch) {
-      customerName = attentionMatch[1].trim();
-    }
+    if (attentionMatch) customerName = attentionMatch[1].trim();
 
-    // Pattern 2: Find "CUSTOMER INFORMATION" - the FIRST non-empty line after it is the customer name
-    if (!customerName) {
-      const custInfoIdx = text.indexOf("CUSTOMER INFORMATION");
-      console.log("[OCR] Looking for CUSTOMER INFORMATION at index:", custInfoIdx);
-      if (custInfoIdx > -1) {
-        // Get everything after CUSTOMER INFORMATION
-        const afterMarker = text.substring(custInfoIdx + "CUSTOMER INFORMATION".length);
-        const lines = afterMarker.split("\n");
-        console.log("[OCR] Lines after CUSTOMER INFORMATION:", lines.slice(0, 5).map(l => `"${l}"`));
+    // Pattern 2: look after CUSTOMER INFORMATION marker and pick first plausible name line
+    if (!customerName && customerInfoIdx > -1) {
+      const afterMarkerLines = lines.slice(customerInfoIdx + 1, customerInfoIdx + 8);
 
-        // Get the first non-empty line after CUSTOMER INFORMATION
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const trimmed = line.trim();
-          console.log(`[OCR] Line ${i}: "${trimmed}"`);
-          if (trimmed && trimmed.length > 0) {
-            // This is the first non-empty line - it should be the customer name
-            // Clean up any OCR artifacts but keep the name intact
-            customerName = trimmed.replace(/[\|\[\]]+/g, "").trim();
-            console.log("[OCR] Selected customer name:", customerName);
-            // Stop at first non-empty line
-            break;
-          }
+      const isLikelyName = (s: string) => {
+        if (!s) return false;
+        // remove stray punctuation
+        const clean = s.replace(/[^A-Za-z\s'\-]/g, "").trim();
+        if (!clean) return false;
+        const parts = clean.split(/\s+/).filter(Boolean);
+        if (parts.length < 2) return false;
+        // require each part to have at least 2 letters
+        if (parts.some(p => p.replace(/[\-' ]/g, "").length < 2)) return false;
+        // avoid lines that are all uppercase codes or contain digits
+        if (/\d/.test(s)) return false;
+        if (/^[A-Z0-9]{3,}$/.test(s.replace(/\s+/g, ""))) return false;
+        return true;
+      };
+
+      for (const l of afterMarkerLines) {
+        const t = l.trim();
+        if (!t) continue;
+        // Some OCR outputs include lines like 'SF8855' above name — skip those that include digits or are short
+        if (isLikelyName(t)) {
+          customerName = t.replace(/[|\[\]]+/g, "").trim();
+          break;
         }
       }
     }
 
-    if (customerName) {
-      extracted.customerName = customerName;
+    // Fallback: try to find a likely name near the bottom of the page (before Phone/Email labels)
+    if (!customerName) {
+      // search for lines that look like names within last 10 lines
+      const tail = lines.slice(Math.max(0, lines.length - 12));
+      for (const l of tail) {
+        const t = l.trim();
+        if (!t) continue;
+        if (t.length > 2 && /^[A-Za-z\s'\-]+$/.test(t) && t.split(/\s+/).length >= 2) {
+          customerName = t.replace(/[|\[\]]+/g, "").trim();
+          break;
+        }
+      }
     }
 
-    // Email - look for email address (find all, prefer customer email over store email)
+    if (customerName) extracted.customerName = customerName;
+
+    // EMAIL - find all emails and prefer non-store ones
     let selectedEmail: string | undefined;
-
-    // Find all emails in the entire text (very permissive regex)
-    const allEmails = Array.from(text.matchAll(
-      /([a-zA-Z0-9][a-zA-Z0-9._%+\-]*@[a-zA-Z0-9][a-zA-Z0-9.\-]*\.[a-zA-Z]{2,})/gi,
-    ));
-
-    console.log("[OCR] Found emails:", allEmails.map(m => m[1]));
+    const allEmails = Array.from(text.matchAll(/([a-zA-Z0-9][a-zA-Z0-9._%+\-]*@[a-zA-Z0-9][a-zA-Z0-9.\-]*\.[a-zA-Z]{2,})/gi));
 
     if (allEmails.length > 0) {
-      // Strategy: Look for customer email by skipping known store domains
-      for (const emailMatch of allEmails) {
-        const email = emailMatch[1];
-        console.log("[OCR] Checking email:", email);
-        // Skip if it's clearly a store email
-        if (email.toLowerCase().includes("springfield") || email.toLowerCase().includes("george")) {
-          console.log("[OCR] Skipping store email:", email);
-          continue;
-        }
-        // Use first non-store email
-        console.log("[OCR] Using customer email:", email);
+      for (const m of allEmails) {
+        const email = m[1];
+        if (email.toLowerCase().includes("springfield") || email.toLowerCase().includes("george") || email.toLowerCase().includes("georges")) continue;
         selectedEmail = email;
         break;
       }
-
-      // If no customer email found (all are store emails), use any email
-      if (!selectedEmail && allEmails.length > 0) {
-        console.log("[OCR] Using fallback email (all were store):", allEmails[0][1]);
-        selectedEmail = allEmails[0][1];
-      }
+      if (!selectedEmail) selectedEmail = allEmails[0][1];
     }
 
-    if (selectedEmail) {
-      extracted.customerEmail = selectedEmail.trim();
-    }
+    if (selectedEmail) extracted.customerEmail = selectedEmail.trim();
 
-    // Phone Number - look for various phone labels in CUSTOMER SECTION
+    // PHONE - look specifically in customer section for primary phone, then fallback
     let phone: string | undefined;
+    const primaryPhoneMatch = customerSection.match(/Phone[-\s]*Primary[\s:\s]*(\d{10,})/i);
+    if (primaryPhoneMatch) phone = primaryPhoneMatch[1];
 
-    // Pattern 1: "Phone-Primary" or "Phone" label followed by number
-    const primaryPhoneMatch = customerSection.match(/Phone[-\s]*Primary[\s:]*(\d{10,})/i);
-    if (primaryPhoneMatch) {
-      phone = primaryPhoneMatch[1];
-    }
-
-    // Pattern 2: "Phone" or "Number" label
     if (!phone) {
       const phoneMatch = customerSection.match(/(?:Phone|Number)\s*[:\s]*(\d{3}[-.]?\d{3}[-.]?\d{4})/i);
-      if (phoneMatch) {
-        phone = phoneMatch[1];
-      }
+      if (phoneMatch) phone = phoneMatch[1];
     }
 
-    // Pattern 3: Standalone 10-digit number (as fallback)
     if (!phone) {
       const numberMatch = customerSection.match(/(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/);
-      if (numberMatch) {
-        phone = numberMatch[1];
-      }
+      if (numberMatch) phone = numberMatch[1];
     }
 
     if (phone) {
-      // Format as (XXX) XXX-XXXX if not already formatted
       const cleanPhone = phone.replace(/[-.\s]/g, "");
       if (cleanPhone.match(/^\d{10}$/)) {
         phone = `(${cleanPhone.slice(0, 3)}) ${cleanPhone.slice(3, 6)}-${cleanPhone.slice(6)}`;
@@ -423,129 +369,62 @@ export const extractInvoiceData = async (
       extracted.customerPhone = phone;
     }
 
-    // Address - extract from CUSTOMER SECTION only
+    // ADDRESS
     const address = extractAddressFromText(customerSection);
-    if (address) {
-      extracted.customerAddress = address;
-    }
+    if (address) extracted.customerAddress = address;
 
-    // Repair Description - extract from TROUBLE SECTION only
+    // REPAIR DESCRIPTION - from trouble section
     let repairDescription: string | undefined;
-
-    // Find the "Trouble Reported:" label and extract the multi-line text that follows it
-    // The pattern should capture text until we hit "Special Instructions" or "Technician Comments"
-    const troubleMatch = troubleSection.match(/Trouble\s+Reported\s*:?\s*([^]*?)(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i);
-
+    const troubleMatch = troubleSection.match(/Trouble\s+Reported\s*:?[\s\S]*?(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i);
     if (troubleMatch) {
-      let troubleText = troubleMatch[1].trim();
-
-      // Remove leading/trailing punctuation and special characters
+      let troubleText = troubleMatch[0];
+      troubleText = troubleText.replace(/Trouble\s+Reported\s*:?/i, "").trim();
       troubleText = troubleText.replace(/^[;:|\/\s]+/, "").replace(/[;:|\/\s]+$/, "").trim();
 
-      // Filter out lines that are just separators or labels
-      const lines = troubleText
-        .split("\n")
-        .map(line => line.trim())
-        .filter(line => {
-          // Remove empty lines, separator lines, and lines that are just numbers/dashes
-          if (!line || /^-+$/.test(line) || /^[0-9]+$/.test(line)) return false;
-          // Remove lines that look like form labels or UI elements
-          if (/Service|Return|RETURN|ORDER|George|Music/i.test(line)) return false;
-          return true;
-        });
-
-      if (lines.length > 0) {
-        troubleText = lines.join(" ");
-
-        // Clean up the joined text - remove extra spaces and fix common OCR issues
-        troubleText = troubleText
-          .replace(/\s+/g, " ") // normalize whitespace
-          .replace(/\s([.,;!?])/g, "$1") // remove space before punctuation
-          .trim();
-
-        if (troubleText.length > 5) {
-          repairDescription = troubleText;
-        }
+      const linesArr = troubleText.split(/\n/).map(l => l.trim()).filter(l => l && !/^-+$/.test(l) && !/^\d+$/.test(l));
+      const filtered = linesArr.filter(l => !/Service|Return|ORDER|George|Music/i.test(l));
+      if (filtered.length > 0) {
+        let joined = filtered.join(" ");
+        joined = joined.replace(/\s+/g, " ").replace(/\s([.,;!?])/g, "$1").trim();
+        if (joined.length > 3) repairDescription = joined;
       }
     }
 
-    // Pattern 2: "Service" label (standard invoice format) - fallback
     if (!repairDescription) {
-      const serviceMatch = text.match(/Service\s+([^\n\r]+?)(?:\n|Invoice|$)/i);
-      if (serviceMatch) {
-        repairDescription = serviceMatch[1].trim();
-      }
+      const serviceMatch = text.match(/Service\s+([\s\S]{10,200}?)(?:\n|Invoice|$)/i);
+      if (serviceMatch) repairDescription = serviceMatch[1].trim();
     }
 
-    if (repairDescription) {
-      extracted.repairDescription = repairDescription;
-    }
+    if (repairDescription) extracted.repairDescription = repairDescription;
 
-    // For George's Music forms, we typically don't extract materials/services from the table
-    // The form shows empty service rows with just "$0.00", which we should skip
-    // Only extract if there are clearly meaningful line items with descriptions and amounts
-
-    const materials: Array<{
-      description: string;
-      quantity: number;
-      unitCost: number;
-    }> = [];
-
-    // Skip materials extraction for now for George's Music forms
-    // These forms usually have empty service rows that shouldn't be extracted
-    // If needed, add explicit extraction logic here in the future
-
-    // Don't set extracted.materials - leave it undefined so form starts empty
-
-    // Extract instrument details
+    // Instruments
     let instrumentType = "Guitar";
     let instrumentDescription = "";
-
-    // Pattern 1: Look for "Item Description" field in TOP SECTION (George's Music forms)
-    // This should capture the full description like "Fernandes Ravelle deluxe"
     const itemDescMatch = topSection.match(/Item\s+Description[\s:]*([^\n]+?)(?:\n|Qty|Quantity|SKU|Serial|Condition|$)/i);
     if (itemDescMatch) {
       let desc = itemDescMatch[1].trim();
-
-      // Clean up OCR artifacts: remove leading symbols, extra spaces, and trailing noise
-      desc = desc.replace(/^[=\-:|\/\s]+/, "").trim(); // Remove leading artifacts
-      desc = desc.replace(/[\s\-:|\/\[\]nt]+$/, "").trim(); // Remove trailing artifacts like "nt]"
-      desc = desc.replace(/\s+ee\s+/g, " ").trim(); // Remove "ee" OCR errors
-      desc = desc.replace(/\s+/g, " ").trim(); // Normalize whitespace
-
-      // Fix common OCR misreadings (e.g., "Fernandez" -> "Fernandes")
+      desc = desc.replace(/^[=\-:|\/\s]+/, "").trim();
+      desc = desc.replace(/[\s\-:|\/\[\]nt]+$/, "").trim();
+      desc = desc.replace(/\s+ee\s+/g, " ").trim();
+      desc = desc.replace(/\s+/g, " ").trim();
       desc = desc.replace(/Fernandez/g, "Fernandes");
+      if (desc.length > 0) instrumentDescription = desc;
 
-      if (desc.length > 0) {
-        instrumentDescription = desc;
-      }
-
-      // Also try to extract serial number from TOP SECTION and append if found
       const serialMatch = topSection.match(/Serial\s*#[\s:]*([A-Z0-9]+)/i);
       if (serialMatch && instrumentDescription.length < 80) {
         instrumentDescription += " (Serial: " + serialMatch[1] + ")";
       }
     }
 
-    // Pattern 2: Extract instrument type from instrument description or repair description
     const fullText = (instrumentDescription + " " + (extracted.repairDescription || "")).toLowerCase();
-
     if (fullText.includes("guitar")) instrumentType = "Guitar";
     else if (fullText.includes("bass")) instrumentType = "Bass";
     else if (fullText.includes("violin")) instrumentType = "Violin";
     else if (fullText.includes("cello")) instrumentType = "Cello";
     else if (fullText.includes("fernandes") || fullText.includes("ravelle")) instrumentType = "Guitar";
-    else if (fullText.includes("setup")) instrumentType = "Guitar";
-    else instrumentType = "Guitar";
 
-    // Use instrument description from form, or repair description as fallback
     const finalInstrumentDesc = instrumentDescription || extracted.repairDescription || "Repair";
-
-    if (finalInstrumentDesc) {
-      extracted.instruments = [
-        { type: instrumentType, description: finalInstrumentDesc },
-      ];
-    }
+    if (finalInstrumentDesc) extracted.instruments = [{ type: instrumentType, description: finalInstrumentDesc }];
 
     return extracted;
   } catch (error) {
@@ -553,19 +432,13 @@ export const extractInvoiceData = async (
     console.error("OCR Error:", errorMsg);
 
     if (errorMsg.includes("Image failed to load")) {
-      throw new Error(
-        "Failed to load image. Please ensure the file is a valid image (JPG, PNG, etc.).",
-      );
+      throw new Error("Failed to load image. Please ensure the file is a valid image (JPG, PNG, etc.).");
     } else if (errorMsg.includes("timeout")) {
-      throw new Error(
-        "Image processing took too long. Please try with a different image.",
-      );
+      throw new Error("Image processing took too long. Please try with a different image.");
     } else if (errorMsg.includes("canvas")) {
       throw new Error("Failed to process image. The file may be corrupted.");
     } else if (errorMsg.includes("OCR")) {
-      throw new Error(
-        "Text recognition failed. Please try with a clearer image.",
-      );
+      throw new Error("Text recognition failed. Please try with a clearer image.");
     } else {
       throw new Error("Failed to extract invoice data: " + errorMsg);
     }
