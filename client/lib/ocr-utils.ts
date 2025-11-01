@@ -629,18 +629,26 @@ export const extractInvoiceData = async (
       }
 
       // Extract description: remove only prices and quantity from the END of the line
-      // Find where the numbers/prices start (from the right)
       let desc = trimmed;
 
       // Remove all dollar amounts first
       desc = desc.replace(/\$[\d.]+/g, '').trim();
 
       // Remove quantity and other numbers from the end of the line (right side)
-      // Keep removing trailing numbers/whitespace until we hit a non-number
       desc = desc.replace(/\s+\d+\s*$/, '').trim();
       desc = desc.replace(/\s+$/, '').trim();
 
-      // Clean up punctuation at boundaries, but be conservative
+      // Remove common service category prefixes that shouldn't be in the description
+      const serviceCategories = ['private lessons', 'instrument repairs', 'recording services', 'lessons'];
+      for (const category of serviceCategories) {
+        const categoryRegex = new RegExp(`^${category}\\s+`, 'i');
+        if (categoryRegex.test(desc)) {
+          desc = desc.replace(categoryRegex, '').trim();
+          break;
+        }
+      }
+
+      // Clean up punctuation at boundaries
       desc = desc.replace(/^\s*[\-:|;/]+\s*/, '').trim();
       desc = desc.replace(/\s*[\-:|;/]+\s*$/, '').trim();
 
