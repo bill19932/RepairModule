@@ -408,8 +408,9 @@ export default function Index() {
         customerAddress: extracted.customerAddress || prev.customerAddress,
         repairDescription:
           extracted.repairDescription || prev.repairDescription,
-        // Don't set isGeorgesMusic if it's an old repair format
-        isGeorgesMusic: isOldFormat ? false : prev.isGeorgesMusic,
+        // Apply detected flags from OCR
+        isGeorgesMusic: typeof extracted.isGeorgesMusic === 'boolean' ? extracted.isGeorgesMusic : (isOldFormat ? false : prev.isGeorgesMusic),
+        isNoDeliveryFee: typeof extracted.isNoDeliveryFee === 'boolean' ? extracted.isNoDeliveryFee : prev.isNoDeliveryFee,
       }));
 
       if (extracted.instruments && extracted.instruments.length > 0) {
