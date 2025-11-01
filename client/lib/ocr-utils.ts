@@ -293,6 +293,9 @@ export const extractInvoiceData = async (
     const extracted: ExtractedInvoiceData = {};
 
     const lines = text.split("\n");
+    console.log("[OCR] Full extracted text:", text);
+    console.log("[OCR] Total lines:", lines.length);
+    console.log("[OCR] All lines:", lines);
 
     // Detect format (old repair vs George's Music)
     const isOldFormat = isOldRepairFormat(text);
