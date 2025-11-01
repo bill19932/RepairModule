@@ -551,17 +551,24 @@ export const extractInvoiceData = async (
 
       const isLikelyName = (s: string) => {
         if (!s) return false;
+        // reject lines with obvious OCR artifacts or UI elements
+        if (/Signature|Picked|Customer|Follow|Completed|Third/.test(s)) {
+          addLog(`  Line "${s}" contains UI element keywords, skipping`);
+          return false;
+        }
         // remove stray punctuation
         const clean = s.replace(/[^A-Za-z\s'\-]/g, "").trim();
         if (!clean) return false;
         const parts = clean.split(/\s+/).filter(Boolean);
-        if (parts.length < 2) {
-          addLog(`  Line "${s}" has only ${parts.length} parts, skipping`);
-          return false;
-        }
-        // require each part to have at least 2 letters
-        if (parts.some((p) => p.replace(/[\-' ]/g, "").length < 2)) {
-          addLog(`  Line "${s}" has a part with <2 letters, skipping`);
+
+        // Filter out very short parts that are likely OCR artifacts (single letters at start/end)
+        const meaningfulParts = parts.filter(p => {
+          const cleanPart = p.replace(/[\-' ]/g, "");
+          return cleanPart.length >= 2;
+        });
+
+        if (meaningfulParts.length < 2) {
+          addLog(`  Line "${s}" has only ${meaningfulParts.length} meaningful parts, skipping`);
           return false;
         }
         // avoid lines that are all uppercase codes or contain digits
