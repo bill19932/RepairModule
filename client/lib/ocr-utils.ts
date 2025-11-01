@@ -692,27 +692,38 @@ export const extractInvoiceData = async (
     let address = undefined;
 
     // Pattern 1: "Address: ..." format (primary method for old repair forms)
-    const addressLabelMatch = text.match(/Address\s*:\s*([^\n]+)/i);
+    const addressLabelMatch = text.match(/Address\s*:\s*([^\n$£#]+)/i);
     if (addressLabelMatch) {
       address = addressLabelMatch[1]
         .trim()
         .replace(/[|\\]+/g, "")
+        .replace(/\$.*/, "") // Remove any dollar amounts
+        .replace(/Total.*/, "") // Remove "Total" lines
         .trim();
+
+      // Reject if it looks like a summary line (contains numbers and $, or looks like table data)
+      if (address && /\$|[\[\]]|\d{2,}.*\$/.test(address)) {
+        address = undefined;
+      }
 
       // If address doesn't already contain PA/Pennsylvania, add it
       if (address && !/(PA|Pennsylvania|\b19[0-9]{3}\b)/.test(address)) {
-        // Try to find city and zip from the full text to add proper PA suffix
-        // For now, append ", PA" to the address
         address = address + ", PA";
       }
     }
 
-    // Pattern 2: Generic address extraction from customer section
+    // Pattern 2: Generic address extraction from customer section (avoid table/summary data)
     if (!address) {
-      address = extractAddressFromText(customerSection);
+      let cleanCustomerSection = customerSection
+        .replace(/Total.*$/gm, "") // Remove Total lines
+        .replace(/\$.*$/gm, ""); // Remove dollar amount lines
+      address = extractAddressFromText(cleanCustomerSection);
     }
 
-    if (address) extracted.customerAddress = address;
+    if (address) {
+      addLog(`Extracted address: ${address}`);
+      extracted.customerAddress = address;
+    }
 
     // REPAIR DESCRIPTION - try "Service:" label first, then fall back to trouble section
     let repairDescription: string | undefined;
