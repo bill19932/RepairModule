@@ -292,11 +292,16 @@ export const extractInvoiceData = async (
 
     const text = (ocrResult && (ocrResult.data?.text || (ocrResult as any).text)) ? (ocrResult.data?.text || (ocrResult as any).text || '') : '';
     const extracted: ExtractedInvoiceData = {};
+    const debugLog: string[] = [];
+
+    const addLog = (msg: string) => {
+      debugLog.push(msg);
+      console.log(`[OCR] ${msg}`);
+    };
 
     const lines = text.split("\n");
-    console.log("[OCR] Full extracted text:", text);
-    console.log("[OCR] Total lines:", lines.length);
-    console.log("[OCR] All lines:", lines);
+    addLog(`Total lines extracted: ${lines.length}`);
+    addLog(`Full text length: ${text.length} characters`);
 
     // Detect format (old repair vs George's Music)
     const isOldFormat = isOldRepairFormat(text);
