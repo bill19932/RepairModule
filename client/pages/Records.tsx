@@ -266,7 +266,7 @@ export default function Records() {
                     Invoice
                   </th>
                   <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">
-                    Date Rcvd
+                    Date Received
                   </th>
                   <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">
                     Customer
@@ -284,7 +284,7 @@ export default function Records() {
                     Total
                   </th>
                   <th className="text-right py-2 px-2 font-semibold text-foreground whitespace-nowrap">
-                    $ Rcvd
+                    $ Received
                   </th>
                   <th className="text-center py-2 px-2 font-semibold text-foreground">
                     Act
