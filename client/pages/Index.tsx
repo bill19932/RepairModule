@@ -69,7 +69,14 @@ export default function Index() {
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOldRepairFormat, setIsOldRepairFormat] = useState(false);
+  const [ocrDebugLog, setOcrDebugLog] = useState<string[]>([]);
   const alert = useAlert();
+
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setOcrDebugLog((prev) => [...prev, `[${timestamp}] ${message}`]);
+    console.log(`[OCR_DEBUG] ${message}`);
+  };
 
   // Initialize lastAssignedInvoiceNumber, load invoices, and sync across tabs
   useEffect(() => {
