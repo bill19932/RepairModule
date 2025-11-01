@@ -375,7 +375,7 @@ export default function Index() {
     }
 
     addInvoiceToLocalStorage(invoice);
-    setSavedInvoices((prev) => [...prev, invoice]);
+    setSavedInvoices(getAllInvoicesFromLocalStorage());
 
     try {
       downloadInvoicePDF(invoice);
