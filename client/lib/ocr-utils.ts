@@ -416,6 +416,15 @@ export const extractInvoiceData = async (
     const isOldFormat = isOldRepairFormat(text);
     extracted.isOldRepairFormat = isOldFormat;
 
+    // Detect if this is a George's Music form by presence of header or known address
+    const isGeorges = /George'?s\s+Music/i.test(text) || /Georges\s+Music/i.test(text) || /Springfield\s*,?\s*PA/i.test(text) && /Georges?\s*Music/i.test(text);
+    if (isGeorges) {
+      extracted.isGeorgesMusic = true;
+      addLog('Detected George\'s Music format');
+    } else {
+      extracted.isGeorgesMusic = false;
+    }
+
     // Find key markers
     let troubleReportedIdx = -1;
     let customerInfoIdx = -1;
