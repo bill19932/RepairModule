@@ -377,10 +377,18 @@ export const extractInvoiceData = async (
 
     if (selectedEmail) extracted.customerEmail = selectedEmail.trim();
 
-    // PHONE - look specifically in customer section for primary phone, then fallback
+    // PHONE - look specifically for Number: or Phone: labels
     let phone: string | undefined;
-    const primaryPhoneMatch = customerSection.match(/Phone[-\s]*Primary[\s:\s]*(\d{10,})/i);
-    if (primaryPhoneMatch) phone = primaryPhoneMatch[1];
+
+    // Pattern 1: "Number: XXXXXXXXXX" format
+    const numberLabelMatch = text.match(/Number\s*:\s*(\d{7,})/i);
+    if (numberLabelMatch) phone = numberLabelMatch[1];
+
+    // Pattern 2: "Phone Primary" or similar format
+    if (!phone) {
+      const primaryPhoneMatch = customerSection.match(/Phone[-\s]*Primary[\s:\s]*(\d{10,})/i);
+      if (primaryPhoneMatch) phone = primaryPhoneMatch[1];
+    }
 
     if (!phone) {
       const phoneMatch = customerSection.match(/(?:Phone|Number)\s*[:\s]*(\d{3}[-.]?\d{3}[-.]?\d{4})/i);
