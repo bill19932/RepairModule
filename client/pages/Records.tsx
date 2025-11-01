@@ -416,16 +416,22 @@ export default function Records() {
                     {filtered
                       .reduce((sum, inv) => {
                         const amountReceived = inv.amountReceived;
-                        const received = amountReceived !== undefined ? amountReceived : (() => {
-                          const servicesTotal = inv.materials.reduce(
-                            (mat_sum, mat) =>
-                              mat_sum + mat.quantity * mat.unitCost,
-                            0,
-                          );
-                          const yourTotal = servicesTotal * 1.06;
-                          const georgesTotal = servicesTotal * 1.54 * 1.06;
-                          return inv.isGeorgesMusic ? georgesTotal : yourTotal;
-                        })();
+                        const received =
+                          amountReceived !== undefined
+                            ? amountReceived
+                            : (() => {
+                                const servicesTotal = inv.materials.reduce(
+                                  (mat_sum, mat) =>
+                                    mat_sum + mat.quantity * mat.unitCost,
+                                  0,
+                                );
+                                const yourTotal = servicesTotal * 1.06;
+                                const georgesTotal =
+                                  servicesTotal * 1.54 * 1.06;
+                                return inv.isGeorgesMusic
+                                  ? georgesTotal
+                                  : yourTotal;
+                              })();
                         return sum + received;
                       }, 0)
                       .toFixed(2)}

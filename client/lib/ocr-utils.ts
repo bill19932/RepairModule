@@ -547,7 +547,9 @@ export const extractInvoiceData = async (
         customerInfoIdx + 1,
         customerInfoIdx + 8,
       );
-      addLog(`Checking next ${afterMarkerLines.length} lines for customer name`);
+      addLog(
+        `Checking next ${afterMarkerLines.length} lines for customer name`,
+      );
 
       const isLikelyName = (s: string) => {
         if (!s) return false;
@@ -562,13 +564,15 @@ export const extractInvoiceData = async (
         const parts = clean.split(/\s+/).filter(Boolean);
 
         // Filter out very short parts that are likely OCR artifacts (single letters at start/end)
-        const meaningfulParts = parts.filter(p => {
+        const meaningfulParts = parts.filter((p) => {
           const cleanPart = p.replace(/[\-' ]/g, "");
           return cleanPart.length >= 2;
         });
 
         if (meaningfulParts.length < 2) {
-          addLog(`  Line "${s}" has only ${meaningfulParts.length} meaningful parts, skipping`);
+          addLog(
+            `  Line "${s}" has only ${meaningfulParts.length} meaningful parts, skipping`,
+          );
           return false;
         }
         // avoid lines that are all uppercase codes or contain digits
@@ -610,13 +614,16 @@ export const extractInvoiceData = async (
         }
         // Check if line has meaningful name-like pattern (each word >= 3 chars)
         const parts = t.split(/\s+/).filter(Boolean);
-        const meaningfulParts = parts.filter(p => p.length >= 3);
+        const meaningfulParts = parts.filter((p) => p.length >= 3);
         if (
           t.length > 5 &&
           /^[A-Za-z\s'\-]+$/.test(t) &&
           meaningfulParts.length >= 2
         ) {
-          customerName = meaningfulParts.join(" ").replace(/[|\[\]]+/g, "").trim();
+          customerName = meaningfulParts
+            .join(" ")
+            .replace(/[|\[\]]+/g, "")
+            .trim();
           addLog(`Fallback: Selected name from tail: "${customerName}"`);
           break;
         }
@@ -754,10 +761,14 @@ export const extractInvoiceData = async (
 
     // REPAIR DESCRIPTION - try "Service:" label first, then fall back to trouble section
     let repairDescription: string | undefined;
-    addLog(`troubleReportedIdx: ${troubleReportedIdx}, customerInfoIdx: ${customerInfoIdx}, itemDescIdx: ${itemDescIdx}`);
+    addLog(
+      `troubleReportedIdx: ${troubleReportedIdx}, customerInfoIdx: ${customerInfoIdx}, itemDescIdx: ${itemDescIdx}`,
+    );
     addLog(`Trouble section length: ${troubleSection.length} chars`);
     if (troubleSection) {
-      addLog(`Trouble section (first 200 chars): ${troubleSection.substring(0, 200)}`);
+      addLog(
+        `Trouble section (first 200 chars): ${troubleSection.substring(0, 200)}`,
+      );
     }
 
     // Pattern 1: "Service: ..." format (old repair form)
@@ -797,7 +808,7 @@ export const extractInvoiceData = async (
 
         // Remove lines that are just "/ RETURN ORDER" or variations
         const cleanedFiltered = filtered.filter(
-          (l) => !/^\s*\/\s*RETURN\s+ORDER\s*$/i.test(l)
+          (l) => !/^\s*\/\s*RETURN\s+ORDER\s*$/i.test(l),
         );
 
         if (cleanedFiltered.length > 0) {
@@ -808,7 +819,9 @@ export const extractInvoiceData = async (
             .trim();
           if (joined.length > 3) {
             repairDescription = joined;
-            addLog(`Trouble: Extracted from troubled section: ${joined.substring(0, 80)}`);
+            addLog(
+              `Trouble: Extracted from troubled section: ${joined.substring(0, 80)}`,
+            );
           }
         }
       } else {
@@ -826,7 +839,9 @@ export const extractInvoiceData = async (
         desc = desc.replace(/^\s*\/\s*RETURN\s+ORDER\s*/i, "").trim();
         if (desc.length > 3) {
           repairDescription = desc;
-          addLog(`Service: Extracted from service match: ${desc.substring(0, 80)}`);
+          addLog(
+            `Service: Extracted from service match: ${desc.substring(0, 80)}`,
+          );
         }
       }
     }
@@ -834,7 +849,9 @@ export const extractInvoiceData = async (
     if (repairDescription) {
       extracted.repairDescription = repairDescription;
       console.log("[OCR] Repair description:", repairDescription);
-      addLog(`Final repair description: ${repairDescription.substring(0, 100)}`);
+      addLog(
+        `Final repair description: ${repairDescription.substring(0, 100)}`,
+      );
     } else {
       addLog(`No repair description found`);
     }
