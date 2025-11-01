@@ -608,6 +608,8 @@ export const extractInvoiceData = async (
       ),
     );
 
+    addLog(`Found ${allEmails.length} email(s) in OCR text: ${allEmails.map(m => m[1]).join(", ")}`);
+
     if (allEmails.length > 0) {
       for (const m of allEmails) {
         const email = m[1];
@@ -615,15 +617,26 @@ export const extractInvoiceData = async (
           email.toLowerCase().includes("springfield") ||
           email.toLowerCase().includes("george") ||
           email.toLowerCase().includes("georges")
-        )
+        ) {
+          addLog(`Skipping store email: ${email}`);
           continue;
+        }
         selectedEmail = email;
+        addLog(`Selected customer email: ${email}`);
         break;
       }
-      if (!selectedEmail) selectedEmail = allEmails[0][1];
+      if (!selectedEmail) {
+        selectedEmail = allEmails[0][1];
+        addLog(`Using first email (all were filtered): ${selectedEmail}`);
+      }
+    } else {
+      addLog(`No emails found in OCR text`);
     }
 
-    if (selectedEmail) extracted.customerEmail = selectedEmail.trim();
+    if (selectedEmail) {
+      extracted.customerEmail = selectedEmail.trim();
+      addLog(`Email extracted: ${extracted.customerEmail}`);
+    }
 
     // PHONE - look specifically for Number: or Phone: labels
     let phone: string | undefined;
