@@ -1226,23 +1226,6 @@ export default function Index() {
             </div>
           )}
 
-          <div className="lg:col-span-1">
-            <div className="card-modern p-6 space-y-4">
-              <div className="pt-3 border-t">
-                <h4 className="text-sm font-semibold mb-2">Recent Invoices</h4>
-                <div className="text-xs text-muted-foreground">Use the Recent Invoices button at the top to view and manage recent invoices.</div>
-              </div>
-
-              <div className="pt-3">
-                <button
-                  onClick={() => setShowRecentModal(true)}
-                  className="btn-secondary w-full text-sm"
-                >
-                  Open Recent Invoices
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
 
