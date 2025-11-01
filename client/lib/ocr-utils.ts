@@ -17,6 +17,7 @@ export interface ExtractedInvoiceData {
   }>;
   laborHours?: number;
   hourlyRate?: number;
+  debugLog?: string[];
 }
 
 const readFileAsDataURL = (file: File): Promise<string> => {
