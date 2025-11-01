@@ -688,6 +688,115 @@ export default function Index() {
                     </div>
                   </div>
 
+                  {batchRepairs.length > 0 && (
+                    <div className="mt-6 border-t pt-6">
+                      <h3 className="text-lg font-bold mb-4">Batch Repairs ({batchRepairs.length})</h3>
+                      <div className="flex gap-6 overflow-x-auto pb-4">
+                        {batchRepairs.map((repair) => {
+                          const data = batchFormData[repair.id] || repair.formData;
+                          const subtotal = repair.materials.reduce((sum: number, m: any) => sum + (m.quantity * m.unitCost), 0);
+                          const delivery = data.isGeorgesMusic || data.isNoDeliveryFee ? 0 : (repair.deliveryFee || 0);
+                          const subtotalWithDelivery = subtotal + delivery;
+                          const tax = subtotalWithDelivery * 0.06;
+                          const total = subtotalWithDelivery + tax;
+
+                          return (
+                            <div key={repair.id} className="min-w-[900px] bg-white rounded shadow border p-6">
+                              <div className="text-sm font-semibold mb-4 text-primary">New Invoice 📸 Auto-Fill from Image</div>
+
+                              <div className="grid grid-cols-3 gap-3 mb-4">
+                                <div>
+                                  <label className="block text-xs font-semibold mb-1">Invoice # *</label>
+                                  <input type="text" value={data.invoiceNumber} onChange={(e) => handleBatchRepairFormChange(repair.id, 'invoiceNumber', e.target.value)} className="input-modern text-sm w-full" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold mb-1">Date Received</label>
+                                  <input type="date" value={data.dateReceived} onChange={(e) => handleBatchRepairFormChange(repair.id, 'dateReceived', e.target.value)} className="input-modern text-sm w-full" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold mb-1">Invoice Date</label>
+                                  <input type="date" value={data.date} onChange={(e) => handleBatchRepairFormChange(repair.id, 'date', e.target.value)} className="input-modern text-sm w-full" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3 mb-4">
+                                <div>
+                                  <label className="block text-xs font-semibold mb-1">Customer Name *</label>
+                                  <input type="text" value={data.customerName} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerName', e.target.value)} className="input-modern text-sm w-full" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold mb-1">Phone</label>
+                                  <input type="tel" value={data.customerPhone} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerPhone', e.target.value)} className="input-modern text-sm w-full" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-semibold mb-1">Email</label>
+                                  <input type="email" value={data.customerEmail} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerEmail', e.target.value)} className="input-modern text-sm w-full" />
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="block text-xs font-semibold mb-1">Address</label>
+                                <input type="text" value={data.customerAddress} onChange={(e) => handleBatchRepairFormChange(repair.id, 'customerAddress', e.target.value)} className="input-modern text-sm w-full" />
+                              </div>
+
+                              <div className="flex items-center gap-4 mb-4">
+                                <label className="flex items-center gap-2">
+                                  <input type="checkbox" checked={data.isGeorgesMusic} onChange={(e) => handleBatchRepairFormChange(repair.id, 'isGeorgesMusic', e.target.checked)} className="w-4 h-4" />
+                                  <span className="text-xs">George's Music</span>
+                                </label>
+                                <label className="flex items-center gap-2">
+                                  <input type="checkbox" checked={data.isNoDeliveryFee} onChange={(e) => handleBatchRepairFormChange(repair.id, 'isNoDeliveryFee', e.target.checked)} className="w-4 h-4" />
+                                  <span className="text-xs">No Delivery Fee</span>
+                                </label>
+                              </div>
+
+                              <div className="mb-4 pb-4 border-t pt-4">
+                                <label className="block text-xs font-semibold mb-2">Instruments *</label>
+                                <div className="space-y-2">
+                                  {repair.instruments.map((inst: any, idx: number) => (
+                                    <div key={idx} className="grid grid-cols-2 gap-2">
+                                      <select value={inst.type} className="input-modern text-sm"><option>Select Type</option><option>Guitar</option><option>Bass</option></select>
+                                      <input type="text" value={inst.description} placeholder="Description" className="input-modern text-sm" />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="mb-4">
+                                <label className="block text-xs font-semibold mb-1">Repair Work Description *</label>
+                                <textarea value={data.repairDescription} onChange={(e) => handleBatchRepairFormChange(repair.id, 'repairDescription', e.target.value)} className="input-modern text-sm w-full min-h-16" />
+                              </div>
+
+                              <div className="mb-4 pb-4 border-t pt-4">
+                                <label className="block text-xs font-semibold mb-2">Services & Materials</label>
+                                <div className="text-xs space-y-1">
+                                  {repair.materials.map((m: any) => (
+                                    <div key={m.description} className="flex justify-between">
+                                      <span>{m.description}</span>
+                                      <span>${(m.quantity * m.unitCost).toFixed(2)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="bg-gray-50 p-3 rounded mb-4">
+                                <div className="flex justify-between text-xs mb-1"><span>Services</span><span>${subtotal.toFixed(2)}</span></div>
+                                {!data.isGeorgesMusic && !data.isNoDeliveryFee && <div className="flex justify-between text-xs mb-1"><span>Delivery</span><span>${delivery.toFixed(2)}</span></div>}
+                                <div className="flex justify-between text-xs mb-1"><span>Tax (6%)</span><span>${tax.toFixed(2)}</span></div>
+                                <div className="flex justify-between text-xs font-bold"><span>Total</span><span>${total.toFixed(2)}</span></div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => saveBatchRepair(repair.id)} className="flex-1 px-4 py-2 bg-primary text-white rounded font-semibold text-sm">Print & Save</button>
+                                <button type="button" onClick={() => removeBatchRepair(repair.id)} className="px-4 py-2 bg-red-50 text-red-600 rounded text-sm">Remove</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">
