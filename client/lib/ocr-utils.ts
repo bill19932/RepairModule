@@ -145,6 +145,42 @@ const extractInvoiceNumber = (text: string): string | undefined => {
   return undefined;
 };
 
+// Helper to validate address is in Delco or Montco PA
+const isValidPAAddress = (address: string | undefined): boolean => {
+  if (!address) return false;
+
+  // Check if address contains PA or Pennsylvania
+  if (!/(PA|Pennsylvania)/i.test(address)) return false;
+
+  // List of common Delco and Montco municipalities and areas
+  const delcoMontcoAreas = [
+    // Delco County
+    'chester', 'darby', 'ridley park', 'swarthmore', 'media', 'broomall', 'newtown square',
+    'devon', 'paoli', 'rose valley', 'upland', 'haverford', 'villanova', 'radnor', 'wayne',
+    'norriton', 'marple', 'chadds ford', 'kennett', 'yorktown', 'concord', 'easttown',
+    'london', 'penn', 'tredyffrin', 'honey brook', 'coatesville', 'downingtown',
+    // Montco County
+    'lansdale', 'hatboro', 'horsham', 'warrington', 'doylestown', 'newtown', 'morrisville',
+    'bristol', 'bensalem', 'colmar', 'penndel', 'jamison', 'warminster', 'souderton',
+    'perkasie', 'ambler', 'fort washington', 'willow grove', 'whitemarsh', 'dresher',
+    'abington', 'norriton', 'franconia', 'schwenksville', 'pennsburg', 'trappe',
+    'skippack', 'yerkes', 'valley forge', 'great valley'
+  ];
+
+  const addressLower = address.toLowerCase();
+  return delcoMontcoAreas.some(area => addressLower.includes(area));
+};
+
+// Helper to detect if document is old repair format
+const isOldRepairFormat = (text: string): boolean => {
+  // Old repair format has "Invoice Number:" label and table with Description/Quantity/Price columns
+  const hasInvoiceNumberLabel = /Invoice\s+Number\s*:/i.test(text);
+  const hasTableHeader = /Description|Quantity|Unit\s+Price|Cost/i.test(text);
+  const hasServiceLabel = /Service\s*:/i.test(text);
+
+  return hasInvoiceNumberLabel && (hasTableHeader || hasServiceLabel);
+};
+
 export const extractInvoiceData = async (
   imageFile: File,
 ): Promise<ExtractedInvoiceData> => {
