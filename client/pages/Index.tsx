@@ -195,16 +195,8 @@ export default function Index() {
   };
 
   const handleOCRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    // If multiple selected, delegate to bulk handler
-    if (files.length > 1) {
-      await handleBulkUpload(e);
-      return;
-    }
-
-    const file = files[0];
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     setIsProcessingOCR(true);
     setOcrProgress(30);
