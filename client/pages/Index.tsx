@@ -284,6 +284,10 @@ export default function Index() {
         ),
       );
     }
+
+    if (field === "customerAddress") {
+      calculateBatchDeliveryFee(repairId, value);
+    }
   };
 
   const handleBatchMaterialChange = (
