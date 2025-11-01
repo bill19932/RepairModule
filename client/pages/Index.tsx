@@ -204,6 +204,10 @@ export default function Index() {
         email = "";
       }
 
+      // Detect if this is an old repair format
+      const isOldFormat = extracted.isOldRepairFormat || false;
+      setIsOldRepairFormat(isOldFormat);
+
       setFormData((prev) => ({
         ...prev,
         invoiceNumber: extracted.invoiceNumber || prev.invoiceNumber,
@@ -213,6 +217,8 @@ export default function Index() {
         customerEmail: email || prev.customerEmail,
         customerAddress: extracted.customerAddress || prev.customerAddress,
         repairDescription: extracted.repairDescription || prev.repairDescription,
+        // Don't set isGeorgesMusic if it's an old repair format
+        isGeorgesMusic: isOldFormat ? false : prev.isGeorgesMusic,
       }));
 
       if (extracted.instruments && extracted.instruments.length > 0) {
