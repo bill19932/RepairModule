@@ -646,6 +646,7 @@ export const extractInvoiceData = async (
     const finalInstrumentDesc = instrumentDescription || extracted.repairDescription || "Repair";
     if (finalInstrumentDesc) extracted.instruments = [{ type: instrumentType, description: finalInstrumentDesc }];
 
+    extracted.debugLog = debugLog;
     return extracted;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
