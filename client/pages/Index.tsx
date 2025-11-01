@@ -559,10 +559,68 @@ export default function Index() {
                     </div>
                   </div>
 
-                  {/* Rest of form remains unchanged (instruments, materials, totals, etc.) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground mb-1">Address</label>
+                      <input type="text" name="customerAddress" value={formData.customerAddress} onChange={handleFormChange} placeholder="Address" className="input-modern text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground mb-1">George's Music Repair?</label>
+                      <label className="flex items-center gap-2 mt-1">
+                        <input type="checkbox" name="isGeorgesMusic" checked={formData.isGeorgesMusic} onChange={handleFormChange} className="w-4 h-4" />
+                        <span className="text-xs">Yes, George's Music</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-2">Instruments *</label>
+                    {instruments.map((instrument, index) => (
+                      <div key={`instr-${index}`} className="flex gap-2 mb-2">
+                        <select value={instrument.type} onChange={(e) => handleInstrumentChange(index, "type", e.target.value)} className="input-modern flex-1 text-sm">
+                          <option value="">Select Type</option>
+                          <option value="Guitar">Guitar</option>
+                          <option value="Bass">Bass</option>
+                          <option value="Violin">Violin</option>
+                          <option value="Cello">Cello</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        <input type="text" placeholder="Description" value={instrument.description} onChange={(e) => handleInstrumentChange(index, "description", e.target.value)} className="input-modern flex-1 text-sm" />
+                        <button type="button" onClick={() => removeInstrument(index)} className="text-red-600 hover:text-red-900 font-semibold text-sm">Remove</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={addInstrument} className="text-xs text-primary font-semibold mt-1">+ Add Instrument</button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Repair Work Description *</label>
+                    <textarea name="repairDescription" value={formData.repairDescription} onChange={handleFormChange} placeholder="Describe the repair work" className="input-modern text-sm min-h-20" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-2">Services & Materials</label>
+                    {materials.map((material, index) => (
+                      <div key={`mat-${index}`} className="grid grid-cols-4 gap-2 mb-2">
+                        <input type="text" placeholder="Description" value={material.description} onChange={(e) => handleMaterialChange(index, "description", e.target.value)} className="input-modern col-span-2 text-sm" />
+                        <input type="number" placeholder="Qty" min="1" value={material.quantity} onChange={(e) => handleMaterialChange(index, "quantity", e.target.value)} className="input-modern text-sm" />
+                        <input type="number" placeholder="Cost" min="0" step="0.01" value={material.unitCost} onChange={(e) => handleMaterialChange(index, "unitCost", e.target.value)} className="input-modern text-sm" />
+                        <button type="button" onClick={() => removeMaterial(index)} className="text-red-600 hover:text-red-900 font-semibold text-xs col-span-4">Remove</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={addMaterial} className="text-xs text-primary font-semibold mt-1">+ Add Item</button>
+                  </div>
+
+                  {deliveryMiles !== null && !formData.isGeorgesMusic && (
+                    <div className="bg-blue-50 p-3 rounded text-sm border border-blue-200">
+                      <div className="font-semibold text-blue-900">Delivery</div>
+                      <div className="text-xs text-blue-800 mt-1">{deliveryMiles} miles × 3 trips = ${deliveryFee.toFixed(2)}</div>
+                    </div>
+                  )}
 
                   <div className="pt-4">
-                    <button type="submit" className="btn-primary">Save Invoice</button>
+                    <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                      {isSubmitting ? "Saving..." : "Save Invoice"}
+                    </button>
                   </div>
                 </form>
               </div>
