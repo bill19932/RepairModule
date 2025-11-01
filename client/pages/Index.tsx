@@ -128,7 +128,7 @@ export default function Index() {
   }, [lastAssignedInvoiceNumber]);
 
   const calculateDeliveryFee = async (address: string) => {
-    if (!address || !address.trim() || formData.isGeorgesMusic) {
+    if (!address || !address.trim() || formData.isGeorgesMusic || formData.isNoDeliveryFee) {
       setDeliveryMiles(null);
       setDeliveryFee(0);
       return;
