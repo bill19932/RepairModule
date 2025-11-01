@@ -648,7 +648,6 @@ export default function Index() {
                   New Invoice
                 </h2>
 
-                {batchRepairs.length === 0 && (
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-2">
@@ -1143,7 +1142,6 @@ export default function Index() {
                     </button>
                   </div>
                 </form>
-                )}
               </div>
             </div>
           )}
