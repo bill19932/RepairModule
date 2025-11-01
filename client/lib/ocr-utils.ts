@@ -598,20 +598,25 @@ export const extractInvoiceData = async (
 
     // Fallback: try to find a likely name near the bottom of the page (before Phone/Email labels)
     if (!customerName) {
-      // search for lines that look like names within last 12 lines, but require at least 4+ chars per word
+      // search for lines that look like names within last 12 lines, but require at least 3+ chars per word
       const tail = lines.slice(Math.max(0, lines.length - 12));
       for (const l of tail) {
         const t = l.trim();
         if (!t) continue;
-        // Check if line has meaningful name-like pattern (each word >= 4 chars)
+        // Reject obvious UI element lines
+        if (/Signature|Picked|Customer|Follow|Completed|Third|rE|———/.test(t)) {
+          addLog(`Fallback: Skipping UI element line: "${t}"`);
+          continue;
+        }
+        // Check if line has meaningful name-like pattern (each word >= 3 chars)
         const parts = t.split(/\s+/).filter(Boolean);
+        const meaningfulParts = parts.filter(p => p.length >= 3);
         if (
           t.length > 5 &&
           /^[A-Za-z\s'\-]+$/.test(t) &&
-          parts.length >= 2 &&
-          parts.every(p => p.length >= 3)
+          meaningfulParts.length >= 2
         ) {
-          customerName = t.replace(/[|\[\]]+/g, "").trim();
+          customerName = meaningfulParts.join(" ").replace(/[|\[\]]+/g, "").trim();
           addLog(`Fallback: Selected name from tail: "${customerName}"`);
           break;
         }
