@@ -317,6 +317,96 @@ export default function Index() {
     );
   };
 
+  const calculateBatchDeliveryFee = async (
+    repairId: string,
+    address: string,
+  ) => {
+    const data = batchFormData[repairId] || {};
+    if (
+      !address ||
+      !address.trim() ||
+      data.isGeorgesMusic ||
+      data.isNoDeliveryFee
+    ) {
+      setBatchRepairs((prev) =>
+        prev.map((r) =>
+          r.id === repairId ? { ...r, deliveryMiles: null, deliveryFee: 0 } : r,
+        ),
+      );
+      return;
+    }
+
+    try {
+      let cleanAddr = address.trim();
+      cleanAddr = cleanAddr
+        .replace(
+          /\b(?:Unit|Apt|Apt\.|Apartment|Suite|Ste|Ste\.|#)\s*[0-9A-Za-z\-]+/gi,
+          "",
+        )
+        .trim();
+      cleanAddr = cleanAddr.replace(/\s+/g, " ").replace(/,\s*,/g, ",").trim();
+
+      let customerCoords = null;
+      const addressVariations: string[] = [];
+
+      addressVariations.push(cleanAddr);
+      if (!cleanAddr.includes("Pennsylvania")) {
+        addressVariations.push(cleanAddr.replace(/,\s*PA\b/, ", Pennsylvania"));
+      }
+
+      for (const variation of addressVariations) {
+        customerCoords = await geocodeAddress(variation);
+        if (customerCoords) break;
+      }
+
+      if (!customerCoords) {
+        setBatchRepairs((prev) =>
+          prev.map((r) =>
+            r.id === repairId ? { ...r, deliveryMiles: null, deliveryFee: 0 } : r,
+          ),
+        );
+        return;
+      }
+
+      const baseCoords = await geocodeAddress(
+        "150 E Wynnewood Rd, Wynnewood, PA",
+      );
+      if (!baseCoords) {
+        setBatchRepairs((prev) =>
+          prev.map((r) =>
+            r.id === repairId ? { ...r, deliveryMiles: null, deliveryFee: 0 } : r,
+          ),
+        );
+        return;
+      }
+
+      const miles = haversineMiles(
+        baseCoords.lat,
+        baseCoords.lon,
+        customerCoords.lat,
+        customerCoords.lon,
+      );
+      const roundedMiles = Math.round(miles);
+      const fee = roundedMiles * 2 * 0.85;
+      const finalFee = parseFloat(fee.toFixed(2));
+
+      setBatchRepairs((prev) =>
+        prev.map((r) =>
+          r.id === repairId
+            ? { ...r, deliveryMiles: roundedMiles, deliveryFee: finalFee }
+            : r,
+        ),
+      );
+    } catch (err) {
+      console.error("[DELIVERY BATCH] Error:", err);
+      setBatchRepairs((prev) =>
+        prev.map((r) =>
+          r.id === repairId ? { ...r, deliveryMiles: null, deliveryFee: 0 } : r,
+        ),
+      );
+    }
+  };
+
   const saveBatchRepair = (repairId: string) => {
     const repair = batchRepairs.find((r) => r.id === repairId);
     if (!repair) return;
