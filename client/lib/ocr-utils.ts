@@ -1024,6 +1024,10 @@ export const extractInvoiceData = async (
       // Remove leading/trailing slashes and "RETURN ORDER" completely
       desc = desc.replace(/\s*\/\s*RETURN\s+ORDER\s*$/i, "").trim();
       desc = desc.replace(/^[\/\s]+/, "").trim();
+      // Remove OCR artifacts like "pe" (likely OCR misread of model marker) and "__" (line gaps)
+      desc = desc.replace(/\s+pe\s+/gi, " ").trim();
+      desc = desc.replace(/\s+__\s+/g, " ").trim();
+      desc = desc.replace(/\s+_+\s+/g, " ").trim();
       desc = desc.replace(/\s+ee\s+/g, " ").trim();
       desc = desc.replace(/\s+/g, " ").trim();
       desc = desc.replace(/Fernandez/g, "Fernandes");
