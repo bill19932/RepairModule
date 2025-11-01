@@ -1354,6 +1354,19 @@ export default function Index() {
                         />
                       </div>
 
+                      {formData.isGeorgesMusic && (
+                        <div>
+                          <label className="block text-xs font-semibold text-foreground mb-1">Work Done</label>
+                          <textarea
+                            name="workDone"
+                            value={formData.workDone}
+                            onChange={handleFormChange}
+                            placeholder="Describe the work performed"
+                            className="input-modern text-sm min-h-24 resize-none"
+                          />
+                        </div>
+                      )}
+
                       <div>
                         <label className="block text-xs font-semibold text-foreground mb-2">
                           Services & Materials
