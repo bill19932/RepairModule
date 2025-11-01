@@ -568,50 +568,59 @@ export const extractInvoiceData = async (
       if (/^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention)/i.test(trimmed)) continue;
 
       // Try to parse this line as a material
+      // Strategy: Extract all numbers/prices first, then everything else is description
+
       let parts: string[] = [];
 
       if (trimmed.includes('|')) {
         parts = trimmed.split('|').map(p => p.trim()).filter(p => p);
       } else {
-        // Split on any whitespace (1+ spaces or tabs)
-        parts = trimmed.split(/\s+/).map(p => p.trim()).filter(p => p);
+        // Split on any whitespace
+        parts = trimmed.split(/\s+/).filter(p => p);
       }
 
-      addLog(`Materials: Parsing line, parts=${JSON.stringify(parts)}`);
+      addLog(`Materials: Parsing line, split into ${parts.length} parts: ${JSON.stringify(parts)}`);
 
-      // We need at least 2 parts (description + something with numbers)
-      if (parts.length < 2) {
-        addLog(`Materials: Not enough parts (${parts.length} < 2)`);
-        continue;
-      }
+      // Find all numbers in the line
+      const numbers: number[] = [];
+      const numberIndices: number[] = [];
 
-      // The first part should be the description
-      const desc = parts[0];
-
-      // Look for quantity and price in remaining parts
-      // Usually: part[1] = qty, part[2] = price, part[3] = cost
-      let qty = 0;
-      let price = 0;
-
-      // Try to extract numbers from parts
-      for (let j = 1; j < parts.length; j++) {
-        const numMatch = parts[j].match(/([\d.]+)/);
+      for (let i = 0; i < parts.length; i++) {
+        const numMatch = parts[i].match(/^[\d.]+$|^\$[\d.]+$/);
         if (numMatch) {
-          const num = parseFloat(numMatch[1]);
-          addLog(`Materials: Found number '${numMatch[1]}' from part '${parts[j]}'`);
-          if (!qty && num > 0 && num <= 1000) {
-            // This looks like a quantity (usually <= 1000)
-            qty = Math.round(num);
-            addLog(`Materials: Set qty=${qty}`);
-          } else if (!price && num > 0) {
-            // This looks like a price
-            price = num;
-            addLog(`Materials: Set price=${price}`);
-          }
+          const num = parseFloat(parts[i].replace('$', ''));
+          numbers.push(num);
+          numberIndices.push(i);
+          addLog(`Materials: Found number ${num} at index ${i}`);
         }
       }
 
-      addLog(`Materials: Final parsed - desc='${desc}', qty=${qty}, price=${price}`);
+      // We need at least 2 numbers (qty and price)
+      if (numbers.length < 2) {
+        addLog(`Materials: Not enough numbers (${numbers.length} < 2)`);
+        continue;
+      }
+
+      // Strategy: assume format is "Description ... Qty Price [Cost]"
+      // Last number is usually cost, second-to-last is unit price, third-to-last is qty
+      let qty = 0;
+      let price = 0;
+
+      if (numbers.length >= 3) {
+        // Format: Qty Price Cost
+        qty = Math.round(numbers[numbers.length - 3]);
+        price = numbers[numbers.length - 2];
+      } else if (numbers.length === 2) {
+        // Format: Qty Price
+        qty = Math.round(numbers[0]);
+        price = numbers[1];
+      }
+
+      // Description is everything before the first number
+      const firstNumberIdx = numberIndices[0];
+      const desc = parts.slice(0, firstNumberIdx).join(' ');
+
+      addLog(`Materials: Extracted - desc='${desc}', qty=${qty}, price=${price}`);
 
       // Add if we found valid quantity and price
       if (qty > 0 && price > 0 && desc && desc.length > 2) {
@@ -622,7 +631,7 @@ export const extractInvoiceData = async (
         });
         addLog(`✅ Materials: ADDED material: ${desc} x${qty} @ $${price}`);
       } else {
-        addLog(`❌ Materials: FAILED validation - qty=${qty}, price=${price}, desc.length=${desc.length}`);
+        addLog(`❌ Materials: FAILED - qty=${qty}, price=${price}, desc='${desc}' (len=${desc.length})`);
       }
     }
 
