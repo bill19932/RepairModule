@@ -59,9 +59,12 @@ export default function Index() {
     { description: "", quantity: 1, unitCost: 0 },
   ]);
 
-  const [savedInvoices, setSavedInvoices] = useState<RepairInvoice[]>(
-    getAllInvoicesFromLocalStorage(),
-  );
+  const [savedInvoices, setSavedInvoices] = useState<RepairInvoice[]>(() => {
+    // Load and deduplicate on initial state to prevent duplicate key warnings
+    const invoices = getAllInvoicesFromLocalStorage();
+    localStorage.setItem('delco-invoices', JSON.stringify(invoices));
+    return invoices;
+  });
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
