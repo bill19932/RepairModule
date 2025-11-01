@@ -217,15 +217,23 @@ export const extractInvoiceData = async (
         }
       };
 
-      // Prefer global Tesseract if present (CDN or earlier bundle). Otherwise dynamically create a worker.
+      // Try to use global Tesseract first (CDN). If not available, use the npm package.
       const globalT = (typeof window !== 'undefined' ? (window as any).Tesseract : undefined);
       if (globalT && typeof globalT.recognize === 'function') {
+        console.log("Using global Tesseract");
         ocrResult = await globalT.recognize(normalizedDataUrl, 'eng', { logger: logProgress });
       } else {
-        const { createWorker } = await import('tesseract.js');
-        const worker = await createWorker({ logger: logProgress });
-        ocrResult = await worker.recognize(normalizedDataUrl, 'eng');
-        await worker.terminate();
+        console.log("Using tesseract.js npm package");
+        try {
+          const Tesseract = await import('tesseract.js');
+          // Call recognize directly on the default export
+          ocrResult = await Tesseract.default.recognize(normalizedDataUrl, 'eng', { logger: logProgress });
+        } catch (workerErr) {
+          console.warn("Worker-based OCR failed, trying alternative:", workerErr);
+          // Fallback: try the named export
+          const { recognize } = await import('tesseract.js');
+          ocrResult = await recognize(normalizedDataUrl, 'eng', { logger: logProgress });
+        }
       }
 
       console.log('OCR completed successfully');
@@ -235,7 +243,7 @@ export const extractInvoiceData = async (
       throw new Error('OCR processing failed: ' + msg);
     }
 
-    const text = (ocrResult && (ocrResult.data || (ocrResult as any).text)) ? (ocrResult.data?.text || (ocrResult as any).text || '') : '';
+    const text = (ocrResult && (ocrResult.data?.text || (ocrResult as any).text)) ? (ocrResult.data?.text || (ocrResult as any).text || '') : '';
     const extracted: ExtractedInvoiceData = {};
 
     const lines = text.split("\n");
