@@ -10,10 +10,12 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   const tax = subtotalWithDelivery * 0.06;
   const customerTotal = subtotalWithDelivery + tax;
 
-  const georgesUpcharge = invoice.isGeorgesMusic ? 1.54 : 1;
-  const georgesSubtotal = subtotal * georgesUpcharge;
-  const georgesTax = georgesSubtotal * 0.06;
-  const georgesCustomerTotal = georgesSubtotal + georgesTax;
+  // George's: upcharge applied AFTER tax on your charge
+  const yourTax = subtotal * 0.06;
+  const yourChargeWithTax = subtotal + yourTax;
+  const georgesSubtotal = yourChargeWithTax * 1.54;
+  const georgesTax = 0;  // Tax already included in the 1.54 multiplier
+  const georgesCustomerTotal = georgesSubtotal;
 
   const finalTotal = invoice.isGeorgesMusic ? georgesCustomerTotal : customerTotal;
   const finalSubtotal = invoice.isGeorgesMusic ? georgesSubtotal : subtotalWithDelivery;
@@ -163,14 +165,17 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
   <div class="page">
     <div class="brand">
       <img class="logo" src="${logoUrl}" alt="Delco Music Co logo" />
-      <div>
-        <div class="title">Delco Music Co</div>
-        <div style="font-size:11px;color:#666;margin-top:4px;">Repair Invoice</div>
-      </div>
+      <div style="font-size:11px;color:#666;margin-top:4px;">Repair Invoice</div>
       <div class="meta">
         <div style="font-weight:700; color:#0066cc; font-size:16px;">${invoice.invoiceNumber}</div>
-        <div style="margin-top:6px;">Date Received: ${new Date(invoice.dateReceived).toLocaleDateString('en-US')}</div>
-        ${invoice.dateCompleted ? `<div style="margin-top:4px;">Date Completed: ${new Date(invoice.dateCompleted).toLocaleDateString('en-US')}</div>` : ''}
+        <div style="margin-top:6px;">Date Received: ${(() => {
+          const [y, m, d] = invoice.dateReceived.split('-');
+          return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('en-US');
+        })()}</div>
+        ${invoice.dateCompleted ? `<div style="margin-top:4px;">Date Completed: ${(() => {
+          const [y, m, d] = invoice.dateCompleted.split('-');
+          return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('en-US');
+        })()}</div>` : ''}
       </div>
     </div>
 
@@ -187,7 +192,10 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
       </div>
       <div class="right">
         <div class="label">Date Received</div>
-        <div class="value">${new Date(invoice.dateReceived).toLocaleDateString('en-US')}</div>
+        <div class="value">${(() => {
+          const [y, m, d] = invoice.dateReceived.split('-');
+          return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('en-US');
+        })()}</div>
         <div style="height:8px"></div>
         <div class="label">Instruments</div>
         <div class="value">${invoice.instruments.map(i => `${i.type}${i.description ? ' (Instrument Model: ' + i.description + ')' : ''}`).join(', ')}</div>
@@ -223,8 +231,9 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
           <div class="row"><div>Services Total</div><div>$${(invoice.materials.reduce((s, m) => s + m.quantity * m.unitCost, 0)).toFixed(2)}</div></div>
         ${invoice.isGeorgesMusic ? `
           <div class="row"><div>Your Charge</div><div>$${subtotal.toFixed(2)}</div></div>
+          <div class="row"><div>6% Tax (on Your Charge)</div><div>$${yourTax.toFixed(2)}</div></div>
+          <div class="row"><div>Your Charge + Tax</div><div>$${yourChargeWithTax.toFixed(2)}</div></div>
           <div class="row"><div>George's Markup (1.54x)</div><div>$${georgesSubtotal.toFixed(2)}</div></div>
-          <div class="row"><div>6% Tax (on George's)</div><div>$${georgesTax.toFixed(2)}</div></div>
           <div class="row total"><div>George's Total</div><div>$${georgesCustomerTotal.toFixed(2)}</div></div>
         ` : `
           <div class="row"><div>Subtotal</div><div>$${finalSubtotal.toFixed(2)}</div></div>
