@@ -263,6 +263,24 @@ export default function Index() {
     }
   };
 
+  const handleBatchMaterialChange = (repairId: string, index: number, field: keyof RepairMaterial, value: any) => {
+    setBatchRepairs((prev) =>
+      prev.map((r) => {
+        if (r.id !== repairId) return r;
+        const materials = Array.isArray(r.materials) ? [...r.materials] : [];
+        const existing = materials[index] || { description: '', quantity: 1, unitCost: 0 };
+        const updated = { ...existing, [field]: field === 'description' ? String(value) : parseFloat(value) || 0 };
+        materials[index] = updated;
+        // Ensure batchFormData also reflects materials
+        setBatchFormData((prevForm) => ({
+          ...prevForm,
+          [repairId]: { ...(prevForm[repairId] || {}), materials },
+        }));
+        return { ...r, materials };
+      }),
+    );
+  };
+
   const saveBatchRepair = (repairId: string) => {
     const repair = batchRepairs.find((r) => r.id === repairId);
     if (!repair) return;
@@ -799,11 +817,31 @@ export default function Index() {
 
                               <div className="mb-4 pb-4 border-t pt-4">
                                 <label className="block text-xs font-semibold mb-2">Services & Materials</label>
-                                <div className="text-xs space-y-1">
-                                  {repair.materials.map((m: any) => (
-                                    <div key={m.description} className="flex justify-between">
-                                      <span>{m.description}</span>
-                                      <span>${(m.quantity * m.unitCost).toFixed(2)}</span>
+                                <div className="space-y-2 text-xs">
+                                  {(repair.materials || []).map((m: any, mi: number) => (
+                                    <div key={`${mi}-${m.description || 'mat'}`} className="grid grid-cols-4 gap-2 items-center">
+                                      <input
+                                        type="text"
+                                        value={m.description || ''}
+                                        onChange={(e) => handleBatchMaterialChange(repair.id, mi, 'description', e.target.value)}
+                                        className="input-modern text-xs col-span-2"
+                                        placeholder="Description"
+                                      />
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={m.quantity}
+                                        onChange={(e) => handleBatchMaterialChange(repair.id, mi, 'quantity', e.target.value)}
+                                        className="input-modern text-xs"
+                                      />
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={m.unitCost}
+                                        onChange={(e) => handleBatchMaterialChange(repair.id, mi, 'unitCost', e.target.value)}
+                                        className="input-modern text-xs"
+                                      />
                                     </div>
                                   ))}
                                 </div>
