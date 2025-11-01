@@ -73,6 +73,10 @@ export default function Index() {
   // Initialize lastAssignedInvoiceNumber, load invoices, and sync across tabs
   useEffect(() => {
     const invoices = getAllInvoicesFromLocalStorage();
+
+    // Ensure storage is clean (deduplicated)
+    localStorage.setItem('delco-invoices', JSON.stringify(invoices));
+
     setSavedInvoices(invoices);
 
     const numericInvoiceNumbers = invoices
