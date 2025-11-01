@@ -331,13 +331,14 @@ export default function Index() {
   const calculateBatchDeliveryFee = async (
     repairId: string,
     address: string,
+    isGeorgesMusic?: boolean,
+    isNoDeliveryFee?: boolean,
   ) => {
-    const data = batchFormData[repairId] || {};
     if (
       !address ||
       !address.trim() ||
-      data.isGeorgesMusic ||
-      data.isNoDeliveryFee
+      isGeorgesMusic ||
+      isNoDeliveryFee
     ) {
       setBatchRepairs((prev) =>
         prev.map((r) =>
