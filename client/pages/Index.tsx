@@ -594,7 +594,7 @@ export default function Index() {
                 <h4 className="text-sm font-semibold">Recent Invoices</h4>
                 <div className="max-h-48 overflow-auto mt-2 space-y-2">
                   {savedInvoices.slice().reverse().slice(0, 8).map((inv) => (
-                    <div key={inv.invoiceNumber} className="flex items-center justify-between text-sm border rounded p-2">
+                    <div key={`${inv.invoiceNumber}-${inv.dateReceived}`} className="flex items-center justify-between text-sm border rounded p-2">
                       <div>
                         <div className="font-semibold">#{inv.invoiceNumber}</div>
                         <div className="text-xs text-muted-foreground">{inv.customerName} • {inv.dateReceived}</div>
