@@ -244,9 +244,74 @@ export default function Index() {
     }
   };
 
+  const handleBatchRepairFormChange = (repairId: string, field: string, value: any) => {
+    setBatchFormData((prev) => ({
+      ...prev,
+      [repairId]: { ...prev[repairId], [field]: value },
+    }));
+
+    const repair = batchRepairs.find((r) => r.id === repairId);
+    if (repair) {
+      setBatchRepairs((prev) =>
+        prev.map((r) => (r.id === repairId ? { ...r, formData: batchFormData[repairId] } : r))
+      );
+    }
+  };
+
+  const saveBatchRepair = (repairId: string) => {
+    const repair = batchRepairs.find((r) => r.id === repairId);
+    if (!repair) return;
+
+    const data = batchFormData[repairId];
+    const invoice = {
+      invoiceNumber: data.invoiceNumber,
+      dateReceived: data.dateReceived,
+      date: data.date,
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      customerEmail: data.customerEmail,
+      customerAddress: data.customerAddress || '',
+      deliveryMiles: repair.deliveryMiles || 0,
+      deliveryFee: repair.deliveryFee || 0,
+      instruments: repair.instruments,
+      repairDescription: data.repairDescription,
+      materials: repair.materials,
+      laborHours: data.laborHours || 0,
+      hourlyRate: data.hourlyRate || 0,
+      notes: data.notes || '',
+      isGeorgesMusic: data.isGeorgesMusic || false,
+      isNoDeliveryFee: data.isNoDeliveryFee || false,
+      invoiceHtml: '',
+    } as any;
+
+    addInvoiceToLocalStorage(invoice);
+    setSavedInvoices(getAllInvoicesFromLocalStorage());
+    setLastAssignedInvoiceNumber(parseInt(data.invoiceNumber) || lastAssignedInvoiceNumber + 1);
+
+    setBatchRepairs((prev) => prev.filter((r) => r.id !== repairId));
+    alert.show(`Saved invoice ${invoice.invoiceNumber}`, 'success');
+  };
+
+  const removeBatchRepair = (repairId: string) => {
+    setBatchRepairs((prev) => prev.filter((r) => r.id !== repairId));
+    setBatchFormData((prev) => {
+      const newData = { ...prev };
+      delete newData[repairId];
+      return newData;
+    });
+  };
+
   const handleOCRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // If multiple files, use batch handler
+    if (files.length > 1) {
+      await handleBulkUpload(e);
+      return;
+    }
+
+    const file = files[0];
 
     setIsProcessingOCR(true);
     setOcrProgress(30);
