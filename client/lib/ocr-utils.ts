@@ -573,8 +573,8 @@ export const extractInvoiceData = async (
       if (trimmed.includes('|')) {
         parts = trimmed.split('|').map(p => p.trim()).filter(p => p);
       } else {
-        // Split on 2+ spaces or tabs
-        parts = trimmed.split(/\s{2,}|\t+/).map(p => p.trim()).filter(p => p);
+        // Split on any whitespace (1+ spaces or tabs)
+        parts = trimmed.split(/\s+/).map(p => p.trim()).filter(p => p);
       }
 
       addLog(`Materials: Parsing line, parts=${JSON.stringify(parts)}`);
