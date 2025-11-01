@@ -197,6 +197,7 @@ export default function Records() {
                   <th className="text-left py-3 px-3 font-semibold text-foreground">Repair Work</th>
                   <th className="text-center py-3 px-3 font-semibold text-foreground">George's</th>
                   <th className="text-right py-3 px-3 font-semibold text-foreground">Total</th>
+                  <th className="text-right py-3 px-3 font-semibold text-foreground">$ Received</th>
                   <th className="text-center py-3 px-3 font-semibold text-foreground">Action</th>
                 </tr>
               </thead>
