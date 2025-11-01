@@ -69,9 +69,11 @@ export default function Index() {
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const alert = useAlert();
 
-  // Initialize lastAssignedInvoiceNumber from saved invoices if not present
+  // Initialize lastAssignedInvoiceNumber, load invoices, and sync across tabs
   useEffect(() => {
     const invoices = getAllInvoicesFromLocalStorage();
+    setSavedInvoices(invoices);
+
     const numericInvoiceNumbers = invoices
       .map((inv) => parseInt(String(inv.invoiceNumber).replace(/[^0-9]/g, ""), 10))
       .filter((n) => !isNaN(n) && n > 0);
@@ -80,26 +82,32 @@ export default function Index() {
     const storedVal = parseInt(localStorage.getItem("lastAssignedInvoiceNumber") || "0", 10) || 0;
     const defaultStart = 33757;
 
-    // If there are no saved invoices but localStorage has a larger counter (from another run),
-    // reset to defaultStart to allow next invoice to be defaultStart+1 (33758) — prevents accidental gap.
     if (invoices.length === 0 && storedVal > defaultStart) {
       setLastAssignedInvoiceNumber(defaultStart);
       localStorage.setItem("lastAssignedInvoiceNumber", String(defaultStart));
     } else {
-      if (maxFromSaved > lastAssignedInvoiceNumber) {
+      if (maxFromSaved > storedVal) {
         setLastAssignedInvoiceNumber(maxFromSaved);
         localStorage.setItem("lastAssignedInvoiceNumber", String(maxFromSaved));
-      }
-
-      // If nothing found anywhere, default to 33757 as starting point
-      if (maxFromSaved === 0 && lastAssignedInvoiceNumber === 0) {
+      } else if (storedVal === 0) {
         setLastAssignedInvoiceNumber(defaultStart);
         localStorage.setItem("lastAssignedInvoiceNumber", String(defaultStart));
+      } else {
+        setLastAssignedInvoiceNumber(storedVal);
       }
     }
 
-    setSavedInvoices(invoices);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const handleFocus = () => setSavedInvoices(getAllInvoicesFromLocalStorage());
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "delco-invoices") setSavedInvoices(getAllInvoicesFromLocalStorage());
+    };
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   // Prefill the invoice number field with the next number whenever lastAssigned changes
@@ -107,21 +115,6 @@ export default function Index() {
     const next = lastAssignedInvoiceNumber + 1;
     setFormData((prev) => ({ ...prev, invoiceNumber: String(next) }));
   }, [lastAssignedInvoiceNumber]);
-
-  // Keep saved invoices in sync when returning to this page and across tabs
-  useEffect(() => {
-    const refresh = () => setSavedInvoices(getAllInvoicesFromLocalStorage());
-    refresh();
-    window.addEventListener("focus", refresh);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "delco-invoices") refresh();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => {
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
 
   const handleFormChange = (
     e: React.ChangeEvent<
