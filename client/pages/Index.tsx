@@ -593,6 +593,7 @@ export default function Index() {
         customerEmail: "",
         customerAddress: "",
         repairDescription: "",
+        workDone: "",
         laborHours: 0,
         hourlyRate: 0,
         isGeorgesMusic: false,
