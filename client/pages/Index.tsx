@@ -596,7 +596,7 @@ export default function Index() {
                   {deliveryMiles !== null && !formData.isGeorgesMusic && (
                     <div className="bg-blue-50 p-3 rounded border border-blue-200">
                       <div className="flex justify-between text-sm">
-                        <span className="font-semibold text-blue-900">Delivery Fee ({deliveryMiles} miles × 3 trips)</span>
+                        <span className="font-semibold text-blue-900">Delivery Fee ({deliveryMiles} miles × 2 trips)</span>
                         <span className="font-semibold text-blue-900">${deliveryFee.toFixed(2)}</span>
                       </div>
                     </div>
