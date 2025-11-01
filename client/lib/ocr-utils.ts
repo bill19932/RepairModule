@@ -1,5 +1,4 @@
 import heic2any from "heic2any";
-import Tesseract from "tesseract.js";
 
 export interface ExtractedInvoiceData {
   customerName?: string;
