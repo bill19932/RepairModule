@@ -577,8 +577,13 @@ export const extractInvoiceData = async (
         parts = trimmed.split(/\s{2,}|\t+/).map(p => p.trim()).filter(p => p);
       }
 
+      addLog(`Materials: Parsing line, parts=${JSON.stringify(parts)}`);
+
       // We need at least 2 parts (description + something with numbers)
-      if (parts.length < 2) continue;
+      if (parts.length < 2) {
+        addLog(`Materials: Not enough parts (${parts.length} < 2)`);
+        continue;
+      }
 
       // The first part should be the description
       const desc = parts[0];
@@ -593,15 +598,20 @@ export const extractInvoiceData = async (
         const numMatch = parts[j].match(/([\d.]+)/);
         if (numMatch) {
           const num = parseFloat(numMatch[1]);
+          addLog(`Materials: Found number '${numMatch[1]}' from part '${parts[j]}'`);
           if (!qty && num > 0 && num <= 1000) {
             // This looks like a quantity (usually <= 1000)
             qty = Math.round(num);
+            addLog(`Materials: Set qty=${qty}`);
           } else if (!price && num > 0) {
             // This looks like a price
             price = num;
+            addLog(`Materials: Set price=${price}`);
           }
         }
       }
+
+      addLog(`Materials: Final parsed - desc='${desc}', qty=${qty}, price=${price}`);
 
       // Add if we found valid quantity and price
       if (qty > 0 && price > 0 && desc && desc.length > 2) {
@@ -610,6 +620,9 @@ export const extractInvoiceData = async (
           quantity: qty,
           unitCost: price
         });
+        addLog(`✅ Materials: ADDED material: ${desc} x${qty} @ $${price}`);
+      } else {
+        addLog(`❌ Materials: FAILED validation - qty=${qty}, price=${price}, desc.length=${desc.length}`);
       }
     }
 
