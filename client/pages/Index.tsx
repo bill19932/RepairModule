@@ -73,7 +73,57 @@ export default function Index() {
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOldRepairFormat, setIsOldRepairFormat] = useState(false);
+  const [batchRepairs, setBatchRepairs] = useState<any[]>([]);
+  const [batchFormData, setBatchFormData] = useState<{ [key: string]: any }>({});
   const alert = useAlert();
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const results: any[] = [];
+    for (const file of files) {
+      try {
+        const extracted = await extractInvoiceData(file);
+        const id = `batch_${Date.now()}_${Math.random()}`;
+
+        // Create form data for this repair
+        const newFormData = {
+          invoiceNumber: extracted.invoiceNumber || String(lastAssignedInvoiceNumber + results.length + 1),
+          dateReceived: extracted.dateReceived || new Date().toISOString().split('T')[0],
+          date: extracted.date || new Date().toISOString().split('T')[0],
+          customerName: extracted.customerName || '',
+          customerPhone: extracted.customerPhone || '',
+          customerEmail: extracted.customerEmail || '',
+          customerAddress: extracted.customerAddress || '',
+          repairDescription: extracted.repairDescription || '',
+          laborHours: 0,
+          hourlyRate: 0,
+          isGeorgesMusic: extracted.isGeorgesMusic || false,
+          isNoDeliveryFee: extracted.isNoDeliveryFee || false,
+          notes: '',
+        };
+
+        results.push({
+          id,
+          fileName: file.name,
+          extracted,
+          formData: newFormData,
+          materials: extracted.materials || [],
+          instruments: extracted.instruments || [{ type: '', description: '' }],
+          deliveryMiles: null,
+          deliveryFee: 0,
+        });
+
+        setBatchFormData((prev) => ({ ...prev, [id]: newFormData }));
+      } catch (err) {
+        console.error('Error processing file:', err);
+      }
+    }
+
+    setBatchRepairs((prev) => [...prev, ...results]);
+    e.target.value = '';
+  };
 
   // Initialize lastAssignedInvoiceNumber, load invoices, and sync across tabs
   useEffect(() => {
