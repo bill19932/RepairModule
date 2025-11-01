@@ -343,8 +343,11 @@ export default function Index() {
         invoiceHtml: "",
       };
 
-      setLastAssignedInvoiceNumber(assignedNum);
-      localStorage.setItem("lastAssignedInvoiceNumber", String(assignedNum));
+      // Only update invoice counter if this is NOT an old repair format
+      if (!isOldRepairFormat) {
+        setLastAssignedInvoiceNumber(assignedNum);
+        localStorage.setItem("lastAssignedInvoiceNumber", String(assignedNum));
+      }
 
       let invoiceHtml = "";
       try {
