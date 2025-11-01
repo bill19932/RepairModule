@@ -169,7 +169,8 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
       </div>
       <div class="meta">
         <div style="font-weight:700; color:#0066cc; font-size:16px;">${invoice.invoiceNumber}</div>
-        <div style="margin-top:6px;">${new Date(invoice.date).toLocaleDateString('en-US')}</div>
+        <div style="margin-top:6px;">Date Received: ${new Date(invoice.dateReceived).toLocaleDateString('en-US')}</div>
+        ${invoice.dateCompleted ? `<div style="margin-top:4px;">Date Completed: ${new Date(invoice.dateCompleted).toLocaleDateString('en-US')}</div>` : ''}
       </div>
     </div>
 
