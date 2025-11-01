@@ -966,7 +966,7 @@ export default function Index() {
                                     (inst: any, idx: number) => (
                                       <div
                                         key={idx}
-                                        className="grid grid-cols-2 gap-2"
+                                        className="grid grid-cols-3 gap-2 items-center"
                                       >
                                         <select
                                           value={inst.type || ""}
@@ -1017,10 +1017,51 @@ export default function Index() {
                                           placeholder="Description"
                                           className="input-modern text-sm"
                                         />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setBatchRepairs((prev) =>
+                                              prev.map((r) =>
+                                                r.id === repair.id
+                                                  ? {
+                                                      ...r,
+                                                      instruments: r.instruments.filter(
+                                                        (_: any, i: number) => i !== idx
+                                                      ),
+                                                    }
+                                                  : r,
+                                              ),
+                                            );
+                                          }}
+                                          className="text-red-600 hover:text-red-900 font-semibold text-sm"
+                                        >
+                                          Remove
+                                        </button>
                                       </div>
                                     ),
                                   )}
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setBatchRepairs((prev) =>
+                                      prev.map((r) =>
+                                        r.id === repair.id
+                                          ? {
+                                              ...r,
+                                              instruments: [
+                                                ...r.instruments,
+                                                { type: "", description: "" },
+                                              ],
+                                            }
+                                          : r,
+                                      ),
+                                    );
+                                  }}
+                                  className="text-xs text-primary font-semibold mt-2"
+                                >
+                                  + Add Instrument
+                                </button>
                               </div>
 
                               <div className="mb-4">
@@ -1058,7 +1099,7 @@ export default function Index() {
                                     (m: any, mi: number) => (
                                       <div
                                         key={`${mi}-${m.description || "mat"}`}
-                                        className="grid grid-cols-4 gap-2 items-center"
+                                        className="grid grid-cols-5 gap-2 items-center"
                                       >
                                         <input
                                           type="text"
@@ -1103,10 +1144,51 @@ export default function Index() {
                                           }
                                           className="input-modern text-xs"
                                         />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setBatchRepairs((prev) =>
+                                              prev.map((r) =>
+                                                r.id === repair.id
+                                                  ? {
+                                                      ...r,
+                                                      materials: r.materials.filter(
+                                                        (_: any, i: number) => i !== mi
+                                                      ),
+                                                    }
+                                                  : r,
+                                              ),
+                                            );
+                                          }}
+                                          className="text-red-600 text-xs col-span-1 justify-self-end"
+                                        >
+                                          Remove
+                                        </button>
                                       </div>
                                     ),
                                   )}
                                 </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setBatchRepairs((prev) =>
+                                      prev.map((r) =>
+                                        r.id === repair.id
+                                          ? {
+                                              ...r,
+                                              materials: [
+                                                ...r.materials,
+                                                { description: "", quantity: 1, unitCost: 0 },
+                                              ],
+                                            }
+                                          : r,
+                                      ),
+                                    );
+                                  }}
+                                  className="text-xs text-primary font-semibold mt-2"
+                                >
+                                  + Add Material
+                                </button>
                               </div>
 
                               <div className="bg-gray-50 p-3 rounded mb-4">
