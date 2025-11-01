@@ -760,10 +760,12 @@ export const extractInvoiceData = async (
 
     // Pattern 2: from trouble section (George's Music format)
     if (!repairDescription) {
+      addLog(`Searching for Trouble Reported in trouble section...`);
       const troubleMatch = troubleSection.match(
         /Trouble\s+Reported\s*:?[\s\S]*?(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i,
       );
       if (troubleMatch) {
+        addLog(`Found trouble match: ${troubleMatch[0].substring(0, 150)}`);
         let troubleText = troubleMatch[0];
         troubleText = troubleText
           .replace(/Trouble\s+Reported\s*:?/i, "")
