@@ -482,37 +482,64 @@ export const extractInvoiceData = async (
     // MATERIALS - extract from table format (Description | Quantity | Unit Price | Cost)
     const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
 
-    // Look for table rows with format: description | quantity | price | cost
-    // Match patterns like: "Pickup Swap | 2 | $60.00 | $120.00"
-    const materialLines = lines.filter(l =>
-      l.trim() &&
-      !l.match(/Description|Quantity|Unit|Price|Cost|Subtotal|Tax|Total|Invoice|Date|Service|Address|Number|Attention/i) &&
-      l.match(/[\d.]/) // Must contain digits
-    );
+    // Look for Description/Quantity/Price table header to identify table section
+    const descHeaderIdx = lines.findIndex(l => /Description/.test(l));
+    let tableLines: string[] = [];
 
-    for (const line of materialLines) {
-      // Split by pipe or multiple spaces
-      const parts = line.split(/\s*\|\s*|\s{2,}/).map(p => p.trim()).filter(p => p);
+    if (descHeaderIdx > -1) {
+      // Extract lines after the header until we hit Subtotal or end
+      for (let i = descHeaderIdx + 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || /^Subtotal|^Tax|^Total|^DMC|^Invoice/i.test(line)) break;
+        if (line.match(/\d/)) {
+          tableLines.push(line);
+        }
+      }
+    } else {
+      // Fallback: filter for lines that look like table rows
+      tableLines = lines.filter(l =>
+        l.trim() &&
+        !l.match(/Description|Quantity|Unit|Price|Cost|Subtotal|Tax|Total|Invoice|Date|Service|Address|Number|Attention|Thank you|Google|Delco|Sincerely|Review/i) &&
+        l.match(/[\d.]/)
+      );
+    }
 
+    for (const line of tableLines) {
+      // Split by pipe or multiple spaces (tab-separated or pipe-separated)
+      const parts = line.split(/\s*\|\s*|\t+|\s{2,}/).map(p => p.trim()).filter(p => p);
+
+      // Look for pattern: description, quantity, price (and maybe cost)
       if (parts.length >= 3) {
-        const description = parts[0];
-        const quantityStr = parts[1];
-        const priceStr = parts[2];
+        // Try different part arrangements
+        let description: string | null = null;
+        let quantity = 0;
+        let unitCost = 0;
 
-        // Try to parse quantity and price
-        const quantity = parseInt(quantityStr);
-        const priceMatch = priceStr.match(/[\d.]+/);
-        const unitCost = priceMatch ? parseFloat(priceMatch[0]) : 0;
+        // Pattern 1: description | quantity | price | cost
+        if (parts.length >= 3) {
+          const desc = parts[0];
+          const qtyStr = parts[1];
+          const priceStr = parts[2];
 
-        if (description && !isNaN(quantity) && quantity > 0 && unitCost > 0) {
-          // Avoid extracting metadata rows
-          if (!/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Label|SKU|Invoice|Item)$/i.test(description)) {
-            materials.push({
-              description: description,
-              quantity: quantity,
-              unitCost: unitCost
-            });
+          const qty = parseInt(qtyStr);
+          const priceMatch = priceStr.match(/([\d.]+)/);
+
+          if (!isNaN(qty) && qty > 0 && priceMatch) {
+            const price = parseFloat(priceMatch[1]);
+            if (price > 0 && !/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Label|SKU|Invoice|Item|Cost)$/i.test(desc)) {
+              description = desc;
+              quantity = qty;
+              unitCost = price;
+            }
           }
+        }
+
+        if (description && quantity > 0 && unitCost > 0) {
+          materials.push({
+            description: description,
+            quantity: quantity,
+            unitCost: unitCost
+          });
         }
       }
     }
