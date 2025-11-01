@@ -785,12 +785,23 @@ export const extractInvoiceData = async (
       const serviceMatch = text.match(
         /Service\s+([\s\S]{10,200}?)(?:\n|Invoice|$)/i,
       );
-      if (serviceMatch) repairDescription = serviceMatch[1].trim();
+      if (serviceMatch) {
+        let desc = serviceMatch[1].trim();
+        // Filter out "/ RETURN ORDER" and similar artifacts
+        desc = desc.replace(/^\s*\/\s*RETURN\s+ORDER\s*/i, "").trim();
+        if (desc.length > 3) {
+          repairDescription = desc;
+          addLog(`Service: Extracted from service match: ${desc.substring(0, 80)}`);
+        }
+      }
     }
 
     if (repairDescription) {
       extracted.repairDescription = repairDescription;
       console.log("[OCR] Repair description:", repairDescription);
+      addLog(`Final repair description: ${repairDescription.substring(0, 100)}`);
+    } else {
+      addLog(`No repair description found`);
     }
 
     // MATERIALS - extract from table format
