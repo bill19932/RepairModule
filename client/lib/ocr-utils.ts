@@ -530,65 +530,70 @@ export const extractInvoiceData = async (
       console.log("[OCR] Repair description:", repairDescription);
     }
 
-    // MATERIALS - extract from table format (Description | Quantity | Unit Price | Cost)
+    // MATERIALS - extract from table format using direct pattern matching
     const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
 
-    // Look for Description header to find table section
-    const descHeaderIdx = lines.findIndex(l => /Description/.test(l));
-    console.log("[MATERIALS] Looking for Description header. Found at index:", descHeaderIdx);
-    console.log("[MATERIALS] All lines:", lines);
+    // Strategy 1: Look for lines with known repair service patterns
+    // Common patterns: "Pickup Swap", "Setup", "Restring", "Fret", "Bridge", etc.
+    const knownServices = ['pickup', 'swap', 'setup', 'restring', 'fret', 'bridge', 'nut', 'tune', 'intonation', 'adjustment', 'cleaning'];
 
-    if (descHeaderIdx > -1) {
-      // Extract lines after the header until we hit Subtotal, blank line, or key footer
-      for (let i = descHeaderIdx + 1; i < lines.length; i++) {
-        const line = lines[i].trim();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.length < 3) continue;
 
-        // Stop at subtotal/total section
-        if (!line || /^Subtotal|^Tax|^Total|^DMC|^-{2,}/.test(line)) break;
+      // Check if this line contains a known service
+      const hasKnownService = knownServices.some(service => trimmed.toLowerCase().includes(service));
+      if (!hasKnownService) continue;
 
-        // Skip if line doesn't have numbers (not a data row)
-        if (!line.match(/\d/)) continue;
+      // Check if line contains numbers (qty and price)
+      if (!trimmed.match(/\d/)) continue;
 
-        // Skip header-like lines
-        if (/^Quantity|^Unit|^Price|^Cost|Description|Invoice/.test(line)) continue;
+      // Skip if it's a header or metadata
+      if (/^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention)/i.test(trimmed)) continue;
 
-        // Try to parse as material row
-        // Patterns: "Pickup Swap | 2 | $60.00 | $120.00" or "Pickup Swap     2     $60.00     $120.00"
-        let parts: string[] = [];
+      // Try to parse this line as a material
+      let parts: string[] = [];
 
-        if (line.includes('|')) {
-          parts = line.split('|').map(p => p.trim()).filter(p => p);
-        } else {
-          // Split on 2+ consecutive spaces or tabs
-          parts = line.split(/\s{2,}|\t+/).map(p => p.trim()).filter(p => p);
-        }
+      if (trimmed.includes('|')) {
+        parts = trimmed.split('|').map(p => p.trim()).filter(p => p);
+      } else {
+        // Split on 2+ spaces or tabs
+        parts = trimmed.split(/\s{2,}|\t+/).map(p => p.trim()).filter(p => p);
+      }
 
-        // Need at least 3 parts: description, qty, price
-        if (parts.length >= 3) {
-          const desc = parts[0];
-          const qtyStr = parts[1];
-          const priceStr = parts[2];
+      // We need at least 2 parts (description + something with numbers)
+      if (parts.length < 2) continue;
 
-          // Parse quantity (should be a simple number)
-          const qty = parseInt(qtyStr);
+      // The first part should be the description
+      const desc = parts[0];
 
-          // Extract price from string like "$60.00" or "60.00"
-          const priceMatch = priceStr.match(/([\d.]+)/);
-          const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+      // Look for quantity and price in remaining parts
+      // Usually: part[1] = qty, part[2] = price, part[3] = cost
+      let qty = 0;
+      let price = 0;
 
-          // Validate we have valid numbers
-          if (!isNaN(qty) && qty > 0 && price > 0 && desc && desc.length > 1) {
-            // Skip if description looks like a header/footer
-            if (!/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Item|Label|SKU|Cost|Quantity|Unit|Price|Description)$/i.test(desc) &&
-                !desc.match(/^[\-=]{2,}/)) {
-              materials.push({
-                description: desc,
-                quantity: qty,
-                unitCost: price
-              });
-            }
+      // Try to extract numbers from parts
+      for (let j = 1; j < parts.length; j++) {
+        const numMatch = parts[j].match(/([\d.]+)/);
+        if (numMatch) {
+          const num = parseFloat(numMatch[1]);
+          if (!qty && num > 0 && num <= 1000) {
+            // This looks like a quantity (usually <= 1000)
+            qty = Math.round(num);
+          } else if (!price && num > 0) {
+            // This looks like a price
+            price = num;
           }
         }
+      }
+
+      // Add if we found valid quantity and price
+      if (qty > 0 && price > 0 && desc && desc.length > 2) {
+        materials.push({
+          description: desc,
+          quantity: qty,
+          unitCost: price
+        });
       }
     }
 
