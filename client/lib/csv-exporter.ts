@@ -97,16 +97,29 @@ export const addInvoiceToLocalStorage = (invoice: RepairInvoice) => {
 export const getAllInvoicesFromLocalStorage = (): RepairInvoice[] => {
   const invoices = JSON.parse(localStorage.getItem('delco-invoices') || '[]');
 
-  // Migration: ensure all invoices have required fields
-  return invoices.map((invoice: any) => ({
-    ...invoice,
-    dateReceived: invoice.dateReceived || invoice.date || new Date().toISOString().split('T')[0],
-    customerAddress: invoice.customerAddress || invoice.address || '',
-    deliveryMiles: typeof invoice.deliveryMiles === 'number' ? invoice.deliveryMiles : (invoice.delivery_miles || null),
-    deliveryFee: typeof invoice.deliveryFee === 'number' ? invoice.deliveryFee : (invoice.delivery_fee || 0),
-    instruments: invoice.instruments || [{ type: invoice.instrumentType || 'Other', description: invoice.instrumentDescription || '' }],
-    invoiceHtml: invoice.invoiceHtml || '',
-  }));
+  // Migration: ensure all invoices have required fields and deduplicate by invoiceNumber
+  const seen = new Set<string>();
+  const deduped: RepairInvoice[] = [];
+
+  for (const invoice of invoices) {
+    const normalized = {
+      ...invoice,
+      dateReceived: invoice.dateReceived || invoice.date || new Date().toISOString().split('T')[0],
+      customerAddress: invoice.customerAddress || invoice.address || '',
+      deliveryMiles: typeof invoice.deliveryMiles === 'number' ? invoice.deliveryMiles : (invoice.delivery_miles || null),
+      deliveryFee: typeof invoice.deliveryFee === 'number' ? invoice.deliveryFee : (invoice.delivery_fee || 0),
+      instruments: invoice.instruments || [{ type: invoice.instrumentType || 'Other', description: invoice.instrumentDescription || '' }],
+      invoiceHtml: invoice.invoiceHtml || '',
+    };
+
+    const invoiceKey = String(normalized.invoiceNumber);
+    if (!seen.has(invoiceKey)) {
+      seen.add(invoiceKey);
+      deduped.push(normalized);
+    }
+  }
+
+  return deduped;
 };
 
 export const exportAllInvoicesToCSV = () => {
