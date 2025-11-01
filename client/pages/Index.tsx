@@ -455,7 +455,7 @@ export default function Index() {
     );
     const subtotal = servicesTotal;
 
-    const deliveryAmount = formData.isGeorgesMusic ? 0 : deliveryFee || 0;
+    const deliveryAmount = formData.isGeorgesMusic || formData.isNoDeliveryFee ? 0 : deliveryFee || 0;
     const subtotalWithDelivery = subtotal + deliveryAmount;
     const tax = subtotalWithDelivery * 0.06;
     const total = subtotalWithDelivery + tax;
