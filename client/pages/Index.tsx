@@ -32,9 +32,6 @@ export default function Index() {
   const [showForm, setShowForm] = useState(true);
   const navigate = useNavigate();
 
-  // Track the last assigned invoice number (numeric). This allows reusing the last number
-  // if the most recent invoice is deleted, and ensures each saved invoice increments
-  // the counter when appropriate.
   const [lastAssignedInvoiceNumber, setLastAssignedInvoiceNumber] = useState<number>(() => {
     const stored = localStorage.getItem("lastAssignedInvoiceNumber");
     return stored ? parseInt(stored, 10) || 0 : 0;
@@ -52,6 +49,7 @@ export default function Index() {
     laborHours: 0 as number,
     hourlyRate: 0 as number,
     isGeorgesMusic: false as boolean,
+    notes: "" as string,
   });
 
   const [instruments, setInstruments] = useState([{ type: "", description: "" }]);
@@ -60,7 +58,6 @@ export default function Index() {
   ]);
 
   const [savedInvoices, setSavedInvoices] = useState<RepairInvoice[]>(() => {
-    // Load and deduplicate on initial state to prevent duplicate key warnings
     const invoices = getAllInvoicesFromLocalStorage();
     localStorage.setItem('delco-invoices', JSON.stringify(invoices));
     return invoices;
@@ -113,24 +110,10 @@ export default function Index() {
     };
   }, []);
 
-  // Prefill the invoice number field with the next number whenever lastAssigned changes
   useEffect(() => {
     const next = lastAssignedInvoiceNumber + 1;
     setFormData((prev) => ({ ...prev, invoiceNumber: String(next) }));
   }, [lastAssignedInvoiceNumber]);
-
-  const handleFormChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
 
   const calculateDeliveryFee = async (address: string) => {
     if (!address || !address.trim() || formData.isGeorgesMusic) {
@@ -151,37 +134,18 @@ export default function Index() {
 
       const addressParts = cleanAddr.split(",").map((p) => p.trim());
       let street = addressParts[0];
-      let city = "";
-      let state = "PA";
-
-      if (addressParts.length >= 2) {
-        city = addressParts[1];
-        if (addressParts.length >= 3) {
-          state = addressParts[2].replace(/^\D*/, "").trim();
-        }
-      }
 
       let customerCoords = null;
-      let successfulAddr = "";
       const addressVariations: string[] = [];
 
       addressVariations.push(cleanAddr);
-      if (city && state !== "PA") {
-        addressVariations.push(`${street}, ${state}`);
-      }
-      if (city && state) {
-        addressVariations.push(`${city}, ${state}`);
-      }
       if (!cleanAddr.includes("Pennsylvania")) {
         addressVariations.push(cleanAddr.replace(/,\s*PA\b/, ", Pennsylvania"));
       }
 
       for (const variation of addressVariations) {
         customerCoords = await geocodeAddress(variation);
-        if (customerCoords) {
-          successfulAddr = variation;
-          break;
-        }
+        if (customerCoords) break;
       }
 
       if (!customerCoords) {
@@ -204,7 +168,7 @@ export default function Index() {
         customerCoords.lon,
       );
       const roundedMiles = Math.round(miles);
-      const fee = roundedMiles * 2 * 0.85; // formula used previously
+      const fee = roundedMiles * 2 * 0.85;
       const finalFee = parseFloat(fee.toFixed(2));
 
       setDeliveryMiles(roundedMiles);
@@ -275,6 +239,23 @@ export default function Index() {
     } finally {
       setIsProcessingOCR(false);
       e.target.value = "";
+    }
+  };
+
+  const handleFormChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    if (name === "customerAddress") {
+      calculateDeliveryFee(value);
     }
   };
 
@@ -392,6 +373,7 @@ export default function Index() {
         laborHours: 0,
         hourlyRate: 0,
         isGeorgesMusic: false,
+        notes: "",
       });
 
       setInstruments([{ type: "", description: "" }]);
@@ -409,7 +391,6 @@ export default function Index() {
     setSavedInvoices(updatedInvoices);
     localStorage.setItem("delco-invoices", JSON.stringify(updatedInvoices));
 
-    // If the deleted invoice is the currently last assigned, decrement lastAssigned to allow reuse
     const parsed = parseInt(String(invoiceNumber).replace(/[^0-9]/g, ""), 10);
     if (!isNaN(parsed) && parsed === lastAssignedInvoiceNumber) {
       const newLast = Math.max(0, lastAssignedInvoiceNumber - 1);
@@ -446,30 +427,10 @@ export default function Index() {
     };
   };
 
-  const getFilteredInvoices = () => {
-    if (!searchQuery.trim()) return savedInvoices;
-
-    const query = searchQuery.toLowerCase();
-    return savedInvoices.filter((invoice) =>
-      invoice.invoiceNumber.toLowerCase().includes(query) ||
-      invoice.customerName.toLowerCase().includes(query) ||
-      invoice.customerPhone.toLowerCase().includes(query) ||
-      invoice.customerEmail.toLowerCase().includes(query) ||
-      invoice.instrumentType.toLowerCase().includes(query) ||
-      invoice.instrumentDescription.toLowerCase().includes(query) ||
-      invoice.repairDescription.toLowerCase().includes(query) ||
-      invoice.date.includes(query),
-    );
-  };
-
   const totals = calculateTotals();
-  const filteredInvoices = getFilteredInvoices();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Rest of component unchanged - omitted for brevity in this edit block */}
-      {/* The file content below this point remains identical to previous implementation */}
-
       <div className="bg-white border-b border-gray-200">
         <div className="h-1 bg-primary"></div>
         <header className="max-w-7xl mx-auto px-6 py-6">
@@ -532,7 +493,7 @@ export default function Index() {
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">Invoice # *</label>
-                      <input type="text" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleFormChange} placeholder="e.g., 337-001" className="input-modern text-sm" required />
+                      <input type="text" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleFormChange} placeholder="e.g., 33758" className="input-modern text-sm" required />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">Date Received</label>
@@ -566,7 +527,7 @@ export default function Index() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">George's Music Repair?</label>
-                      <label className="flex items-center gap-2 mt-1">
+                      <label className="flex items-center gap-2 mt-2">
                         <input type="checkbox" name="isGeorgesMusic" checked={formData.isGeorgesMusic} onChange={handleFormChange} className="w-4 h-4" />
                         <span className="text-xs">Yes, George's Music</span>
                       </label>
@@ -575,50 +536,61 @@ export default function Index() {
 
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-2">Instruments *</label>
-                    {instruments.map((instrument, index) => (
-                      <div key={`instr-${index}`} className="flex gap-2 mb-2">
-                        <select value={instrument.type} onChange={(e) => handleInstrumentChange(index, "type", e.target.value)} className="input-modern flex-1 text-sm">
-                          <option value="">Select Type</option>
-                          <option value="Guitar">Guitar</option>
-                          <option value="Bass">Bass</option>
-                          <option value="Violin">Violin</option>
-                          <option value="Cello">Cello</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <input type="text" placeholder="Description" value={instrument.description} onChange={(e) => handleInstrumentChange(index, "description", e.target.value)} className="input-modern flex-1 text-sm" />
-                        <button type="button" onClick={() => removeInstrument(index)} className="text-red-600 hover:text-red-900 font-semibold text-sm">Remove</button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={addInstrument} className="text-xs text-primary font-semibold mt-1">+ Add Instrument</button>
+                    <div className="space-y-2">
+                      {instruments.map((instrument, index) => (
+                        <div key={`instr-${index}`} className="grid grid-cols-4 gap-2">
+                          <select value={instrument.type} onChange={(e) => handleInstrumentChange(index, "type", e.target.value)} className="input-modern text-sm">
+                            <option value="">Select Type</option>
+                            <option value="Guitar">Guitar</option>
+                            <option value="Bass">Bass</option>
+                            <option value="Violin">Violin</option>
+                            <option value="Cello">Cello</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          <input type="text" placeholder="Description" value={instrument.description} onChange={(e) => handleInstrumentChange(index, "description", e.target.value)} className="input-modern col-span-2 text-sm" />
+                          <button type="button" onClick={() => removeInstrument(index)} className="text-red-600 hover:text-red-900 font-semibold text-sm">Remove</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={addInstrument} className="text-xs text-primary font-semibold">+ Add Instrument</button>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-1">Repair Work Description *</label>
-                    <textarea name="repairDescription" value={formData.repairDescription} onChange={handleFormChange} placeholder="Describe the repair work" className="input-modern text-sm min-h-20" />
+                    <textarea name="repairDescription" value={formData.repairDescription} onChange={handleFormChange} placeholder="Describe the repair work" className="input-modern text-sm min-h-24 resize-none" required />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-2">Services & Materials</label>
-                    {materials.map((material, index) => (
-                      <div key={`mat-${index}`} className="grid grid-cols-4 gap-2 mb-2">
-                        <input type="text" placeholder="Description" value={material.description} onChange={(e) => handleMaterialChange(index, "description", e.target.value)} className="input-modern col-span-2 text-sm" />
-                        <input type="number" placeholder="Qty" min="1" value={material.quantity} onChange={(e) => handleMaterialChange(index, "quantity", e.target.value)} className="input-modern text-sm" />
-                        <input type="number" placeholder="Cost" min="0" step="0.01" value={material.unitCost} onChange={(e) => handleMaterialChange(index, "unitCost", e.target.value)} className="input-modern text-sm" />
-                        <button type="button" onClick={() => removeMaterial(index)} className="text-red-600 hover:text-red-900 font-semibold text-xs col-span-4">Remove</button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={addMaterial} className="text-xs text-primary font-semibold mt-1">+ Add Item</button>
+                    <div className="space-y-2">
+                      {materials.map((material, index) => (
+                        <div key={`mat-${index}`} className="grid grid-cols-4 gap-2">
+                          <input type="text" placeholder="Description" value={material.description} onChange={(e) => handleMaterialChange(index, "description", e.target.value)} className="input-modern col-span-2 text-sm" />
+                          <input type="number" placeholder="Qty" min="1" value={material.quantity} onChange={(e) => handleMaterialChange(index, "quantity", e.target.value)} className="input-modern text-sm" />
+                          <input type="number" placeholder="Cost" min="0" step="0.01" value={material.unitCost} onChange={(e) => handleMaterialChange(index, "unitCost", e.target.value)} className="input-modern text-sm" />
+                          <button type="button" onClick={() => removeMaterial(index)} className="text-red-600 text-xs col-span-4">Remove</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={addMaterial} className="text-xs text-primary font-semibold">+ Add Item</button>
+                    </div>
                   </div>
 
                   {deliveryMiles !== null && !formData.isGeorgesMusic && (
-                    <div className="bg-blue-50 p-3 rounded text-sm border border-blue-200">
-                      <div className="font-semibold text-blue-900">Delivery</div>
-                      <div className="text-xs text-blue-800 mt-1">{deliveryMiles} miles × 3 trips = ${deliveryFee.toFixed(2)}</div>
+                    <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-semibold text-blue-900">Delivery Fee ({deliveryMiles} miles × 3 trips)</span>
+                        <span className="font-semibold text-blue-900">${deliveryFee.toFixed(2)}</span>
+                      </div>
                     </div>
                   )}
 
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Notes</label>
+                    <textarea name="notes" value={formData.notes} onChange={handleFormChange} placeholder="Internal notes" className="input-modern text-sm min-h-16 resize-none" />
+                  </div>
+
                   <div className="pt-4">
-                    <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button type="submit" disabled={isSubmitting} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
                       {isSubmitting ? "Saving..." : "Save Invoice"}
                     </button>
                   </div>
@@ -627,52 +599,66 @@ export default function Index() {
             </div>
           )}
 
-          {/* Sidebar summary / totals */}
           <div className="lg:col-span-1">
             <div className="card-modern p-6 space-y-4">
               <h3 className="text-lg font-semibold">Summary</h3>
-              <div className="text-sm">
+              <div className="text-sm space-y-1">
                 <div className="flex justify-between"><div>Services</div><div>${totals.servicesTotal.toFixed(2)}</div></div>
                 <div className="flex justify-between"><div>Delivery</div><div>${totals.delivery.toFixed(2)}</div></div>
                 <div className="flex justify-between"><div>Tax (6%)</div><div>${totals.tax.toFixed(2)}</div></div>
-                <div className="flex justify-between font-bold mt-2"><div>Total</div><div>${totals.total.toFixed(2)}</div></div>
+                <div className="flex justify-between font-bold border-t pt-1 mt-1"><div>Total</div><div>${totals.total.toFixed(2)}</div></div>
 
                 {formData.isGeorgesMusic && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded">
-                    <div className="text-xs text-blue-900 font-semibold">George's Music Invoice (1.54x)</div>
-                    <div className="text-sm mt-1">Your Charge: ${totals.subtotal.toFixed(2)}</div>
-                    <div className="text-sm">George's Markup (1.54x): ${totals.georgesSubtotal.toFixed(2)}</div>
-                    <div className="text-sm">George's Total (incl. tax): ${totals.georgesTotal.toFixed(2)}</div>
+                  <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
+                    <div className="text-xs text-blue-900 font-semibold mb-2">George's Music Invoice (1.54x)</div>
+                    <div className="text-xs space-y-1">
+                      <div className="flex justify-between"><div>Your Charge</div><div>${totals.subtotal.toFixed(2)}</div></div>
+                      <div className="flex justify-between"><div>George's Markup</div><div>${(totals.georgesSubtotal - totals.subtotal).toFixed(2)}</div></div>
+                      <div className="flex justify-between"><div>Tax (6%)</div><div>${totals.georgesTax.toFixed(2)}</div></div>
+                      <div className="flex justify-between font-semibold border-t pt-1 mt-1"><div>George's Total</div><div>${totals.georgesTotal.toFixed(2)}</div></div>
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="pt-3">
-                <h4 className="text-sm font-semibold">Recent Invoices</h4>
-                <div className="max-h-48 overflow-auto mt-2 space-y-2">
-                  {savedInvoices.slice().reverse().slice(0, 8).map((inv) => (
-                    <div key={`${inv.invoiceNumber}-${inv.dateReceived}`} className="flex items-center justify-between text-sm border rounded p-2">
-                      <div>
-                        <div className="font-semibold">#{inv.invoiceNumber}</div>
-                        <div className="text-xs text-muted-foreground">{inv.customerName} • {inv.dateReceived}</div>
+              <div className="pt-3 border-t">
+                <h4 className="text-sm font-semibold mb-2">Recent Invoices</h4>
+                <div className="max-h-48 overflow-auto space-y-2">
+                  {savedInvoices.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No invoices yet</div>
+                  ) : (
+                    savedInvoices.slice().reverse().slice(0, 8).map((inv) => (
+                      <div key={`${inv.invoiceNumber}-${inv.dateReceived}`} className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded border">
+                        <div>
+                          <div className="font-semibold">#{inv.invoiceNumber}</div>
+                          <div className="text-muted-foreground">{inv.customerName}</div>
+                          <div className="text-muted-foreground">{inv.dateReceived}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => { try { downloadInvoicePDF(inv); } catch(e){console.error(e);} }} className="text-primary hover:underline text-xs font-semibold">PDF</button>
+                          <button onClick={() => handleDeleteInvoice(inv.invoiceNumber)} className="text-red-600 hover:text-red-900 text-xs font-semibold">Delete</button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => { try { downloadInvoicePDF(inv); } catch(e){console.error(e);} }} className="text-primary underline text-xs">PDF</button>
-                        <button onClick={() => handleDeleteInvoice(inv.invoiceNumber)} className="text-red-600 text-xs">Delete</button>
-                      </div>
-                    </div>
-                  ))}
-                  {savedInvoices.length === 0 && <div className="text-xs text-muted-foreground">No invoices yet</div>}
+                    ))
+                  )}
                 </div>
               </div>
 
-              <div className="pt-2">
-                <button onClick={() => exportAllInvoicesToCSV()} className="btn-secondary w-full">Export CSV</button>
+              <div className="pt-3">
+                <button onClick={() => exportAllInvoicesToCSV()} className="btn-secondary w-full text-sm">Export CSV</button>
               </div>
             </div>
           </div>
         </div>
       </main>
+
+      <AlertDialog
+        title=""
+        message={alert.message}
+        isOpen={alert.isOpen}
+        onClose={alert.close}
+        type={alert.type}
+      />
     </div>
   );
 }
