@@ -153,11 +153,11 @@ export default function Records() {
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="card-modern p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-foreground">📋 All Repairs</h2>
-            <div className="flex items-center gap-3">
-              <button onClick={handleExportSelected} className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-sm flex items-center gap-2">
-                <Download size={14} /> Export to Spreadsheet
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-foreground">📋 All Repairs</h2>
+            <div className="flex items-center gap-2">
+              <button onClick={handleExportSelected} className="bg-green-600 hover:bg-green-700 text-white font-semibold py-1.5 px-3 rounded-sm flex items-center gap-2 text-xs">
+                <Download size={12} /> Export
               </button>
             </div>
           </div>
