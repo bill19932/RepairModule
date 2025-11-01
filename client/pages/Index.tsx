@@ -171,7 +171,7 @@ export default function Index() {
 
     addInvoiceToLocalStorage(invoice);
     setSavedInvoices(getAllInvoicesFromLocalStorage());
-    setLastAssignedInvoiceNumber((prev) => prev + 1);
+    setLastAssignedInvoiceNumber(assignedNum);
 
     // mark saved
     setBatchRepairs((prev) => prev.map((b, i) => (i === itemIndex ? { ...b, saved: true } : b)));
