@@ -1349,7 +1349,7 @@ export default function Index() {
                           {materials.map((material, index) => (
                             <div
                               key={`mat-${index}`}
-                              className="grid grid-cols-4 gap-2"
+                              className="grid grid-cols-5 gap-2 items-center"
                             >
                               <input
                                 type="text"
@@ -1396,7 +1396,7 @@ export default function Index() {
                               <button
                                 type="button"
                                 onClick={() => removeMaterial(index)}
-                                className="text-red-600 text-xs col-span-4"
+                                className="text-red-600 text-xs col-span-1 justify-self-end"
                               >
                                 Remove
                               </button>
@@ -1483,11 +1483,11 @@ export default function Index() {
                         </div>
                       </div>
 
-                      <div className="pt-4">
+                      <div className="pt-4 text-center">
                         <button
                           type="submit"
                           disabled={isSubmitting}
-                          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="btn-primary inline-flex items-center px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isSubmitting
                             ? "Printing & Saving..."
