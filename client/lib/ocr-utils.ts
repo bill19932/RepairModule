@@ -759,15 +759,24 @@ export const extractInvoiceData = async (
           .map((l) => l.trim())
           .filter((l) => l && !/^-+$/.test(l) && !/^\d+$/.test(l));
         const filtered = linesArr.filter(
-          (l) => !/Service|Return|ORDER|George|Music/i.test(l),
+          (l) => !/Service|Return|ORDER|George|Music|^[\/\|]+$/.test(l),
         );
-        if (filtered.length > 0) {
-          let joined = filtered.join(" ");
+
+        // Remove lines that are just "/ RETURN ORDER" or variations
+        const cleanedFiltered = filtered.filter(
+          (l) => !/^\s*\/\s*RETURN\s+ORDER\s*$/i.test(l)
+        );
+
+        if (cleanedFiltered.length > 0) {
+          let joined = cleanedFiltered.join(" ");
           joined = joined
             .replace(/\s+/g, " ")
             .replace(/\s([.,;!?])/g, "$1")
             .trim();
-          if (joined.length > 3) repairDescription = joined;
+          if (joined.length > 3) {
+            repairDescription = joined;
+            addLog(`Trouble: Extracted from troubled section: ${joined.substring(0, 80)}`);
+          }
         }
       }
     }
