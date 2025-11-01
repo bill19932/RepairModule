@@ -700,18 +700,14 @@ export default function Index() {
 
                   {batchRepairs.length > 0 && (
                     <div className="mt-3">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="text-sm font-semibold">Imported Repairs ({batchRepairs.length})</div>
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => scrollBatch('left')} className="px-2 py-1 bg-gray-100 rounded">◀</button>
-                          <button type="button" onClick={() => scrollBatch('right')} className="px-2 py-1 bg-gray-100 rounded">▶</button>
-                          <button type="button" onClick={saveAllBatch} className="text-xs text-primary font-semibold">Save All</button>
-                        </div>
+                        <button type="button" onClick={saveAllBatch} className="text-xs text-primary font-semibold">Save All</button>
                       </div>
 
-                      <div ref={batchContainerRef} className="flex gap-4 overflow-x-auto py-2">
+                      <div className="grid grid-cols-2 gap-4 w-full">
                         {batchRepairs.map((b, idx) => (
-                          <div key={b.id} className="min-w-[420px] bg-white rounded shadow p-4 border">
+                          <div key={b.id} className="bg-white rounded shadow p-4 border">
                             <div className="flex items-start gap-3 mb-3">
                               {b.preview ? (
                                 <img src={b.preview} alt={b.fileName} className="w-28 h-20 object-cover rounded" />
