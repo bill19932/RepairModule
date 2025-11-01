@@ -617,8 +617,9 @@ export default function Index() {
                     <div className="text-xs text-blue-900 font-semibold mb-2">George's Music Invoice (1.54x)</div>
                     <div className="text-xs space-y-1">
                       <div className="flex justify-between"><div>Your Charge</div><div>${totals.subtotal.toFixed(2)}</div></div>
-                      <div className="flex justify-between"><div>George's Markup</div><div>${(totals.georgesSubtotal - totals.subtotal).toFixed(2)}</div></div>
-                      <div className="flex justify-between"><div>Tax (6%)</div><div>${totals.georgesTax.toFixed(2)}</div></div>
+                      <div className="flex justify-between"><div>Tax on Your Charge (6%)</div><div>${totals.yourTax.toFixed(2)}</div></div>
+                      <div className="flex justify-between"><div>Your Charge + Tax</div><div>${totals.yourChargeWithTax.toFixed(2)}</div></div>
+                      <div className="flex justify-between"><div>George's Markup (1.54x)</div><div>${totals.georgesSubtotal.toFixed(2)}</div></div>
                       <div className="flex justify-between font-semibold border-t pt-1 mt-1"><div>George's Total</div><div>${totals.georgesTotal.toFixed(2)}</div></div>
                     </div>
                   </div>
