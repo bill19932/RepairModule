@@ -844,7 +844,7 @@ export default function Index() {
                     </div>
                   </div>
 
-                  {deliveryMiles !== null && !formData.isGeorgesMusic && (
+                  {deliveryMiles !== null && !formData.isGeorgesMusic && !formData.isNoDeliveryFee && (
                     <div className="bg-blue-50 p-3 rounded border border-blue-200">
                       <div className="flex justify-between text-sm">
                         <span className="font-semibold text-blue-900">
