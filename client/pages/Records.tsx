@@ -85,6 +85,15 @@ export default function Records() {
     localStorage.setItem('delco-invoices', JSON.stringify(updated));
     setInvoices(updated);
     setSelected(prev => prev.filter(x => x !== invoiceNumber));
+
+    // If the deleted invoice was the last assigned, decrement the counter so the next created invoice can reuse the number
+    const parsed = parseInt(String(invoiceNumber).replace(/[^0-9]/g, ''), 10);
+    const lastAssignedStored = parseInt(localStorage.getItem('lastAssignedInvoiceNumber') || '0', 10) || 0;
+    if (!isNaN(parsed) && parsed === lastAssignedStored) {
+      const newLast = Math.max(0, lastAssignedStored - 1);
+      localStorage.setItem('lastAssignedInvoiceNumber', String(newLast));
+    }
+
     alert.show('Repair deleted.', 'success');
   };
 
