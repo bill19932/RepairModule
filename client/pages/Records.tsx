@@ -111,6 +111,24 @@ export default function Records() {
     downloadCSV(toExport);
   };
 
+  const handleAmountReceivedChange = (invoiceNumber: string, value: string) => {
+    const numValue = value ? parseFloat(value) : undefined;
+    const key = `${invoiceNumber}`;
+    setAmountReceivedEdits(prev => ({
+      ...prev,
+      [key]: numValue,
+    }));
+
+    // Update localStorage
+    const updated = getAllInvoicesFromLocalStorage().map(inv =>
+      inv.invoiceNumber === invoiceNumber
+        ? { ...inv, amountReceived: numValue }
+        : inv
+    );
+    localStorage.setItem('delco-invoices', JSON.stringify(updated));
+    setInvoices(updated);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200">
