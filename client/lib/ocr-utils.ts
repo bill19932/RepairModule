@@ -526,98 +526,65 @@ export const extractInvoiceData = async (
     // MATERIALS - extract from table format (Description | Quantity | Unit Price | Cost)
     const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
 
-    console.log("[OCR] Extracting materials from lines:", lines);
-
-    // Look for Description/Quantity/Price table header to identify table section
+    // Look for Description header to find table section
     const descHeaderIdx = lines.findIndex(l => /Description/.test(l));
-    let tableLines: string[] = [];
 
     if (descHeaderIdx > -1) {
-      console.log("[OCR] Found Description header at line", descHeaderIdx);
-      // Extract lines after the header until we hit Subtotal or end
+      // Extract lines after the header until we hit Subtotal, blank line, or key footer
       for (let i = descHeaderIdx + 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (!line || /^Subtotal|^Tax|^Total|^DMC|^Invoice/i.test(line)) break;
-        if (line && line.match(/\d/)) {
-          tableLines.push(line);
-          console.log("[OCR] Table line candidate:", line);
-        }
-      }
-    }
 
-    // If no header found, try to find lines that look like table rows
-    if (tableLines.length === 0) {
-      console.log("[OCR] No Description header found, using fallback filtering");
-      tableLines = lines.filter(l => {
-        const trimmed = l.trim();
-        if (!trimmed) return false;
-        // Exclude header/footer lines and metadata
-        if (/Description|Quantity|Unit|Price|Cost|Subtotal|Tax|Total|Invoice|Date|Service|Address|Number|Attention|Thank you|Google|Delco|Sincerely|Review/i.test(trimmed)) {
-          return false;
-        }
-        // Must contain digits (for quantity and price)
-        if (!trimmed.match(/\d/)) {
-          return false;
-        }
-        return true;
-      });
-      console.log("[OCR] Fallback table lines:", tableLines);
-    }
+        // Stop at subtotal/total section
+        if (!line || /^Subtotal|^Tax|^Total|^DMC|^-{2,}/.test(line)) break;
 
-    // Parse each line as a table row
-    for (const line of tableLines) {
-      // Try multiple split strategies: pipes, tabs, or multiple spaces
-      let parts: string[] = [];
+        // Skip if line doesn't have numbers (not a data row)
+        if (!line.match(/\d/)) continue;
 
-      if (line.includes('|')) {
-        parts = line.split(/\s*\|\s*/).map(p => p.trim()).filter(p => p);
-      } else if (line.includes('\t')) {
-        parts = line.split(/\t+/).map(p => p.trim()).filter(p => p);
-      } else {
-        // Split on 2+ spaces
-        parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p);
-      }
+        // Skip header-like lines
+        if (/^Quantity|^Unit|^Price|^Cost|Description|Invoice/.test(line)) continue;
 
-      console.log("[OCR] Parsing line parts:", parts);
+        // Try to parse as material row
+        // Patterns: "Pickup Swap | 2 | $60.00 | $120.00" or "Pickup Swap     2     $60.00     $120.00"
+        let parts: string[] = [];
 
-      if (parts.length >= 3) {
-        // Pattern: description | quantity | unit_price | [cost]
-        // Or: description | quantity | cost (if we need to infer unit price)
-        const desc = parts[0];
-        const qtyStr = parts[1];
-        const priceStr = parts[2];
-
-        // Parse quantity
-        const qty = parseInt(qtyStr);
-
-        // Parse price
-        const priceMatch = priceStr.match(/([\d.]+)/);
-        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
-
-        // Validate
-        if (!isNaN(qty) && qty > 0 && price > 0) {
-          // Skip header/metadata rows
-          if (!/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Label|SKU|Invoice|Item|Cost|Description|Quantity|Unit|Price)$/i.test(desc)) {
-            materials.push({
-              description: desc,
-              quantity: qty,
-              unitCost: price
-            });
-            console.log("[OCR] Material added:", { desc, qty, price });
-          }
+        if (line.includes('|')) {
+          parts = line.split('|').map(p => p.trim()).filter(p => p);
         } else {
-          console.log("[OCR] Material parsing failed - qty:", qty, "price:", price);
+          // Split on 2+ consecutive spaces or tabs
+          parts = line.split(/\s{2,}|\t+/).map(p => p.trim()).filter(p => p);
         }
-      } else {
-        console.log("[OCR] Not enough parts to parse material row");
+
+        // Need at least 3 parts: description, qty, price
+        if (parts.length >= 3) {
+          const desc = parts[0];
+          const qtyStr = parts[1];
+          const priceStr = parts[2];
+
+          // Parse quantity (should be a simple number)
+          const qty = parseInt(qtyStr);
+
+          // Extract price from string like "$60.00" or "60.00"
+          const priceMatch = priceStr.match(/([\d.]+)/);
+          const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+
+          // Validate we have valid numbers
+          if (!isNaN(qty) && qty > 0 && price > 0 && desc && desc.length > 1) {
+            // Skip if description looks like a header/footer
+            if (!/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Item|Label|SKU|Cost|Quantity|Unit|Price|Description)$/i.test(desc) &&
+                !desc.match(/^[\-=]{2,}/)) {
+              materials.push({
+                description: desc,
+                quantity: qty,
+                unitCost: price
+              });
+            }
+          }
+        }
       }
     }
 
     if (materials.length > 0) {
       extracted.materials = materials;
-      console.log("[OCR] Final materials extracted:", materials);
-    } else {
-      console.log("[OCR] No materials were extracted");
     }
 
     // Instruments
