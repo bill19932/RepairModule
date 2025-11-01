@@ -628,16 +628,24 @@ export const extractInvoiceData = async (
         }
       }
 
-      // Extract description: keep everything except numbers and prices
-      // Remove dollar signs and amounts
-      let desc = trimmed.replace(/\$[\d.]+/g, '').trim();
-      // Remove standalone numbers (but preserve numbers within hyphenated words like "4-point")
-      desc = desc.replace(/\s+(\d+)(?=\s|$)/g, ' ').trim();
-      // Remove extra whitespace
+      // Extract description: remove only prices and quantity from the END of the line
+      // Find where the numbers/prices start (from the right)
+      let desc = trimmed;
+
+      // Remove all dollar amounts first
+      desc = desc.replace(/\$[\d.]+/g, '').trim();
+
+      // Remove quantity and other numbers from the end of the line (right side)
+      // Keep removing trailing numbers/whitespace until we hit a non-number
+      desc = desc.replace(/\s+\d+\s*$/, '').trim();
+      desc = desc.replace(/\s+$/, '').trim();
+
+      // Clean up punctuation at boundaries, but be conservative
+      desc = desc.replace(/^\s*[\-:|;/]+\s*/, '').trim();
+      desc = desc.replace(/\s*[\-:|;/]+\s*$/, '').trim();
+
+      // Normalize whitespace
       desc = desc.replace(/\s+/g, ' ').trim();
-      // Clean up leading punctuation but preserve hyphenated words
-      desc = desc.replace(/^\s*[:|;]+\s*/, '').trim();
-      desc = desc.replace(/\s*[:|;]+\s*$/, '').trim();
 
       addLog(`Materials: Parsed - qty=${qty}, price=$${price.toFixed(2)}, desc='${desc}'`);
 
