@@ -309,9 +309,11 @@ export const extractInvoiceData = async (
     // CUSTOMER NAME - robust extraction from CUSTOMER INFORMATION
     let customerName: string | undefined;
 
-    // Pattern 1: 'Attention' label inside customer section
-    const attentionMatch = customerSection.match(/Attention\s+([^\n\r]+?)(?:\n|Email|$)/i);
-    if (attentionMatch) customerName = attentionMatch[1].trim();
+    // Pattern 1: 'Attention:' label (works for both formats)
+    const attentionMatch = text.match(/Attention\s*:\s*([^\n\r]+?)(?:\n|$)/i);
+    if (attentionMatch) {
+      customerName = attentionMatch[1].trim().replace(/[|\\]+/g, "").trim();
+    }
 
     // Pattern 2: look after CUSTOMER INFORMATION marker and pick first plausible name line
     if (!customerName && customerInfoIdx > -1) {
