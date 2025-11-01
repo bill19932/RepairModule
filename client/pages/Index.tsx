@@ -199,6 +199,10 @@ export default function Index() {
       const extracted = await extractInvoiceData(file);
       setOcrProgress(80);
 
+      if (extracted.debugLog && extracted.debugLog.length > 0) {
+        setOcrDebugLog(extracted.debugLog);
+      }
+
       let phone = extracted.customerPhone || "";
       let email = extracted.customerEmail || "";
 
