@@ -29,6 +29,7 @@ export interface RepairInvoice {
   notes: string;
   isGeorgesMusic: boolean;
   isNoDeliveryFee?: boolean;
+  amountReceived?: number;
   invoiceHtml: string;
 }
 
