@@ -408,8 +408,20 @@ export const extractInvoiceData = async (
       extracted.customerPhone = phone;
     }
 
-    // ADDRESS
-    const address = extractAddressFromText(customerSection);
+    // ADDRESS - try direct "Address:" label first, then fall back to generic extraction
+    let address = undefined;
+
+    // Pattern 1: "Address: ..." format
+    const addressLabelMatch = text.match(/Address\s*:\s*([^\n]+)/i);
+    if (addressLabelMatch) {
+      address = addressLabelMatch[1].trim().replace(/[|\\]+/g, "").trim();
+    }
+
+    // Pattern 2: Generic address extraction from customer section
+    if (!address) {
+      address = extractAddressFromText(customerSection);
+    }
+
     if (address) extracted.customerAddress = address;
 
     // REPAIR DESCRIPTION - from trouble section
