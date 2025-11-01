@@ -6,6 +6,7 @@ export interface ExtractedInvoiceData {
   customerEmail?: string;
   customerAddress?: string;
   dateReceived?: string;
+  date?: string;
   invoiceNumber?: string;
   isOldRepairFormat?: boolean;
   instruments?: Array<{ type: string; description: string }>;
@@ -17,6 +18,9 @@ export interface ExtractedInvoiceData {
   }>;
   laborHours?: number;
   hourlyRate?: number;
+  workDone?: string;
+  isGeorgesMusic?: boolean;
+  isNoDeliveryFee?: boolean;
   debugLog?: string[];
 }
 
