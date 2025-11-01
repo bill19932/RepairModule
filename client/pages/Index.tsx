@@ -1039,6 +1039,15 @@ export default function Index() {
                                 />
                               </div>
 
+                              <div className="mb-4">
+                                <label className="block text-xs font-semibold mb-1">Work Done</label>
+                                <textarea
+                                  value={data.workDone || ''}
+                                  onChange={(e) => handleBatchRepairFormChange(repair.id, 'workDone', e.target.value)}
+                                  className="input-modern text-sm w-full min-h-16"
+                                />
+                              </div>
+
                               <div className="mb-4 pb-4 border-t pt-4">
                                 <label className="block text-xs font-semibold mb-2">
                                   Services & Materials
