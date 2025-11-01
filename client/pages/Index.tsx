@@ -674,16 +674,28 @@ export default function Index() {
                       <label className="block text-xs font-semibold text-foreground mb-1">
                         George's Music Repair?
                       </label>
-                      <label className="flex items-center gap-2 mt-2">
-                        <input
-                          type="checkbox"
-                          name="isGeorgesMusic"
-                          checked={formData.isGeorgesMusic}
-                          onChange={handleFormChange}
-                          className="w-4 h-4"
-                        />
-                        <span className="text-xs">Yes, George's Music</span>
-                      </label>
+                      <div className="flex items-center gap-4 mt-2">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            name="isGeorgesMusic"
+                            checked={formData.isGeorgesMusic}
+                            onChange={handleFormChange}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-xs">Yes, George's Music</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            name="isNoDeliveryFee"
+                            checked={formData.isNoDeliveryFee}
+                            onChange={handleFormChange}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-xs">No Delivery Fee</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
 
