@@ -558,23 +558,28 @@ export const extractInvoiceData = async (
 
       addLog(`Materials: Processing line: "${trimmed}"`);
 
-      // Extract dollar amounts (prices)
+      // Extract dollar amounts (prices) - look for $X.XX patterns
       const priceMatches: number[] = [];
-      const pricePattern = /\$?([\d.]+)/g;
+      const dollarPattern = /\$[\d.]+/g;
       let match;
-      while ((match = pricePattern.exec(trimmed)) !== null) {
-        if (match[0].includes('$') || match[1].includes('.')) {
-          priceMatches.push(parseFloat(match[1]));
-        }
+      while ((match = dollarPattern.exec(trimmed)) !== null) {
+        const value = parseFloat(match[0].substring(1));
+        priceMatches.push(value);
       }
 
-      // Also extract plain numbers (potential quantity)
+      // Also extract plain whole numbers between 1-999 (potential quantity)
       const plainNumberMatches: number[] = [];
-      const plainPattern = /(?<!\$)\b(\d+)(?![\d.])/g;
-      while ((match = plainPattern.exec(trimmed)) !== null) {
-        const num = parseInt(match[1], 10);
-        if (num > 0 && num < 1000) {
-          plainNumberMatches.push(num);
+      // Split line and check each token
+      const tokens = trimmed.split(/\s+/);
+      for (const token of tokens) {
+        // Skip tokens with $ signs
+        if (token.includes('$')) continue;
+        // Look for plain integer numbers
+        if (/^\d+$/.test(token)) {
+          const num = parseInt(token, 10);
+          if (num > 0 && num < 1000) {
+            plainNumberMatches.push(num);
+          }
         }
       }
 
