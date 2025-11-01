@@ -113,6 +113,7 @@ export default function Index() {
           customerEmail: customerEmail || "",
           customerAddress: extracted.customerAddress || "",
           repairDescription: extracted.repairDescription || "",
+          workDone: extracted.workDone || "",
           laborHours: 0,
           hourlyRate: 0,
           isGeorgesMusic: extracted.isGeorgesMusic || false,
