@@ -526,70 +526,98 @@ export const extractInvoiceData = async (
     // MATERIALS - extract from table format (Description | Quantity | Unit Price | Cost)
     const materials: Array<{ description: string; quantity: number; unitCost: number }> = [];
 
+    console.log("[OCR] Extracting materials from lines:", lines);
+
     // Look for Description/Quantity/Price table header to identify table section
     const descHeaderIdx = lines.findIndex(l => /Description/.test(l));
     let tableLines: string[] = [];
 
     if (descHeaderIdx > -1) {
+      console.log("[OCR] Found Description header at line", descHeaderIdx);
       // Extract lines after the header until we hit Subtotal or end
       for (let i = descHeaderIdx + 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line || /^Subtotal|^Tax|^Total|^DMC|^Invoice/i.test(line)) break;
-        if (line.match(/\d/)) {
+        if (line && line.match(/\d/)) {
           tableLines.push(line);
+          console.log("[OCR] Table line candidate:", line);
         }
       }
-    } else {
-      // Fallback: filter for lines that look like table rows
-      tableLines = lines.filter(l =>
-        l.trim() &&
-        !l.match(/Description|Quantity|Unit|Price|Cost|Subtotal|Tax|Total|Invoice|Date|Service|Address|Number|Attention|Thank you|Google|Delco|Sincerely|Review/i) &&
-        l.match(/[\d.]/)
-      );
     }
 
+    // If no header found, try to find lines that look like table rows
+    if (tableLines.length === 0) {
+      console.log("[OCR] No Description header found, using fallback filtering");
+      tableLines = lines.filter(l => {
+        const trimmed = l.trim();
+        if (!trimmed) return false;
+        // Exclude header/footer lines and metadata
+        if (/Description|Quantity|Unit|Price|Cost|Subtotal|Tax|Total|Invoice|Date|Service|Address|Number|Attention|Thank you|Google|Delco|Sincerely|Review/i.test(trimmed)) {
+          return false;
+        }
+        // Must contain digits (for quantity and price)
+        if (!trimmed.match(/\d/)) {
+          return false;
+        }
+        return true;
+      });
+      console.log("[OCR] Fallback table lines:", tableLines);
+    }
+
+    // Parse each line as a table row
     for (const line of tableLines) {
-      // Split by pipe or multiple spaces (tab-separated or pipe-separated)
-      const parts = line.split(/\s*\|\s*|\t+|\s{2,}/).map(p => p.trim()).filter(p => p);
+      // Try multiple split strategies: pipes, tabs, or multiple spaces
+      let parts: string[] = [];
 
-      // Look for pattern: description, quantity, price (and maybe cost)
+      if (line.includes('|')) {
+        parts = line.split(/\s*\|\s*/).map(p => p.trim()).filter(p => p);
+      } else if (line.includes('\t')) {
+        parts = line.split(/\t+/).map(p => p.trim()).filter(p => p);
+      } else {
+        // Split on 2+ spaces
+        parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p);
+      }
+
+      console.log("[OCR] Parsing line parts:", parts);
+
       if (parts.length >= 3) {
-        // Try different part arrangements
-        let description: string | null = null;
-        let quantity = 0;
-        let unitCost = 0;
+        // Pattern: description | quantity | unit_price | [cost]
+        // Or: description | quantity | cost (if we need to infer unit price)
+        const desc = parts[0];
+        const qtyStr = parts[1];
+        const priceStr = parts[2];
 
-        // Pattern 1: description | quantity | price | cost
-        if (parts.length >= 3) {
-          const desc = parts[0];
-          const qtyStr = parts[1];
-          const priceStr = parts[2];
+        // Parse quantity
+        const qty = parseInt(qtyStr);
 
-          const qty = parseInt(qtyStr);
-          const priceMatch = priceStr.match(/([\d.]+)/);
+        // Parse price
+        const priceMatch = priceStr.match(/([\d.]+)/);
+        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
 
-          if (!isNaN(qty) && qty > 0 && priceMatch) {
-            const price = parseFloat(priceMatch[1]);
-            if (price > 0 && !/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Label|SKU|Invoice|Item|Cost)$/i.test(desc)) {
-              description = desc;
-              quantity = qty;
-              unitCost = price;
-            }
+        // Validate
+        if (!isNaN(qty) && qty > 0 && price > 0) {
+          // Skip header/metadata rows
+          if (!/^(DMC|Total|Subtotal|Delivery|Tax|Fee|Label|SKU|Invoice|Item|Cost|Description|Quantity|Unit|Price)$/i.test(desc)) {
+            materials.push({
+              description: desc,
+              quantity: qty,
+              unitCost: price
+            });
+            console.log("[OCR] Material added:", { desc, qty, price });
           }
+        } else {
+          console.log("[OCR] Material parsing failed - qty:", qty, "price:", price);
         }
-
-        if (description && quantity > 0 && unitCost > 0) {
-          materials.push({
-            description: description,
-            quantity: quantity,
-            unitCost: unitCost
-          });
-        }
+      } else {
+        console.log("[OCR] Not enough parts to parse material row");
       }
     }
 
     if (materials.length > 0) {
       extracted.materials = materials;
+      console.log("[OCR] Final materials extracted:", materials);
+    } else {
+      console.log("[OCR] No materials were extracted");
     }
 
     // Instruments
