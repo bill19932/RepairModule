@@ -502,6 +502,18 @@ export default function Index() {
                 <h2 className="text-2xl font-bold text-foreground mb-6">New Invoice</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {ocrDebugLog.length > 0 && (
+                    <div className="bg-red-50 border-2 border-red-500 p-4 rounded max-h-48 overflow-auto">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-bold text-red-900">🐛 OCR Debug Log</h4>
+                        <button type="button" onClick={() => setOcrDebugLog([])} className="text-red-600 text-sm font-bold">Clear</button>
+                      </div>
+                      <div className="text-xs font-mono space-y-1 text-red-900">
+                        {ocrDebugLog.map((log, i) => <div key={i}>{log}</div>)}
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-2">📸 Auto-Fill from Image</label>
                     <div className="relative border-2 border-dashed border-primary/30 rounded-sm p-6 bg-blue-50 hover:border-primary/50 transition-colors cursor-pointer group">
