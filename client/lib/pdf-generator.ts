@@ -220,10 +220,17 @@ export const generateInvoicePDF = (invoice: RepairInvoice): string => {
 
     <div class="totals">
       <div class="block">
-        <div class="row"><div>Services Total</div><div>$${(invoice.materials.reduce((s, m) => s + m.quantity * m.unitCost, 0)).toFixed(2)}</div></div>
-        <div class="row"><div>Subtotal</div><div>$${finalSubtotal.toFixed(2)}</div></div>
-        <div class="row"><div>6% Tax</div><div>$${finalTax.toFixed(2)}</div></div>
-        <div class="row total"><div>Customer Total</div><div>$${finalTotal.toFixed(2)}</div></div>
+          <div class="row"><div>Services Total</div><div>$${(invoice.materials.reduce((s, m) => s + m.quantity * m.unitCost, 0)).toFixed(2)}</div></div>
+        ${invoice.isGeorgesMusic ? `
+          <div class="row"><div>Your Charge</div><div>$${subtotal.toFixed(2)}</div></div>
+          <div class="row"><div>George's Markup (1.54x)</div><div>$${georgesSubtotal.toFixed(2)}</div></div>
+          <div class="row"><div>6% Tax (on George's)</div><div>$${georgesTax.toFixed(2)}</div></div>
+          <div class="row total"><div>George's Total</div><div>$${georgesCustomerTotal.toFixed(2)}</div></div>
+        ` : `
+          <div class="row"><div>Subtotal</div><div>$${finalSubtotal.toFixed(2)}</div></div>
+          <div class="row"><div>6% Tax</div><div>$${finalTax.toFixed(2)}</div></div>
+          <div class="row total"><div>Customer Total</div><div>$${finalTotal.toFixed(2)}</div></div>
+        `}
       </div>
     </div>
 
