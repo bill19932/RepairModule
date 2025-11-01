@@ -12,6 +12,7 @@ export interface Instrument {
 export interface RepairInvoice {
   invoiceNumber: string;
   dateReceived: string;
+  dateCompleted?: string;
   date: string;
   customerName: string;
   customerPhone: string;
