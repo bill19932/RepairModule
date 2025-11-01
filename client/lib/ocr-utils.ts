@@ -42,10 +42,15 @@ const convertHeicToJpeg = async (file: File): Promise<File> => {
       type: "image/jpeg",
     });
   } catch (error) {
-    console.error("HEIC conversion failed:", error);
-    throw new Error(
-      "HEIC conversion failed. Please convert to JPG or PNG and try again.",
-    );
+    try {
+      console.error("HEIC conversion failed:", error);
+    } catch (e) {
+      console.error("HEIC conversion failed (unable to stringify error)");
+    }
+    // Some environments can't convert HEIC reliably client-side. Fall back to returning the original file
+    // so OCR can attempt to process it. Warn the user in console and continue.
+    console.warn("Proceeding without HEIC->JPEG conversion; OCR may fail for HEIC images.");
+    return file;
   }
 };
 
