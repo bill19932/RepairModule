@@ -429,7 +429,11 @@ export const extractInvoiceData = async (
       }
     }
 
-    if (customerName) extracted.customerName = customerName;
+    if (customerName) {
+      // Clean customerName from OCR artifacts like 'pw', 'p/w', or '(w)'
+      let cleanName = customerName.replace(/\(w\)/gi, '').replace(/\b(?:pw|p\/w)\b[:.,]*/gi, '').replace(/[|\[\]]+/g, '').replace(/\s+/g, ' ').trim();
+      if (cleanName) extracted.customerName = cleanName;
+    }
 
     // EMAIL - find all emails and prefer non-store ones
     let selectedEmail: string | undefined;
