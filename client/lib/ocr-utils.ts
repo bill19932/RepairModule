@@ -435,20 +435,30 @@ export const extractInvoiceData = async (
 
     if (address) extracted.customerAddress = address;
 
-    // REPAIR DESCRIPTION - from trouble section
+    // REPAIR DESCRIPTION - try "Service:" label first, then fall back to trouble section
     let repairDescription: string | undefined;
-    const troubleMatch = troubleSection.match(/Trouble\s+Reported\s*:?[\s\S]*?(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i);
-    if (troubleMatch) {
-      let troubleText = troubleMatch[0];
-      troubleText = troubleText.replace(/Trouble\s+Reported\s*:?/i, "").trim();
-      troubleText = troubleText.replace(/^[;:|\/\s]+/, "").replace(/[;:|\/\s]+$/, "").trim();
 
-      const linesArr = troubleText.split(/\n/).map(l => l.trim()).filter(l => l && !/^-+$/.test(l) && !/^\d+$/.test(l));
-      const filtered = linesArr.filter(l => !/Service|Return|ORDER|George|Music/i.test(l));
-      if (filtered.length > 0) {
-        let joined = filtered.join(" ");
-        joined = joined.replace(/\s+/g, " ").replace(/\s([.,;!?])/g, "$1").trim();
-        if (joined.length > 3) repairDescription = joined;
+    // Pattern 1: "Service: ..." format
+    const serviceLabelMatch = text.match(/Service\s*:\s*([^\n]+)/i);
+    if (serviceLabelMatch) {
+      repairDescription = serviceLabelMatch[1].trim().replace(/[|\\]+/g, "").trim();
+    }
+
+    // Pattern 2: from trouble section (George's Music format)
+    if (!repairDescription) {
+      const troubleMatch = troubleSection.match(/Trouble\s+Reported\s*:?[\s\S]*?(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i);
+      if (troubleMatch) {
+        let troubleText = troubleMatch[0];
+        troubleText = troubleText.replace(/Trouble\s+Reported\s*:?/i, "").trim();
+        troubleText = troubleText.replace(/^[;:|\/\s]+/, "").replace(/[;:|\/\s]+$/, "").trim();
+
+        const linesArr = troubleText.split(/\n/).map(l => l.trim()).filter(l => l && !/^-+$/.test(l) && !/^\d+$/.test(l));
+        const filtered = linesArr.filter(l => !/Service|Return|ORDER|George|Music/i.test(l));
+        if (filtered.length > 0) {
+          let joined = filtered.join(" ");
+          joined = joined.replace(/\s+/g, " ").replace(/\s([.,;!?])/g, "$1").trim();
+          if (joined.length > 3) repairDescription = joined;
+        }
       }
     }
 
