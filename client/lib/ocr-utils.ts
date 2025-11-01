@@ -535,6 +535,8 @@ export const extractInvoiceData = async (
 
     // Look for Description header to find table section
     const descHeaderIdx = lines.findIndex(l => /Description/.test(l));
+    console.log("[MATERIALS] Looking for Description header. Found at index:", descHeaderIdx);
+    console.log("[MATERIALS] All lines:", lines);
 
     if (descHeaderIdx > -1) {
       // Extract lines after the header until we hit Subtotal, blank line, or key footer
