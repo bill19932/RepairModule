@@ -755,8 +755,32 @@ export default function Index() {
                                 <div className="space-y-2">
                                   {repair.instruments.map((inst: any, idx: number) => (
                                     <div key={idx} className="grid grid-cols-2 gap-2">
-                                      <select value={inst.type} className="input-modern text-sm"><option>Select Type</option><option>Guitar</option><option>Bass</option></select>
-                                      <input type="text" value={inst.description} placeholder="Description" className="input-modern text-sm" />
+                                      <select
+                                        value={inst.type || ''}
+                                        onChange={(e) => {
+                                          const updated = [...repair.instruments];
+                                          updated[idx].type = e.target.value;
+                                          setBatchRepairs((prev) => prev.map((r) => r.id === repair.id ? { ...r, instruments: updated } : r));
+                                        }}
+                                        className="input-modern text-sm"
+                                      >
+                                        <option value="">Select Type</option>
+                                        <option value="Guitar">Guitar</option>
+                                        <option value="Bass">Bass</option>
+                                        <option value="Violin">Violin</option>
+                                        <option value="Other">Other</option>
+                                      </select>
+                                      <input
+                                        type="text"
+                                        value={inst.description || ''}
+                                        onChange={(e) => {
+                                          const updated = [...repair.instruments];
+                                          updated[idx].description = e.target.value;
+                                          setBatchRepairs((prev) => prev.map((r) => r.id === repair.id ? { ...r, instruments: updated } : r));
+                                        }}
+                                        placeholder="Description"
+                                        className="input-modern text-sm"
+                                      />
                                     </div>
                                   ))}
                                 </div>
