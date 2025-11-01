@@ -421,10 +421,13 @@ export const extractInvoiceData = async (
     extracted.isOldRepairFormat = isOldFormat;
 
     // Detect if this is a George's Music form by presence of header or known address
-    const isGeorges = /George'?s\s+Music/i.test(text) || /Georges\s+Music/i.test(text) || /Springfield\s*,?\s*PA/i.test(text) && /Georges?\s*Music/i.test(text);
+    const isGeorges =
+      /George'?s\s+Music/i.test(text) ||
+      /Georges\s+Music/i.test(text) ||
+      (/Springfield\s*,?\s*PA/i.test(text) && /Georges?\s*Music/i.test(text));
     if (isGeorges) {
       extracted.isGeorgesMusic = true;
-      addLog('Detected George\'s Music format');
+      addLog("Detected George's Music format");
     } else {
       extracted.isGeorgesMusic = false;
     }
@@ -608,7 +611,9 @@ export const extractInvoiceData = async (
       ),
     );
 
-    addLog(`Found ${allEmails.length} email(s) in OCR text: ${allEmails.map(m => m[1]).join(", ")}`);
+    addLog(
+      `Found ${allEmails.length} email(s) in OCR text: ${allEmails.map((m) => m[1]).join(", ")}`,
+    );
 
     if (allEmails.length > 0) {
       for (const m of allEmails) {
@@ -918,15 +923,19 @@ export const extractInvoiceData = async (
       extracted.materials = materials;
 
       // If any material line contains 'delivery' assume delivery already accounted for
-      if (materials.some(m => /delivery/i.test(m.description))) {
+      if (materials.some((m) => /delivery/i.test(m.description))) {
         extracted.isNoDeliveryFee = true;
-        addLog('Detected material containing "delivery"; setting isNoDeliveryFee');
+        addLog(
+          'Detected material containing "delivery"; setting isNoDeliveryFee',
+        );
       }
     } else {
       // Also check repairDescription for delivery mention
       if (repairDescription && /delivery/i.test(repairDescription)) {
         extracted.isNoDeliveryFee = true;
-        addLog('Detected "delivery" in repair description; setting isNoDeliveryFee');
+        addLog(
+          'Detected "delivery" in repair description; setting isNoDeliveryFee',
+        );
       }
     }
 

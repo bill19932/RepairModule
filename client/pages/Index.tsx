@@ -135,7 +135,11 @@ export default function Index() {
         setBatchFormData((prev) => ({ ...prev, [id]: newFormData }));
 
         // Calculate delivery fee if address was extracted
-        if (newFormData.customerAddress && !newFormData.isGeorgesMusic && !newFormData.isNoDeliveryFee) {
+        if (
+          newFormData.customerAddress &&
+          !newFormData.isGeorgesMusic &&
+          !newFormData.isNoDeliveryFee
+        ) {
           setTimeout(() => {
             calculateBatchDeliveryFee(
               id,
@@ -356,12 +360,7 @@ export default function Index() {
     isGeorgesMusic?: boolean,
     isNoDeliveryFee?: boolean,
   ) => {
-    if (
-      !address ||
-      !address.trim() ||
-      isGeorgesMusic ||
-      isNoDeliveryFee
-    ) {
+    if (!address || !address.trim() || isGeorgesMusic || isNoDeliveryFee) {
       setBatchRepairs((prev) =>
         prev.map((r) =>
           r.id === repairId ? { ...r, deliveryMiles: null, deliveryFee: 0 } : r,
@@ -396,7 +395,9 @@ export default function Index() {
       if (!customerCoords) {
         setBatchRepairs((prev) =>
           prev.map((r) =>
-            r.id === repairId ? { ...r, deliveryMiles: null, deliveryFee: 0 } : r,
+            r.id === repairId
+              ? { ...r, deliveryMiles: null, deliveryFee: 0 }
+              : r,
           ),
         );
         return;
@@ -408,7 +409,9 @@ export default function Index() {
       if (!baseCoords) {
         setBatchRepairs((prev) =>
           prev.map((r) =>
-            r.id === repairId ? { ...r, deliveryMiles: null, deliveryFee: 0 } : r,
+            r.id === repairId
+              ? { ...r, deliveryMiles: null, deliveryFee: 0 }
+              : r,
           ),
         );
         return;
@@ -458,7 +461,7 @@ export default function Index() {
       deliveryFee: repair.deliveryFee || 0,
       instruments: repair.instruments,
       repairDescription: data.repairDescription,
-      workDone: data.workDone || '',
+      workDone: data.workDone || "",
       materials: repair.materials,
       laborHours: data.laborHours || 0,
       hourlyRate: data.hourlyRate || 0,
@@ -537,8 +540,16 @@ export default function Index() {
           extracted.repairDescription || prev.repairDescription,
         workDone: extracted.workDone || prev.workDone,
         // Apply detected flags from OCR
-        isGeorgesMusic: typeof extracted.isGeorgesMusic === 'boolean' ? extracted.isGeorgesMusic : (isOldFormat ? false : prev.isGeorgesMusic),
-        isNoDeliveryFee: typeof extracted.isNoDeliveryFee === 'boolean' ? extracted.isNoDeliveryFee : prev.isNoDeliveryFee,
+        isGeorgesMusic:
+          typeof extracted.isGeorgesMusic === "boolean"
+            ? extracted.isGeorgesMusic
+            : isOldFormat
+              ? false
+              : prev.isGeorgesMusic,
+        isNoDeliveryFee:
+          typeof extracted.isNoDeliveryFee === "boolean"
+            ? extracted.isNoDeliveryFee
+            : prev.isNoDeliveryFee,
       }));
 
       if (extracted.instruments && extracted.instruments.length > 0) {
@@ -1149,9 +1160,11 @@ export default function Index() {
                                                 r.id === repair.id
                                                   ? {
                                                       ...r,
-                                                      instruments: r.instruments.filter(
-                                                        (_: any, i: number) => i !== idx
-                                                      ),
+                                                      instruments:
+                                                        r.instruments.filter(
+                                                          (_: any, i: number) =>
+                                                            i !== idx,
+                                                        ),
                                                     }
                                                   : r,
                                               ),
@@ -1206,10 +1219,18 @@ export default function Index() {
                               </div>
 
                               <div className="mb-4">
-                                <label className="block text-xs font-semibold mb-1">Work Done</label>
+                                <label className="block text-xs font-semibold mb-1">
+                                  Work Done
+                                </label>
                                 <textarea
-                                  value={data.workDone || ''}
-                                  onChange={(e) => handleBatchRepairFormChange(repair.id, 'workDone', e.target.value)}
+                                  value={data.workDone || ""}
+                                  onChange={(e) =>
+                                    handleBatchRepairFormChange(
+                                      repair.id,
+                                      "workDone",
+                                      e.target.value,
+                                    )
+                                  }
                                   className="input-modern text-sm w-full min-h-16"
                                 />
                               </div>
@@ -1276,9 +1297,11 @@ export default function Index() {
                                                 r.id === repair.id
                                                   ? {
                                                       ...r,
-                                                      materials: r.materials.filter(
-                                                        (_: any, i: number) => i !== mi
-                                                      ),
+                                                      materials:
+                                                        r.materials.filter(
+                                                          (_: any, i: number) =>
+                                                            i !== mi,
+                                                        ),
                                                     }
                                                   : r,
                                               ),
@@ -1302,7 +1325,11 @@ export default function Index() {
                                               ...r,
                                               materials: [
                                                 ...r.materials,
-                                                { description: "", quantity: 1, unitCost: 0 },
+                                                {
+                                                  description: "",
+                                                  quantity: 1,
+                                                  unitCost: 0,
+                                                },
                                               ],
                                             }
                                           : r,
@@ -1563,7 +1590,9 @@ export default function Index() {
 
                       {formData.isGeorgesMusic && (
                         <div>
-                          <label className="block text-xs font-semibold text-foreground mb-1">Work Done</label>
+                          <label className="block text-xs font-semibold text-foreground mb-1">
+                            Work Done
+                          </label>
                           <textarea
                             name="workDone"
                             value={formData.workDone}
