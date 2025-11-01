@@ -278,22 +278,39 @@ export default function Index() {
     field: string,
     value: any,
   ) => {
+    const newFormData = { ...(batchFormData[repairId] || {}), [field]: value };
     setBatchFormData((prev) => ({
       ...prev,
-      [repairId]: { ...prev[repairId], [field]: value },
+      [repairId]: newFormData,
     }));
 
     const repair = batchRepairs.find((r) => r.id === repairId);
     if (repair) {
       setBatchRepairs((prev) =>
         prev.map((r) =>
-          r.id === repairId ? { ...r, formData: batchFormData[repairId] } : r,
+          r.id === repairId ? { ...r, formData: newFormData } : r,
         ),
       );
     }
 
     if (field === "customerAddress") {
-      calculateBatchDeliveryFee(repairId, value);
+      calculateBatchDeliveryFee(
+        repairId,
+        value,
+        newFormData.isGeorgesMusic,
+        newFormData.isNoDeliveryFee,
+      );
+    }
+
+    if (field === "isGeorgesMusic" || field === "isNoDeliveryFee") {
+      const address =
+        field === "customerAddress" ? value : newFormData.customerAddress;
+      calculateBatchDeliveryFee(
+        repairId,
+        address,
+        field === "isGeorgesMusic" ? value : newFormData.isGeorgesMusic,
+        field === "isNoDeliveryFee" ? value : newFormData.isNoDeliveryFee,
+      );
     }
   };
 
