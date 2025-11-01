@@ -186,19 +186,19 @@ export default function Records() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
                 <tr className="border-b-2 border-primary bg-gray-50">
-                  <th className="py-3 px-3 text-left"><input type="checkbox" checked={selected.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} /></th>
-                  <th className="text-left py-3 px-3 font-semibold text-foreground">Invoice</th>
-                  <th className="text-left py-3 px-3 font-semibold text-foreground">Date Received</th>
-                  <th className="text-left py-3 px-3 font-semibold text-foreground">Customer</th>
-                  <th className="text-left py-3 px-3 font-semibold text-foreground">Instruments</th>
-                  <th className="text-left py-3 px-3 font-semibold text-foreground">Repair Work</th>
-                  <th className="text-center py-3 px-3 font-semibold text-foreground">George's</th>
-                  <th className="text-right py-3 px-3 font-semibold text-foreground">Total</th>
-                  <th className="text-right py-3 px-3 font-semibold text-foreground">$ Received</th>
-                  <th className="text-center py-3 px-3 font-semibold text-foreground">Action</th>
+                  <th className="py-2 px-2 text-left"><input type="checkbox" checked={selected.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} /></th>
+                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">Invoice</th>
+                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">Date Rcvd</th>
+                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">Customer</th>
+                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">Instruments</th>
+                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">Repair</th>
+                  <th className="text-center py-2 px-2 font-semibold text-foreground whitespace-nowrap">GM</th>
+                  <th className="text-right py-2 px-2 font-semibold text-foreground whitespace-nowrap">Total</th>
+                  <th className="text-right py-2 px-2 font-semibold text-foreground whitespace-nowrap">$ Rcvd</th>
+                  <th className="text-center py-2 px-2 font-semibold text-foreground">Act</th>
                 </tr>
               </thead>
               <tbody>
