@@ -628,14 +628,32 @@ export default function Index() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-xs font-semibold text-foreground mb-1">Notes</label>
-                    <textarea name="notes" value={formData.notes} onChange={handleFormChange} placeholder="Internal notes" className="input-modern text-sm min-h-16 resize-none" />
+                  <div className="card-modern p-4 bg-gray-50">
+                    <h3 className="text-sm font-semibold mb-3">Summary</h3>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between"><div>Services</div><div>${totals.servicesTotal.toFixed(2)}</div></div>
+                      <div className="flex justify-between"><div>Delivery</div><div>${totals.delivery.toFixed(2)}</div></div>
+                      <div className="flex justify-between"><div>Tax (6%)</div><div>${totals.tax.toFixed(2)}</div></div>
+                      <div className="flex justify-between font-bold border-t pt-1 mt-1"><div>Total</div><div>${totals.total.toFixed(2)}</div></div>
+
+                      {formData.isGeorgesMusic && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
+                          <div className="text-xs text-blue-900 font-semibold mb-2">George's Music Invoice (1.54x)</div>
+                          <div className="text-xs space-y-1">
+                            <div className="flex justify-between"><div>Repair Total</div><div>${totals.subtotal.toFixed(2)}</div></div>
+                            <div className="flex justify-between"><div>6% Tax (on Repair Total)</div><div>${totals.yourTax.toFixed(2)}</div></div>
+                            <div className="flex justify-between"><div>Repair Total + Tax</div><div>${totals.yourChargeWithTax.toFixed(2)}</div></div>
+                            <div className="flex justify-between"><div>George's Markup (1.54x)</div><div>${totals.georgesSubtotal.toFixed(2)}</div></div>
+                            <div className="flex justify-between font-semibold border-t pt-1 mt-1"><div>George's Total</div><div>${totals.georgesTotal.toFixed(2)}</div></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="pt-4">
                     <button type="submit" disabled={isSubmitting} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
-                      {isSubmitting ? "Saving..." : "Save Invoice"}
+                      {isSubmitting ? "Printing & Saving..." : "Print & Save"}
                     </button>
                   </div>
                 </form>
