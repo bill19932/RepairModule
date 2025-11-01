@@ -540,12 +540,18 @@ export const extractInvoiceData = async (
     // Common patterns: "Pickup Swap", "Setup", "Restring", "Fret", "Bridge", etc.
     const knownServices = ['pickup', 'swap', 'setup', 'restring', 'fret', 'bridge', 'nut', 'tune', 'intonation', 'adjustment', 'cleaning'];
 
+    console.log("[MATERIALS] Starting extraction from", lines.length, "lines");
+
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed || trimmed.length < 3) continue;
+      if (!trimmed || trimmed.length < 3) {
+        console.log("[MATERIALS] Skipping empty/short line:", trimmed);
+        continue;
+      }
 
       // Check if this line contains a known service
       const hasKnownService = knownServices.some(service => trimmed.toLowerCase().includes(service));
+      console.log("[MATERIALS] Line:", trimmed, "HasKnownService:", hasKnownService);
       if (!hasKnownService) continue;
 
       // Check if line contains numbers (qty and price)
