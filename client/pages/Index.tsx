@@ -319,84 +319,87 @@ export default function Index() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.invoiceNumber) {
-      alert.show("Please enter an Invoice Number", "warning");
-      return;
-    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    if (
-      !formData.customerName ||
-      instruments.some((i) => !i.type) ||
-      !formData.repairDescription
-    ) {
-      alert.show(
-        "Please fill in: Invoice #, Customer Name, Instrument Type(s), and Repair Description",
-        "warning",
-      );
-      return;
-    }
-
-    // Determine assigned invoice number (numeric part). If invoice number isn't numeric, fall back to next counter.
-    const parsed = parseInt(String(formData.invoiceNumber).replace(/[^0-9]/g, ""), 10);
-    const assignedNum = !isNaN(parsed) && parsed > 0 ? parsed : lastAssignedInvoiceNumber + 1;
-
-    // Prepare invoice object
-    const invoice: RepairInvoice = {
-      ...formData,
-      invoiceNumber: String(assignedNum),
-      instruments: instruments.filter((i) => i.type.trim()),
-      materials: materials.filter((m) => m.description.trim()),
-      deliveryMiles: deliveryMiles ?? 0,
-      deliveryFee: formData.isGeorgesMusic ? 0 : deliveryFee || 0,
-      invoiceHtml: "",
-    };
-
-    // Update lastAssigned so the next invoice increments. Persist the lastAssigned value.
-    setLastAssignedInvoiceNumber(assignedNum);
-    localStorage.setItem("lastAssignedInvoiceNumber", String(assignedNum));
-
-    let invoiceHtml = "";
     try {
-      if (typeof generateInvoicePDF === "function") {
-        invoiceHtml = generateInvoicePDF(invoice);
-        invoice.invoiceHtml = invoiceHtml;
-      } else {
+      if (!formData.invoiceNumber) {
+        alert.show("Please enter an Invoice Number", "warning");
+        return;
+      }
+
+      if (
+        !formData.customerName ||
+        instruments.some((i) => !i.type) ||
+        !formData.repairDescription
+      ) {
+        alert.show(
+          "Please fill in: Invoice #, Customer Name, Instrument Type(s), and Repair Description",
+          "warning",
+        );
+        return;
+      }
+
+      const parsed = parseInt(String(formData.invoiceNumber).replace(/[^0-9]/g, ""), 10);
+      const assignedNum = !isNaN(parsed) && parsed > 0 ? parsed : lastAssignedInvoiceNumber + 1;
+
+      const invoice: RepairInvoice = {
+        ...formData,
+        invoiceNumber: String(assignedNum),
+        instruments: instruments.filter((i) => i.type.trim()),
+        materials: materials.filter((m) => m.description.trim()),
+        deliveryMiles: deliveryMiles ?? 0,
+        deliveryFee: formData.isGeorgesMusic ? 0 : deliveryFee || 0,
+        invoiceHtml: "",
+      };
+
+      setLastAssignedInvoiceNumber(assignedNum);
+      localStorage.setItem("lastAssignedInvoiceNumber", String(assignedNum));
+
+      let invoiceHtml = "";
+      try {
+        if (typeof generateInvoicePDF === "function") {
+          invoiceHtml = generateInvoicePDF(invoice);
+          invoice.invoiceHtml = invoiceHtml;
+        } else {
+          invoice.invoiceHtml = "";
+        }
+      } catch (err) {
+        console.error("PDF generation error:", err);
         invoice.invoiceHtml = "";
       }
-    } catch (err) {
-      console.error("PDF generation error:", err);
-      invoice.invoiceHtml = "";
+
+      addInvoiceToLocalStorage(invoice);
+      setSavedInvoices(getAllInvoicesFromLocalStorage());
+
+      try {
+        downloadInvoicePDF(invoice);
+      } catch (err) {
+        console.error("Download/print error:", err);
+      }
+
+      setFormData({
+        invoiceNumber: String(assignedNum + 1),
+        dateReceived: formData.dateReceived,
+        date: formData.date,
+        customerName: "",
+        customerPhone: "",
+        customerEmail: "",
+        customerAddress: "",
+        repairDescription: "",
+        laborHours: 0,
+        hourlyRate: 0,
+        isGeorgesMusic: false,
+      });
+
+      setInstruments([{ type: "", description: "" }]);
+      setMaterials([{ description: "", quantity: 1, unitCost: 0 }]);
+      setDeliveryMiles(null);
+      setDeliveryFee(0);
+      alert.show("Invoice created and saved! PDF ready to print.", "success");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    addInvoiceToLocalStorage(invoice);
-    setSavedInvoices(getAllInvoicesFromLocalStorage());
-
-    try {
-      downloadInvoicePDF(invoice);
-    } catch (err) {
-      console.error("Download/print error:", err);
-    }
-
-    // Prefill next invoice number (assignedNum + 1)
-    setFormData({
-      invoiceNumber: String(assignedNum + 1),
-      dateReceived: formData.dateReceived,
-      date: formData.date,
-      customerName: "",
-      customerPhone: "",
-      customerEmail: "",
-      customerAddress: "",
-      repairDescription: "",
-      laborHours: 0,
-      hourlyRate: 0,
-      isGeorgesMusic: false,
-    });
-
-    setInstruments([{ type: "", description: "" }]);
-    setMaterials([{ description: "", quantity: 1, unitCost: 0 }]);
-    setDeliveryMiles(null);
-    setDeliveryFee(0);
-    alert.show("Invoice created and saved! PDF ready to print.", "success");
   };
 
   const handleDeleteInvoice = (invoiceNumber: string) => {
