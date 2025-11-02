@@ -770,8 +770,11 @@ export const extractInvoiceData = async (
           .replace(/\s+,/g, ",") // Fix spacing before commas
           .replace(/,+/g, ",") // Remove duplicate commas
           .trim();
-        // Fix capitalization: ensure street abbreviations are properly capitalized
-        address = address.replace(/\b([a-z])\s+([a-z]{1,2})\b(?=[,\d])/gi, (m, p1, p2) => p1.toUpperCase() + " " + p2.toUpperCase());
+        // Capitalize first letter of each word and street abbreviations
+        address = address.replace(/\b([a-z])/g, (m) => m.toUpperCase());
+        // Ensure common street abbreviations are proper case (Rd, Ave, St, etc.)
+        address = address.replace(/\b(RD|AVE|ST|DR|LN|CT|PL|BLVD|HWY|PKY|PKWY|TERR|TERRACE|BLK|BLOCK)\b/gi,
+          (m) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase());
       }
 
       // If address doesn't already contain PA/Pennsylvania, add it
