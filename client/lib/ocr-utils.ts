@@ -439,14 +439,21 @@ export const extractInvoiceData = async (
 
     for (let i = 0; i < lines.length; i++) {
       if (/Trouble\s+Reported/i.test(lines[i])) troubleReportedIdx = i;
-      if (/CUSTOMER\s+INFORMATION/i.test(lines[i]) || /CUSTOMER\s*INFORMATION/i.test(lines[i])) customerInfoIdx = i;
+      if (
+        /CUSTOMER\s+INFORMATION/i.test(lines[i]) ||
+        /CUSTOMER\s*INFORMATION/i.test(lines[i])
+      )
+        customerInfoIdx = i;
       if (/Item\s+Description/i.test(lines[i])) itemDescIdx = i;
     }
 
     // Fallback: search for markers with more lenient patterns
     if (troubleReportedIdx === -1) {
       for (let i = 0; i < lines.length; i++) {
-        if (/Trouble|trouble/i.test(lines[i]) && /Reported|reported/i.test(lines[i])) {
+        if (
+          /Trouble|trouble/i.test(lines[i]) &&
+          /Reported|reported/i.test(lines[i])
+        ) {
           troubleReportedIdx = i;
           break;
         }
@@ -454,7 +461,10 @@ export const extractInvoiceData = async (
     }
     if (customerInfoIdx === -1) {
       for (let i = 0; i < lines.length; i++) {
-        if (/CUSTOMER|customer/i.test(lines[i]) && /INFORMATION|information/i.test(lines[i])) {
+        if (
+          /CUSTOMER|customer/i.test(lines[i]) &&
+          /INFORMATION|information/i.test(lines[i])
+        ) {
           customerInfoIdx = i;
           break;
         }
@@ -621,21 +631,31 @@ export const extractInvoiceData = async (
     // Fallback: try to find a likely name near the bottom of the page (before Phone/Email labels)
     if (!customerName) {
       // search for lines that look like names in customer section or nearby areas
-      const searchLines = customerInfoIdx > 0
-        ? lines.slice(Math.max(0, customerInfoIdx), Math.min(customerInfoIdx + 15, lines.length))
-        : lines.slice(Math.max(0, lines.length - 12));
+      const searchLines =
+        customerInfoIdx > 0
+          ? lines.slice(
+              Math.max(0, customerInfoIdx),
+              Math.min(customerInfoIdx + 15, lines.length),
+            )
+          : lines.slice(Math.max(0, lines.length - 12));
 
       for (const l of searchLines) {
         const t = l.trim();
         if (!t) continue;
         // Reject obvious UI element lines
-        if (/Signature|Picked|Customer|Follow|Completed|Third|rE|———|Email|Phone|Primary|Second/.test(t)) {
+        if (
+          /Signature|Picked|Customer|Follow|Completed|Third|rE|———|Email|Phone|Primary|Second/.test(
+            t,
+          )
+        ) {
           addLog(`Fallback: Skipping UI element line: "${t}"`);
           continue;
         }
         // Check if line has meaningful name-like pattern (at least 2 words, all alphabetic)
         const parts = t.split(/\s+/).filter(Boolean);
-        const meaningfulParts = parts.filter((p) => p.length >= 2 && /^[A-Za-z'\-]+$/.test(p));
+        const meaningfulParts = parts.filter(
+          (p) => p.length >= 2 && /^[A-Za-z'\-]+$/.test(p),
+        );
         if (
           t.length > 4 &&
           /^[A-Za-z\s'\-]+$/.test(t) &&
@@ -775,8 +795,10 @@ export const extractInvoiceData = async (
         // Capitalize first letter of each word and street abbreviations
         address = address.replace(/\b([a-z])/g, (m) => m.toUpperCase());
         // Ensure common street abbreviations are proper case (Rd, Ave, St, etc.)
-        address = address.replace(/\b(RD|AVE|ST|DR|LN|CT|PL|BLVD|HWY|PKY|PKWY|TERR|TERRACE|BLK|BLOCK)\b/gi,
-          (m) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase());
+        address = address.replace(
+          /\b(RD|AVE|ST|DR|LN|CT|PL|BLVD|HWY|PKY|PKWY|TERR|TERRACE|BLK|BLOCK)\b/gi,
+          (m) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase(),
+        );
       }
 
       // If address doesn't already contain PA/Pennsylvania, add it
@@ -895,12 +917,17 @@ export const extractInvoiceData = async (
           .trim();
         // Remove lines that are just "/ RETURN ORDER" or variations
         desc = desc.replace(/^\s*\/\s*RETURN\s+ORDER\s*/i, "").trim();
-        const descLines = desc.split(/\n/).map((l) => l.trim()).filter((l) => l && !/George|Music|MUSIC/i.test(l));
+        const descLines = desc
+          .split(/\n/)
+          .map((l) => l.trim())
+          .filter((l) => l && !/George|Music|MUSIC/i.test(l));
         if (descLines.length > 0) {
           desc = descLines.join(" ").replace(/\s+/g, " ").trim();
           if (desc.length > 3) {
             repairDescription = desc;
-            addLog(`Trouble: Extracted from lenient match: ${desc.substring(0, 80)}`);
+            addLog(
+              `Trouble: Extracted from lenient match: ${desc.substring(0, 80)}`,
+            );
           }
         }
       }
@@ -961,7 +988,8 @@ export const extractInvoiceData = async (
 
       // Must contain at least one price pattern ($X.XX)
       if (!trimmed.match(/\$[\d.]+/)) {
-        if (idx < 50) { // Only log first 50 lines without prices to avoid spam
+        if (idx < 50) {
+          // Only log first 50 lines without prices to avoid spam
           addLog(`Materials: Line ${idx} has no price, skipping: "${trimmed}"`);
         }
         continue;
@@ -999,10 +1027,16 @@ export const extractInvoiceData = async (
       );
 
       // Check if this is a labor/service item (single price is OK for these)
-      const isLaborOrService = /Labor|Service|Setup|Repair|Work|Tuning|Cleaning|Inspection/i.test(trimmed);
+      const isLaborOrService =
+        /Labor|Service|Setup|Repair|Work|Tuning|Cleaning|Inspection/i.test(
+          trimmed,
+        );
 
       // Need at least 2 prices normally, but allow 1 price for labor/service items
-      if (priceMatches.length < 1 || (priceMatches.length < 2 && !isLaborOrService)) {
+      if (
+        priceMatches.length < 1 ||
+        (priceMatches.length < 2 && !isLaborOrService)
+      ) {
         addLog(
           `Materials: Skipped - only ${priceMatches.length} price(s) found${isLaborOrService ? " (but is labor/service)" : ""}`,
         );
@@ -1098,7 +1132,9 @@ export const extractInvoiceData = async (
           quantity: finalQty,
           unitCost: price,
         });
-        addLog(`✅ Materials: ADDED - ${desc} × ${finalQty} @ $${price.toFixed(2)}`);
+        addLog(
+          `✅ Materials: ADDED - ${desc} × ${finalQty} @ $${price.toFixed(2)}`,
+        );
       } else {
         addLog(
           `❌ Materials: SKIPPED - qty=${qty}, price=${price.toFixed(2)}, desc='${desc}' (len=${desc.length}), isLabor=${isLaborOrService}`,

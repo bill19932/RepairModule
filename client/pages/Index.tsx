@@ -493,7 +493,10 @@ export default function Index() {
 
     try {
       downloadInvoicePDF(invoice);
-      alert.show(`Opened invoice ${invoice.invoiceNumber} for printing`, "success");
+      alert.show(
+        `Opened invoice ${invoice.invoiceNumber} for printing`,
+        "success",
+      );
     } catch (err) {
       console.error("Download/print error:", err);
       alert.show("Error opening PDF for print", "error");
@@ -743,7 +746,10 @@ export default function Index() {
       setSavedInvoices(getAllInvoicesFromLocalStorage());
 
       // Calculate next invoice number
-      const assignedNum = parseInt(String(invoice.invoiceNumber).replace(/[^0-9]/g, ""), 10);
+      const assignedNum = parseInt(
+        String(invoice.invoiceNumber).replace(/[^0-9]/g, ""),
+        10,
+      );
       const nextInvoiceNum = isOldRepairFormat
         ? lastAssignedInvoiceNumber + 1
         : assignedNum + 1;
@@ -823,7 +829,10 @@ export default function Index() {
       }
 
       // Calculate next invoice number
-      const assignedNum = parseInt(String(invoice.invoiceNumber).replace(/[^0-9]/g, ""), 10);
+      const assignedNum = parseInt(
+        String(invoice.invoiceNumber).replace(/[^0-9]/g, ""),
+        10,
+      );
       const nextInvoiceNum = isOldRepairFormat
         ? lastAssignedInvoiceNumber + 1
         : assignedNum + 1;
@@ -970,7 +979,9 @@ export default function Index() {
                   {ocrDebugLog.length > 0 && (
                     <div className="bg-red-50 border-2 border-red-500 p-4 rounded mb-4 max-h-48 overflow-auto">
                       <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-bold text-red-900">🐛 OCR Debug Log</h4>
+                        <h4 className="font-bold text-red-900">
+                          🐛 OCR Debug Log
+                        </h4>
                         <button
                           type="button"
                           onClick={() => setOcrDebugLog([])}
@@ -980,7 +991,9 @@ export default function Index() {
                         </button>
                       </div>
                       <div className="text-xs font-mono space-y-1 text-red-900">
-                        {ocrDebugLog.map((log, i) => <div key={i}>{log}</div>)}
+                        {ocrDebugLog.map((log, i) => (
+                          <div key={i}>{log}</div>
+                        ))}
                       </div>
                     </div>
                   )}
