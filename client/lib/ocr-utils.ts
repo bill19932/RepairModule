@@ -988,10 +988,13 @@ export const extractInvoiceData = async (
         `Materials: Found ${priceMatches.length} prices and ${plainNumberMatches.length} plain numbers`,
       );
 
-      // Need at least 2 prices for unit price and total
-      if (priceMatches.length < 2) {
+      // Check if this is a labor/service item (single price is OK for these)
+      const isLaborOrService = /Labor|Service|Setup|Repair|Work|Tuning|Cleaning|Inspection/i.test(trimmed);
+
+      // Need at least 2 prices normally, but allow 1 price for labor/service items
+      if (priceMatches.length < 1 || (priceMatches.length < 2 && !isLaborOrService)) {
         addLog(
-          `Materials: Skipped - only ${priceMatches.length} price(s) found`,
+          `Materials: Skipped - only ${priceMatches.length} price(s) found${isLaborOrService ? " (but is labor/service)" : ""}`,
         );
         continue;
       }
