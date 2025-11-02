@@ -1090,16 +1090,18 @@ export const extractInvoiceData = async (
       );
 
       // Validate and add
-      if (qty > 0 && price > 0 && desc && desc.length > 2) {
+      if (price > 0 && desc && desc.length > 2) {
+        // For labor items, qty might be 0 if not explicitly in the line - default to 1
+        const finalQty = qty > 0 ? qty : 1;
         materials.push({
           description: desc,
-          quantity: qty,
+          quantity: finalQty,
           unitCost: price,
         });
-        addLog(`✅ Materials: ADDED - ${desc} × ${qty} @ $${price.toFixed(2)}`);
+        addLog(`✅ Materials: ADDED - ${desc} × ${finalQty} @ $${price.toFixed(2)}`);
       } else {
         addLog(
-          `❌ Materials: SKIPPED - qty=${qty}, price=${price.toFixed(2)}, desc_len=${desc.length}`,
+          `❌ Materials: SKIPPED - qty=${qty}, price=${price.toFixed(2)}, desc='${desc}' (len=${desc.length}), isLabor=${isLaborOrService}`,
         );
       }
     }
