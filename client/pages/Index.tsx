@@ -1853,15 +1853,22 @@ export default function Index() {
                         </div>
                       </div>
 
-                      <div className="pt-4 text-center">
+                      <div className="pt-4 flex justify-center gap-3">
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleSave}
                           disabled={isSubmitting}
                           className="btn-primary inline-flex items-center px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isSubmitting
-                            ? "Printing & Saving..."
-                            : "Print & Save"}
+                          {isSubmitting ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handlePrint}
+                          disabled={isSubmitting}
+                          className="btn-primary inline-flex items-center px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSubmitting ? "Printing..." : "Print"}
                         </button>
                       </div>
                     </>
