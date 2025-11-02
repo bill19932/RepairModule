@@ -652,11 +652,13 @@ export const extractInvoiceData = async (
     }
 
     if (customerName) {
-      // Clean customerName from OCR artifacts like 'pw', 'p/w', or '(w)'
+      // Clean customerName from OCR artifacts like 'pw', 'p/w', or '(w)', and trailing ': a'
       let cleanName = customerName
         .replace(/\(w\)/gi, "")
         .replace(/\b(?:pw|p\/w)\b[:.,]*/gi, "")
         .replace(/[|\[\]]+/g, "")
+        .replace(/\s*:\s*[a-z]\s*$/gi, "") // Remove trailing ": a" or similar artifacts
+        .replace(/\s*:\s*$/g, "") // Remove trailing colons
         .replace(/\s+/g, " ")
         .trim();
       if (cleanName) extracted.customerName = cleanName;
