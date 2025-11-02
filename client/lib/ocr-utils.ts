@@ -1120,6 +1120,9 @@ export const extractInvoiceData = async (
       desc = desc.replace(/\s+__\s+/g, " ").trim();
       desc = desc.replace(/\s+_+\s+/g, " ").trim();
       desc = desc.replace(/\s+ee\s+/g, " ").trim();
+      // Remove standalone "OR" OCR artifact (often appears between instrument name and other content)
+      desc = desc.replace(/\s+OR\s*$/i, "").trim();
+      desc = desc.replace(/\s+OR\s+/gi, " ").trim();
       desc = desc.replace(/\s+/g, " ").trim();
       desc = desc.replace(/Fernandez/g, "Fernandes");
 
