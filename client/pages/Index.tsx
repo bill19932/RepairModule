@@ -445,12 +445,12 @@ export default function Index() {
     }
   };
 
-  const saveBatchRepair = (repairId: string) => {
+  const buildBatchInvoice = (repairId: string): any => {
     const repair = batchRepairs.find((r) => r.id === repairId);
-    if (!repair) return;
+    if (!repair) return null;
 
     const data = batchFormData[repairId];
-    const invoice = {
+    return {
       invoiceNumber: data.invoiceNumber,
       dateReceived: data.dateReceived,
       date: data.date,
@@ -470,16 +470,34 @@ export default function Index() {
       isGeorgesMusic: data.isGeorgesMusic || false,
       isNoDeliveryFee: data.isNoDeliveryFee || false,
       invoiceHtml: "",
-    } as any;
+    };
+  };
+
+  const saveBatchRepair = (repairId: string) => {
+    const invoice = buildBatchInvoice(repairId);
+    if (!invoice) return;
 
     addInvoiceToLocalStorage(invoice);
     setSavedInvoices(getAllInvoicesFromLocalStorage());
     setLastAssignedInvoiceNumber(
-      parseInt(data.invoiceNumber) || lastAssignedInvoiceNumber + 1,
+      parseInt(invoice.invoiceNumber) || lastAssignedInvoiceNumber + 1,
     );
 
     setBatchRepairs((prev) => prev.filter((r) => r.id !== repairId));
     alert.show(`Saved invoice ${invoice.invoiceNumber}`, "success");
+  };
+
+  const printBatchRepair = (repairId: string) => {
+    const invoice = buildBatchInvoice(repairId);
+    if (!invoice) return;
+
+    try {
+      downloadInvoicePDF(invoice);
+      alert.show(`Opened invoice ${invoice.invoiceNumber} for printing`, "success");
+    } catch (err) {
+      console.error("Download/print error:", err);
+      alert.show("Error opening PDF for print", "error");
+    }
   };
 
   const removeBatchRepair = (repairId: string) => {
