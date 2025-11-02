@@ -865,7 +865,7 @@ export default function Index() {
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  {ocrDebugLog.length > 0 && (
+                  {false && ocrDebugLog.length > 0 && (
                     <div className="bg-red-50 border-2 border-red-500 p-4 rounded mb-4 max-h-48 overflow-auto">
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="font-bold text-red-900">🐛 OCR Debug Log</h4>
