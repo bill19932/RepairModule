@@ -652,6 +652,136 @@ export default function Index() {
     setMaterials(materials.filter((_, i) => i !== index));
   };
 
+  const buildInvoice = (): RepairInvoice | null => {
+    if (!formData.invoiceNumber) {
+      alert.show("Please enter an Invoice Number", "warning");
+      return null;
+    }
+
+    if (
+      !formData.customerName ||
+      instruments.some((i) => !i.type) ||
+      !formData.repairDescription
+    ) {
+      alert.show(
+        "Please fill in: Invoice #, Customer Name, Instrument Type(s), and Repair Description",
+        "warning",
+      );
+      return null;
+    }
+
+    const parsed = parseInt(
+      String(formData.invoiceNumber).replace(/[^0-9]/g, ""),
+      10,
+    );
+    const assignedNum =
+      !isNaN(parsed) && parsed > 0 ? parsed : lastAssignedInvoiceNumber + 1;
+
+    const invoice: RepairInvoice = {
+      ...formData,
+      invoiceNumber: String(assignedNum),
+      instruments: instruments.filter((i) => i.type.trim()),
+      materials: materials.filter((m) => m.description.trim()),
+      deliveryMiles: deliveryMiles ?? 0,
+      deliveryFee: formData.isGeorgesMusic ? 0 : deliveryFee || 0,
+      invoiceHtml: "",
+    };
+
+    // Only update invoice counter if this is NOT an old repair format
+    if (!isOldRepairFormat) {
+      setLastAssignedInvoiceNumber(assignedNum);
+      localStorage.setItem("lastAssignedInvoiceNumber", String(assignedNum));
+    }
+
+    let invoiceHtml = "";
+    try {
+      if (typeof generateInvoicePDF === "function") {
+        invoiceHtml = generateInvoicePDF(invoice);
+        invoice.invoiceHtml = invoiceHtml;
+      } else {
+        invoice.invoiceHtml = "";
+      }
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      invoice.invoiceHtml = "";
+    }
+
+    return invoice;
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const invoice = buildInvoice();
+      if (!invoice) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      addInvoiceToLocalStorage(invoice);
+      setSavedInvoices(getAllInvoicesFromLocalStorage());
+
+      // Calculate next invoice number
+      const assignedNum = parseInt(String(invoice.invoiceNumber).replace(/[^0-9]/g, ""), 10);
+      const nextInvoiceNum = isOldRepairFormat
+        ? lastAssignedInvoiceNumber + 1
+        : assignedNum + 1;
+
+      setFormData({
+        invoiceNumber: String(nextInvoiceNum),
+        dateReceived: formData.dateReceived,
+        date: formData.date,
+        customerName: "",
+        customerPhone: "",
+        customerEmail: "",
+        customerAddress: "",
+        repairDescription: "",
+        workDone: "",
+        laborHours: 0,
+        hourlyRate: 0,
+        isGeorgesMusic: false,
+        isNoDeliveryFee: false,
+        notes: "",
+      });
+
+      setInstruments([{ type: "", description: "" }]);
+      setMaterials([{ description: "", quantity: 1, unitCost: 0 }]);
+      setDeliveryMiles(null);
+      setDeliveryFee(0);
+      setIsOldRepairFormat(false);
+      alert.show("Invoice saved!", "success");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePrint = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const invoice = buildInvoice();
+      if (!invoice) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      try {
+        downloadInvoicePDF(invoice);
+        alert.show("PDF opened for printing.", "success");
+      } catch (err) {
+        console.error("Download/print error:", err);
+        alert.show("Error opening PDF for print", "error");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -659,57 +789,10 @@ export default function Index() {
     setIsSubmitting(true);
 
     try {
-      if (!formData.invoiceNumber) {
-        alert.show("Please enter an Invoice Number", "warning");
+      const invoice = buildInvoice();
+      if (!invoice) {
+        setIsSubmitting(false);
         return;
-      }
-
-      if (
-        !formData.customerName ||
-        instruments.some((i) => !i.type) ||
-        !formData.repairDescription
-      ) {
-        alert.show(
-          "Please fill in: Invoice #, Customer Name, Instrument Type(s), and Repair Description",
-          "warning",
-        );
-        return;
-      }
-
-      const parsed = parseInt(
-        String(formData.invoiceNumber).replace(/[^0-9]/g, ""),
-        10,
-      );
-      const assignedNum =
-        !isNaN(parsed) && parsed > 0 ? parsed : lastAssignedInvoiceNumber + 1;
-
-      const invoice: RepairInvoice = {
-        ...formData,
-        invoiceNumber: String(assignedNum),
-        instruments: instruments.filter((i) => i.type.trim()),
-        materials: materials.filter((m) => m.description.trim()),
-        deliveryMiles: deliveryMiles ?? 0,
-        deliveryFee: formData.isGeorgesMusic ? 0 : deliveryFee || 0,
-        invoiceHtml: "",
-      };
-
-      // Only update invoice counter if this is NOT an old repair format
-      if (!isOldRepairFormat) {
-        setLastAssignedInvoiceNumber(assignedNum);
-        localStorage.setItem("lastAssignedInvoiceNumber", String(assignedNum));
-      }
-
-      let invoiceHtml = "";
-      try {
-        if (typeof generateInvoicePDF === "function") {
-          invoiceHtml = generateInvoicePDF(invoice);
-          invoice.invoiceHtml = invoiceHtml;
-        } else {
-          invoice.invoiceHtml = "";
-        }
-      } catch (err) {
-        console.error("PDF generation error:", err);
-        invoice.invoiceHtml = "";
       }
 
       addInvoiceToLocalStorage(invoice);
@@ -722,6 +805,7 @@ export default function Index() {
       }
 
       // Calculate next invoice number
+      const assignedNum = parseInt(String(invoice.invoiceNumber).replace(/[^0-9]/g, ""), 10);
       const nextInvoiceNum = isOldRepairFormat
         ? lastAssignedInvoiceNumber + 1
         : assignedNum + 1;
