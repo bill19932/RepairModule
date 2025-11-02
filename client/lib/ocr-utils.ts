@@ -1038,11 +1038,16 @@ export const extractInvoiceData = async (
         }
       }
 
-      // Extract description: remove only prices and quantity from the END of the line
+      // Extract description: remove only prices and quantity from the line
       let desc = trimmed;
 
       // Remove all dollar amounts first
       desc = desc.replace(/\$[\d.]+/g, "").trim();
+
+      // For labor/service items, remove leading quantity numbers (e.g., "10 Tech Labor" -> "Tech Labor")
+      if (isLaborOrService) {
+        desc = desc.replace(/^\d+\s+/, "").trim();
+      }
 
       // Remove quantity and other numbers from the end of the line (right side)
       desc = desc.replace(/\s+\d+\s*$/, "").trim();
