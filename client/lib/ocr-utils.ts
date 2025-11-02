@@ -874,7 +874,7 @@ export const extractInvoiceData = async (
     // Pattern 3: Try more lenient trouble extraction if markers not found
     if (!repairDescription) {
       const troubleMatch = text.match(
-        /(?:Trouble\s+Reported|trouble)[\s:]*([\\s\\S]{10,500}?)(?=Special\s+Instructions|Special instructions|Technician|Item\s+is\s+being|$)/i,
+        /(?:Trouble\s+Reported|trouble)[\s:]*([^]*?{10,500}?)(?=Special\s+Instructions|Special instructions|Technician|Item\s+is\s+being|$)/i,
       );
       if (troubleMatch) {
         let desc = troubleMatch[1]
