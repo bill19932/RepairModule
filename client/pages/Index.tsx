@@ -1496,7 +1496,14 @@ export default function Index() {
                                   onClick={() => saveBatchRepair(repair.id)}
                                   className="btn-primary inline-flex items-center px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  Print & Save
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => printBatchRepair(repair.id)}
+                                  className="btn-primary inline-flex items-center px-5 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  Print
                                 </button>
                                 <button
                                   type="button"
