@@ -761,6 +761,15 @@ export const extractInvoiceData = async (
         address = undefined;
       }
 
+      // Clean OCR artifacts from address (e.g., "oR a." from "Wallingford")
+      if (address) {
+        address = address
+          .replace(/\boR\s+a\b\.?/gi, "Wallingford") // Common OCR error
+          .replace(/\s+,/g, ",") // Fix spacing before commas
+          .replace(/,+/g, ",") // Remove duplicate commas
+          .trim();
+      }
+
       // If address doesn't already contain PA/Pennsylvania, add it
       if (address && !/(PA|Pennsylvania|\b19[0-9]{3}\b)/.test(address)) {
         address = address + ", PA";
@@ -773,6 +782,15 @@ export const extractInvoiceData = async (
         .replace(/Total.*$/gm, "") // Remove Total lines
         .replace(/\$.*$/gm, ""); // Remove dollar amount lines
       address = extractAddressFromText(cleanCustomerSection);
+
+      // Clean OCR artifacts from extracted address
+      if (address) {
+        address = address
+          .replace(/\boR\s+a\b\.?/gi, "Wallingford") // Common OCR error
+          .replace(/\s+,/g, ",") // Fix spacing before commas
+          .replace(/,+/g, ",") // Remove duplicate commas
+          .trim();
+      }
     }
 
     if (address) {
