@@ -620,21 +620,24 @@ export const extractInvoiceData = async (
 
     // Fallback: try to find a likely name near the bottom of the page (before Phone/Email labels)
     if (!customerName) {
-      // search for lines that look like names within last 12 lines, but require at least 3+ chars per word
-      const tail = lines.slice(Math.max(0, lines.length - 12));
-      for (const l of tail) {
+      // search for lines that look like names in customer section or nearby areas
+      const searchLines = customerInfoIdx > 0
+        ? lines.slice(Math.max(0, customerInfoIdx), Math.min(customerInfoIdx + 15, lines.length))
+        : lines.slice(Math.max(0, lines.length - 12));
+
+      for (const l of searchLines) {
         const t = l.trim();
         if (!t) continue;
         // Reject obvious UI element lines
-        if (/Signature|Picked|Customer|Follow|Completed|Third|rE|———/.test(t)) {
+        if (/Signature|Picked|Customer|Follow|Completed|Third|rE|———|Email|Phone|Primary|Second/.test(t)) {
           addLog(`Fallback: Skipping UI element line: "${t}"`);
           continue;
         }
-        // Check if line has meaningful name-like pattern (each word >= 3 chars)
+        // Check if line has meaningful name-like pattern (at least 2 words, all alphabetic)
         const parts = t.split(/\s+/).filter(Boolean);
-        const meaningfulParts = parts.filter((p) => p.length >= 3);
+        const meaningfulParts = parts.filter((p) => p.length >= 2 && /^[A-Za-z'\-]+$/.test(p));
         if (
-          t.length > 5 &&
+          t.length > 4 &&
           /^[A-Za-z\s'\-]+$/.test(t) &&
           meaningfulParts.length >= 2
         ) {
@@ -642,7 +645,7 @@ export const extractInvoiceData = async (
             .join(" ")
             .replace(/[|\[\]]+/g, "")
             .trim();
-          addLog(`Fallback: Selected name from tail: "${customerName}"`);
+          addLog(`Fallback: Selected name from search: "${customerName}"`);
           break;
         }
       }
