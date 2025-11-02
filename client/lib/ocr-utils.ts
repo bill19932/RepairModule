@@ -439,8 +439,26 @@ export const extractInvoiceData = async (
 
     for (let i = 0; i < lines.length; i++) {
       if (/Trouble\s+Reported/i.test(lines[i])) troubleReportedIdx = i;
-      if (/CUSTOMER\s+INFORMATION/i.test(lines[i])) customerInfoIdx = i;
+      if (/CUSTOMER\s+INFORMATION/i.test(lines[i]) || /CUSTOMER\s*INFORMATION/i.test(lines[i])) customerInfoIdx = i;
       if (/Item\s+Description/i.test(lines[i])) itemDescIdx = i;
+    }
+
+    // Fallback: search for markers with more lenient patterns
+    if (troubleReportedIdx === -1) {
+      for (let i = 0; i < lines.length; i++) {
+        if (/Trouble|trouble/i.test(lines[i]) && /Reported|reported/i.test(lines[i])) {
+          troubleReportedIdx = i;
+          break;
+        }
+      }
+    }
+    if (customerInfoIdx === -1) {
+      for (let i = 0; i < lines.length; i++) {
+        if (/CUSTOMER|customer/i.test(lines[i]) && /INFORMATION|information/i.test(lines[i])) {
+          customerInfoIdx = i;
+          break;
+        }
+      }
     }
 
     const topSection =
