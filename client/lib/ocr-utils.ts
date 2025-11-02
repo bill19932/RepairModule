@@ -789,7 +789,9 @@ export const extractInvoiceData = async (
       // Clean OCR artifacts from extracted address
       if (address) {
         address = address
-          .replace(/\boR\s+a\b\.?/gi, "Wallingford") // Common OCR error
+          .replace(/\boR\s+a\b\.?/gi, "Wallingford") // Common OCR error for Wallingford
+          .replace(/\bbrrokhaven\b/gi, "Brookhaven") // Fix double-r OCR error
+          .replace(/\s+ree\b/gi, "") // Remove "ree" artifact (often from city names)
           .replace(/\s+,/g, ",") // Fix spacing before commas
           .replace(/,+/g, ",") // Remove duplicate commas
           .trim();
