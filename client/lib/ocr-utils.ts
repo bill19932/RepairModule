@@ -810,8 +810,11 @@ export const extractInvoiceData = async (
       );
     }
 
-    // Pattern 1: "Service: ..." format (old repair form)
+    // Pattern 1: "Service: ..." or "Performed:" format (old repair form)
     let serviceLabelMatch = text.match(/Service\s*:\s*([^\n]+)/i);
+    if (!serviceLabelMatch) {
+      serviceLabelMatch = text.match(/Performed\s*:\s*([^\n]+)/i);
+    }
     if (serviceLabelMatch) {
       repairDescription = serviceLabelMatch[1]
         .trim()
@@ -821,7 +824,7 @@ export const extractInvoiceData = async (
     }
 
     // Pattern 2: from trouble section (George's Music format)
-    if (!repairDescription) {
+    if (!repairDescription && troubleReportedIdx >= 0) {
       addLog(`Searching for Trouble Reported in trouble section...`);
       const troubleMatch = troubleSection.match(
         /Trouble\s+Reported\s*:?[\s\S]*?(?=Special\s+Instructions|Technician\s+Comments|Item\s+is\s+being|$)/i,
@@ -868,9 +871,33 @@ export const extractInvoiceData = async (
       }
     }
 
+    // Pattern 3: Try more lenient trouble extraction if markers not found
+    if (!repairDescription) {
+      const troubleMatch = text.match(
+        /(?:Trouble\s+Reported|trouble)[\s:]*([\\s\\S]{10,500}?)(?=Special\s+Instructions|Special instructions|Technician|Item\s+is\s+being|$)/i,
+      );
+      if (troubleMatch) {
+        let desc = troubleMatch[1]
+          .trim()
+          .replace(/^[;:|\/\s]+/, "")
+          .replace(/[;:|\/\s]+$/, "")
+          .trim();
+        // Remove lines that are just "/ RETURN ORDER" or variations
+        desc = desc.replace(/^\s*\/\s*RETURN\s+ORDER\s*/i, "").trim();
+        const descLines = desc.split(/\n/).map((l) => l.trim()).filter((l) => l && !/George|Music|MUSIC/i.test(l));
+        if (descLines.length > 0) {
+          desc = descLines.join(" ").replace(/\s+/g, " ").trim();
+          if (desc.length > 3) {
+            repairDescription = desc;
+            addLog(`Trouble: Extracted from lenient match: ${desc.substring(0, 80)}`);
+          }
+        }
+      }
+    }
+
     if (!repairDescription) {
       const serviceMatch = text.match(
-        /Service\s+([\s\S]{10,200}?)(?:\n|Invoice|$)/i,
+        /(?:Service|Performed)\s+(?:PERFORMED)?\s*:?\s*([\s\S]{10,200}?)(?:\n|Invoice|$)/i,
       );
       if (serviceMatch) {
         let desc = serviceMatch[1].trim();
