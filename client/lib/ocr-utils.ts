@@ -1031,8 +1031,8 @@ export const extractInvoiceData = async (
           const totalPrice = priceMatches[priceMatches.length - 1];
           qty = Math.max(1, Math.round(totalPrice / unitPrice));
           price = unitPrice;
-        } else {
-          // Only 1 price, default qty=1
+        } else if (priceMatches.length === 1) {
+          // Only 1 price - for labor/service items, qty=1 and price is the total
           qty = 1;
           price = priceMatches[0];
         }
