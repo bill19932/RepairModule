@@ -942,7 +942,8 @@ export const extractInvoiceData = async (
 
     addLog(`Materials: Starting extraction from ${lines.length} lines`);
 
-    for (const line of lines) {
+    for (let idx = 0; idx < lines.length; idx++) {
+      const line = lines[idx];
       const trimmed = line.trim();
       if (!trimmed || trimmed.length < 3) {
         continue;
@@ -953,13 +954,20 @@ export const extractInvoiceData = async (
         /^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention|Subtotal|Item)/i.test(
           trimmed,
         )
-      )
+      ) {
+        addLog(`Materials: Skipping header line ${idx}: "${trimmed}"`);
         continue;
+      }
 
       // Must contain at least one price pattern ($X.XX)
-      if (!trimmed.match(/\$[\d.]+/)) continue;
+      if (!trimmed.match(/\$[\d.]+/)) {
+        if (idx < 50) { // Only log first 50 lines without prices to avoid spam
+          addLog(`Materials: Line ${idx} has no price, skipping: "${trimmed}"`);
+        }
+        continue;
+      }
 
-      addLog(`Materials: Processing line: "${trimmed}"`);
+      addLog(`Materials: Processing line ${idx}: "${trimmed}"`);
 
       // Extract dollar amounts (prices) - look for $X.XX patterns
       const priceMatches: number[] = [];
