@@ -13,7 +13,14 @@ files:
 
 mac:
   target:
+    - dmg
     - zip
   category: Business
   hardenedRuntime: true
   gatekeeperAssess: false
+
+linux:
+  target:
+    - AppImage
+    - snap
+  category: Utility
