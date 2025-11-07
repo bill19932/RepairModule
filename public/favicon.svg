@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Blue background -->
+  <rect width="200" height="200" fill="#3B7BA6"/>
+  
+  <!-- Musical note symbol (simplified) -->
+  <g fill="white">
+    <!-- First note head -->
+    <circle cx="60" cy="140" r="12"/>
+    <!-- Second note head -->
+    <circle cx="100" cy="120" r="12"/>
+    <!-- Connecting stem -->
+    <rect x="110" y="40" width="6" height="85" fill="white"/>
+    <!-- Curved beam connecting notes -->
+    <path d="M 116 45 Q 130 60 125 95" stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Text: DELCO MUSIC REPAIRS -->
+  <text x="100" y="185" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">DELCO MUSIC REPAIRS</text>
+</svg>
