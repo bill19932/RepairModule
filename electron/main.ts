@@ -16,7 +16,7 @@ const createWindow = () => {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: path.join(__dirname, '../assets/icon.png'),
+    icon: path.join(__dirname, '../public/placeholder.svg'),
   });
 
   const startUrl = isDev
