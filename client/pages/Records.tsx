@@ -384,11 +384,11 @@ export default function Records() {
                     (sum, mat) => sum + mat.quantity * mat.unitCost,
                     0,
                   );
-                  const yourTotal = servicesTotal * 1.06;
+                  const dmcTotal = servicesTotal * 1.06;
                   const georgesTotal = servicesTotal * 1.54 * 1.06;
                   const displayTotal = inv.isGeorgesMusic
                     ? georgesTotal
-                    : yourTotal;
+                    : dmcTotal;
                   const amountReceivedValue =
                     amountReceivedEdits[inv.invoiceNumber] !== undefined
                       ? amountReceivedEdits[inv.invoiceNumber]
