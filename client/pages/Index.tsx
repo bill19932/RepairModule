@@ -1215,27 +1215,6 @@ export default function Index() {
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  {ocrDebugLog.length > 0 && (
-                    <div className="bg-red-50 border-2 border-red-500 p-4 rounded mb-4 max-h-48 overflow-auto">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-bold text-red-900">
-                          🐛 OCR Debug Log
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => setOcrDebugLog([])}
-                          className="text-red-600 text-sm font-bold hover:text-red-900"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                      <div className="text-xs font-mono space-y-1 text-red-900">
-                        {ocrDebugLog.map((log, i) => (
-                          <div key={i}>{log}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {inImageSelectionMode && imageDataUrl && (
                     <div className="bg-green-50 border-2 border-green-500 p-6 rounded space-y-4">
