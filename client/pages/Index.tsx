@@ -383,13 +383,63 @@ export default function Index() {
             (ocrResult?.data?.text || (ocrResult as any).text || "").trim();
 
           if (text) {
-            extractedMaterials.push({
-              description: text,
-              quantity: 1,
-              unitCost: 0,
-            });
+            // Parse quantity and price from the text
+            let quantity = 1;
+            let unitCost = 0;
+            let description = text;
 
-            console.log("Region " + (i + 1) + " extracted:", text.substring(0, 100));
+            // Look for price pattern: $XX.XX or $X.XX
+            const priceMatch = text.match(/\$[\d.]+/g);
+            if (priceMatch && priceMatch.length > 0) {
+              // Use the last price found (usually the unit cost)
+              unitCost = parseFloat(priceMatch[priceMatch.length - 1].substring(1));
+              // Remove prices from description
+              description = description.replace(/\$[\d.]+/g, "").trim();
+            }
+
+            // Look for quantity: a number at the start or before the price
+            // Common patterns: "1 $80.00", "Qty: 1", "1", etc.
+            const qtyMatch = description.match(/^\s*(\d+)\s+/);
+            if (qtyMatch) {
+              quantity = parseInt(qtyMatch[1], 10);
+              description = description.replace(/^\s*\d+\s+/, "").trim();
+            }
+
+            // Also check for plain numbers that might be quantity
+            const allNumbers = description.match(/\s(\d+)\s*$/);
+            if (allNumbers && !qtyMatch) {
+              const num = parseInt(allNumbers[1], 10);
+              if (num > 0 && num < 1000) {
+                quantity = num;
+                description = description.replace(/\s\d+\s*$/, "").trim();
+              }
+            }
+
+            // Clean up description
+            description = description
+              .replace(/^\s*[\-:|;/]+\s*/, "")
+              .replace(/\s*[\-:|;/]+\s*$/, "")
+              .replace(/\s+/g, " ")
+              .trim();
+
+            if (description) {
+              extractedMaterials.push({
+                description,
+                quantity: quantity > 0 ? quantity : 1,
+                unitCost,
+              });
+
+              console.log(
+                "Region " +
+                  (i + 1) +
+                  " extracted: qty=" +
+                  quantity +
+                  ", price=$" +
+                  unitCost.toFixed(2) +
+                  ", desc=" +
+                  description.substring(0, 80),
+              );
+            }
           }
         } catch (err) {
           console.error("Failed to OCR region " + (i + 1) + ":", err);
