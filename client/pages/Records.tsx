@@ -512,12 +512,8 @@ export default function Records() {
                                     mat_sum + mat.quantity * mat.unitCost,
                                   0,
                                 );
-                                const yourTotal = servicesTotal * 1.06;
-                                const georgesTotal =
-                                  servicesTotal * 1.54 * 1.06;
-                                return inv.isGeorgesMusic
-                                  ? georgesTotal
-                                  : yourTotal;
+                                const dmcTotal = servicesTotal * 1.06;
+                                return dmcTotal;
                               })();
                         return sum + received;
                       }, 0)
