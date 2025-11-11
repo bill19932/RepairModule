@@ -1336,6 +1336,51 @@ export default function Index() {
                                 New Invoice 📸 Auto-Fill from Image
                               </div>
 
+                              {batchImageSelectionMode === repair.id &&
+                                repair.imageDataUrl && (
+                                  <div className="bg-green-50 border-2 border-green-500 p-6 rounded space-y-4 mb-6">
+                                    <div>
+                                      <h3 className="text-lg font-bold text-green-900 mb-2">
+                                        📍 Select Service/Material Items
+                                      </h3>
+                                      <p className="text-sm text-green-800 mb-4">
+                                        Draw boxes around each service or material item on the invoice.
+                                      </p>
+                                    </div>
+                                    <ImageSelector
+                                      imageUrl={repair.imageDataUrl}
+                                      onSelectionsComplete={(selections) =>
+                                        processBatchRegionSelections(
+                                          repair.id,
+                                          selections,
+                                        )
+                                      }
+                                      isProcessing={isProcessingRegions}
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setBatchImageSelectionMode(null)
+                                      }
+                                      className="text-sm text-green-600 hover:text-green-800 font-semibold"
+                                    >
+                                      ✕ Cancel Selection
+                                    </button>
+                                  </div>
+                                )}
+
+                              {batchImageSelectionMode !== repair.id && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setBatchImageSelectionMode(repair.id)
+                                  }
+                                  className="w-full mb-6 bg-green-50 border-2 border-green-500 hover:bg-green-100 text-green-700 py-2 px-4 rounded font-semibold text-sm"
+                                >
+                                  📸 Select Items from Image
+                                </button>
+                              )}
+
                               <div className="grid grid-cols-3 gap-3 mb-4">
                                 <div>
                                   <label className="block text-xs font-semibold mb-1">
