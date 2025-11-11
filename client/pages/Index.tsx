@@ -86,6 +86,9 @@ export default function Index() {
   const [imageDataUrl, setImageDataUrl] = useState<string>("");
   const [currentImageFile, setCurrentImageFile] = useState<File | null>(null);
   const [isProcessingRegions, setIsProcessingRegions] = useState(false);
+  const [batchImageSelectionMode, setBatchImageSelectionMode] = useState<
+    string | null
+  >(null);
   const alert = useAlert();
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
