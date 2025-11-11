@@ -1131,6 +1131,35 @@ export default function Index() {
                     </div>
                   )}
 
+                  {inImageSelectionMode && imageDataUrl && (
+                    <div className="bg-green-50 border-2 border-green-500 p-6 rounded space-y-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-green-900 mb-2">
+                          📍 Select Service/Material Items
+                        </h3>
+                        <p className="text-sm text-green-800 mb-4">
+                          Draw boxes around each service or material item on the invoice.
+                        </p>
+                      </div>
+                      <ImageSelector
+                        imageUrl={imageDataUrl}
+                        onSelectionsComplete={processRegionSelections}
+                        isProcessing={isProcessingRegions}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInImageSelectionMode(false);
+                          setImageDataUrl("");
+                          setCurrentImageFile(null);
+                        }}
+                        className="text-sm text-green-600 hover:text-green-800 font-semibold"
+                      >
+                        ✕ Cancel Selection
+                      </button>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-2">
                       📸 Auto-Fill from Image
