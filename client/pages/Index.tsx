@@ -82,12 +82,17 @@ export default function Index() {
   );
   const [showRecentModal, setShowRecentModal] = useState(false);
   const [inImageSelectionMode, setInImageSelectionMode] = useState(false);
+  const [imageSelectorCollapsed, setImageSelectorCollapsed] = useState(false);
   const [imageDataUrl, setImageDataUrl] = useState<string>("");
   const [currentImageFile, setCurrentImageFile] = useState<File | null>(null);
   const [isProcessingRegions, setIsProcessingRegions] = useState(false);
   const [batchImageSelectionMode, setBatchImageSelectionMode] = useState<
     string | null
   >(null);
+  const [batchImageSelectorCollapsed, setBatchImageSelectorCollapsed] = useState<Record<string, boolean>>({});
+
+  const alert = useAlert();
+
   const alert = useAlert();
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
