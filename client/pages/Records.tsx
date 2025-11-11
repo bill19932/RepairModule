@@ -477,7 +477,7 @@ export default function Records() {
                               e.target.value,
                             )
                           }
-                          placeholder={`$${displayTotal.toFixed(2)}`}
+                          placeholder={`$${dmcTotal.toFixed(2)}`}
                           className="input-modern text-xs w-full text-right h-7"
                         />
                       </td>
