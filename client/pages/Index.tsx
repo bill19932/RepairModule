@@ -130,6 +130,16 @@ export default function Index() {
           notes: "",
         };
 
+        // Convert file to data URL for image selection
+        const imageDataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve(reader.result as string);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
         results.push({
           id,
           fileName: file.name,
@@ -139,6 +149,8 @@ export default function Index() {
           instruments: extracted.instruments || [{ type: "", description: "" }],
           deliveryMiles: null,
           deliveryFee: 0,
+          imageFile: file,
+          imageDataUrl,
         });
 
         setBatchFormData((prev) => ({ ...prev, [id]: newFormData }));
