@@ -334,14 +334,23 @@ export default function Records() {
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">
-                    Invoice
+                  <th
+                    onClick={() => handleHeaderClick("invoice")}
+                    className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    Invoice{renderSortArrow("invoice")}
                   </th>
-                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">
-                    Date Received
+                  <th
+                    onClick={() => handleHeaderClick("dateReceived")}
+                    className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    Date Received{renderSortArrow("dateReceived")}
                   </th>
-                  <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">
-                    Customer
+                  <th
+                    onClick={() => handleHeaderClick("customer")}
+                    className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    Customer{renderSortArrow("customer")}
                   </th>
                   <th className="text-left py-2 px-2 font-semibold text-foreground whitespace-nowrap">
                     Instruments
@@ -352,11 +361,17 @@ export default function Records() {
                   <th className="text-center py-2 px-2 font-semibold text-foreground whitespace-nowrap">
                     GM
                   </th>
-                  <th className="text-right py-2 px-2 font-semibold text-foreground whitespace-nowrap">
-                    Total
+                  <th
+                    onClick={() => handleHeaderClick("total")}
+                    className="text-right py-2 px-2 font-semibold text-foreground whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    Total{renderSortArrow("total")}
                   </th>
-                  <th className="text-right py-2 px-2 font-semibold text-foreground whitespace-nowrap">
-                    $ Received
+                  <th
+                    onClick={() => handleHeaderClick("amountReceived")}
+                    className="text-right py-2 px-2 font-semibold text-foreground whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    $ Received{renderSortArrow("amountReceived")}
                   </th>
                   <th className="text-center py-2 px-2 font-semibold text-foreground">
                     Act
