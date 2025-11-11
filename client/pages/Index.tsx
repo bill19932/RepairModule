@@ -507,11 +507,16 @@ export default function Index() {
       if (extractedMaterials.length > 0) {
         setBatchRepairs((prev) =>
           prev.map((r) =>
-            r.id === repairId ? { ...r, materials: extractedMaterials } : r,
+            r.id === repairId
+              ? {
+                  ...r,
+                  materials: [...(r.materials || []), ...extractedMaterials],
+                }
+              : r,
           ),
         );
         alert.show(
-          "Extracted " + extractedMaterials.length + " item(s) successfully!",
+          "Added " + extractedMaterials.length + " item(s) to materials!",
           "success",
         );
       }
