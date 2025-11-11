@@ -515,8 +515,6 @@ export default function Index() {
           "success",
         );
       }
-
-      setBatchImageSelectionMode(null);
     } catch (err) {
       console.error("Error processing batch region selections:", err);
       alert.show("Failed to process selections. Please try again.", "error");
