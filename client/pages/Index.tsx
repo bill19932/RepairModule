@@ -288,6 +288,137 @@ export default function Index() {
     }
   };
 
+  const processRegionSelections = async (
+    selections: Array<{ x: number; y: number; width: number; height: number }>,
+  ) => {
+    if (!currentImageFile || selections.length === 0) return;
+
+    setIsProcessingRegions(true);
+
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+
+      const imageUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          resolve(dataUrl);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(currentImageFile);
+      });
+
+      img.src = imageUrl;
+
+      await new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+      });
+
+      const extractedMaterials: RepairMaterial[] = [];
+
+      for (let i = 0; i < selections.length; i++) {
+        const selection = selections[i];
+
+        const canvas = document.createElement("canvas");
+        canvas.width = selection.width;
+        canvas.height = selection.height;
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) continue;
+
+        ctx.drawImage(
+          img,
+          selection.x,
+          selection.y,
+          selection.width,
+          selection.height,
+          0,
+          0,
+          selection.width,
+          selection.height,
+        );
+
+        const croppedDataUrl = canvas.toDataURL("image/png");
+
+        try {
+          const logProgress = (m: any) => {
+            if (m && m.status === "recognizing") {
+              try {
+                console.log(
+                  "OCR progress (region " + (i + 1) + "):",
+                  Math.round((m.progress || 0) * 100) + "%",
+                );
+              } catch (e) {
+                // ignore
+              }
+            }
+          };
+
+          const globalT =
+            typeof window !== "undefined" ? (window as any).Tesseract : undefined;
+          let ocrResult;
+
+          if (globalT && typeof globalT.recognize === "function") {
+            ocrResult = await globalT.recognize(croppedDataUrl, "eng", {
+              logger: logProgress,
+            });
+          } else {
+            try {
+              const Tesseract = await import("tesseract.js");
+              ocrResult = await Tesseract.default.recognize(
+                croppedDataUrl,
+                "eng",
+                { logger: logProgress },
+              );
+            } catch (workerErr) {
+              const { recognize } = await import("tesseract.js");
+              ocrResult = await recognize(croppedDataUrl, "eng", {
+                logger: logProgress,
+              });
+            }
+          }
+
+          const text =
+            (ocrResult?.data?.text || (ocrResult as any).text || "").trim();
+
+          if (text) {
+            extractedMaterials.push({
+              description: text,
+              quantity: 1,
+              unitCost: 0,
+            });
+
+            console.log("Region " + (i + 1) + " extracted:", text.substring(0, 100));
+          }
+        } catch (err) {
+          console.error("Failed to OCR region " + (i + 1) + ":", err);
+          alert.show(
+            "Failed to extract text from item " + (i + 1) + ". Please try again.",
+            "error",
+          );
+        }
+      }
+
+      if (extractedMaterials.length > 0) {
+        setMaterials(extractedMaterials);
+        alert.show(
+          "Extracted " + extractedMaterials.length + " item(s) successfully!",
+          "success",
+        );
+      }
+
+      setInImageSelectionMode(false);
+      setImageDataUrl("");
+      setCurrentImageFile(null);
+    } catch (err) {
+      console.error("Error processing region selections:", err);
+      alert.show("Failed to process selections. Please try again.", "error");
+    } finally {
+      setIsProcessingRegions(false);
+    }
+  };
+
   const handleBatchRepairFormChange = (
     repairId: string,
     field: string,
