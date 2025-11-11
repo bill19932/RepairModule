@@ -960,7 +960,7 @@ export const extractInvoiceData = async (
       addLog(`No repair description found`);
     }
 
-    // MATERIALS - extract from table format with multi-line description support
+    // MATERIALS - extract from table format with careful multi-line handling
     const materials: Array<{
       description: string;
       quantity: number;
@@ -969,47 +969,54 @@ export const extractInvoiceData = async (
 
     addLog(`Materials: Starting extraction from ${lines.length} lines`);
 
-    // Find all lines that contain prices - these mark the end of table rows
-    const rowEndIndices: number[] = [];
+    // Find all lines that contain prices - these mark item lines
+    const itemLineIndices: number[] = [];
     for (let idx = 0; idx < lines.length; idx++) {
       const trimmed = lines[idx].trim();
       // Look for lines with price patterns ($ followed by digits)
+      // These are typically the last line of an item entry
       if (trimmed.match(/\$[\d.]+/)) {
-        rowEndIndices.push(idx);
+        itemLineIndices.push(idx);
       }
     }
 
-    addLog(`Materials: Found ${rowEndIndices.length} lines with prices`);
+    addLog(`Materials: Found ${itemLineIndices.length} lines with prices`);
 
-    // Process each row (marked by price lines)
-    for (let rowIdx = 0; rowIdx < rowEndIndices.length; rowIdx++) {
-      const endLineIdx = rowEndIndices[rowIdx];
-      const endLine = lines[endLineIdx].trim();
+    // Process each item row
+    for (const itemLineIdx of itemLineIndices) {
+      const itemLine = lines[itemLineIdx].trim();
 
-      // Skip headers and metadata rows
+      // Skip headers and category lines
       if (
-        /^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention|Item)/i.test(
-          endLine,
+        /^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention|Item|Instrument|Recording|Private|Lessons)/i.test(
+          itemLine,
         )
       ) {
         addLog(
-          `Materials: Skipping header line ${endLineIdx}: "${endLine.substring(0, 60)}"`,
+          `Materials: Skipping header/category line ${itemLineIdx}: "${itemLine.substring(0, 60)}"`,
         );
         continue;
       }
 
-      // Extract dollar amounts from the row-end line
+      // Extract prices and numbers from this line
       const priceMatches: number[] = [];
       const dollarPattern = /\$[\d.]+/g;
       let match;
-      while ((match = dollarPattern.exec(endLine)) !== null) {
+      while ((match = dollarPattern.exec(itemLine)) !== null) {
         const value = parseFloat(match[0].substring(1));
         priceMatches.push(value);
       }
 
-      // Extract plain numbers (potential quantity)
+      if (priceMatches.length < 1) {
+        addLog(
+          `Materials: Line ${itemLineIdx} skipped - no prices found`,
+        );
+        continue;
+      }
+
+      // Extract plain numbers from this line (potential quantity)
       const plainNumberMatches: number[] = [];
-      const tokens = endLine.split(/\s+/);
+      const tokens = itemLine.split(/\s+/);
       for (const token of tokens) {
         if (token.includes("$")) continue;
         if (/^\d+$/.test(token)) {
@@ -1020,91 +1027,76 @@ export const extractInvoiceData = async (
         }
       }
 
-      addLog(
-        `Materials: Row ${rowIdx} at line ${endLineIdx}: Found ${priceMatches.length} prices, ${plainNumberMatches.length} numbers`,
-      );
+      // IMPORTANT: Look backwards to collect multi-line descriptions
+      // Only include lines that look like they're part of the same item description
+      // Stop at empty lines or lines that are clearly section headers/category names
+      const descLines: string[] = [];
 
-      // Need at least 1 price to be a valid row
-      if (priceMatches.length < 1) {
+      // Start by looking at lines BEFORE this item line
+      for (let i = itemLineIdx - 1; i >= 0; i--) {
+        const prevLine = lines[i].trim();
+
+        // Stop at empty line
+        if (!prevLine || prevLine.length < 2) break;
+
+        // Stop at section headers or category names
+        if (
+          /^(Instrument|Recording|Private|Lessons|Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address)/i.test(
+            prevLine,
+          )
+        ) {
+          addLog(
+            `Materials: Hit section header "${prevLine.substring(0, 40)}" at line ${i}, stopping description collection`,
+          );
+          break;
+        }
+
+        // Skip lines that look like they're just numbers (line artifacts)
+        if (/^\d+$/.test(prevLine)) {
+          break;
+        }
+
+        // Skip lines that only contain numbers and formatting chars
+        if (!/[a-zA-Z]/i.test(prevLine)) {
+          break;
+        }
+
+        // This line is part of the description
+        descLines.unshift(prevLine);
+      }
+
+      // Add content from the item line itself (after removing prices and quantities)
+      let itemLineContent = itemLine;
+      itemLineContent = itemLineContent.replace(/\$[\d.]+/g, "").trim();
+
+      // Remove leading numbers (quantity indicator)
+      itemLineContent = itemLineContent.replace(/^\d+\s+/, "").trim();
+
+      // Only add if it has letters (actual content)
+      if (itemLineContent && /[a-zA-Z]/i.test(itemLineContent)) {
+        descLines.push(itemLineContent);
+      }
+
+      // Join all description lines
+      let fullDesc = descLines.join(" ").trim();
+
+      if (!fullDesc || fullDesc.length < 3) {
         addLog(
-          `Materials: Row ${rowIdx} skipped - no prices found`,
+          `Materials: Line ${itemLineIdx} skipped - no valid description content`,
         );
         continue;
       }
 
-      // Determine the start of this row's description
-      // Look backwards from the price line to find all consecutive non-empty lines
-      let descStartIdx = endLineIdx;
-      for (let i = endLineIdx - 1; i >= 0; i--) {
-        const prevLine = lines[i].trim();
-
-        // Stop if we hit an empty line
-        if (!prevLine || prevLine.length < 2) break;
-
-        // Stop if we hit a line that looks like it belongs to a previous row
-        // (has prices or looks like a header)
-        if (/^\s*\$[\d.]+|^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax)/i.test(prevLine)) {
-          break;
-        }
-
-        descStartIdx = i;
-      }
-
-      // Collect all description lines from start to end
-      const descLines: string[] = [];
-      for (let i = descStartIdx; i < endLineIdx; i++) {
-        const line = lines[i].trim();
-        if (line && line.length > 0) {
-          descLines.push(line);
-        }
-      }
-
-      // Get the price line content for description cleanup
-      let descFromEndLine = endLine;
-      descFromEndLine = descFromEndLine.replace(/\$[\d.]+/g, "").trim();
-
-      // Only add the price line content if it has meaningful text (not just numbers)
-      if (descFromEndLine && descFromEndLine.match(/[a-zA-Z]/i)) {
-        // Remove leading plain numbers (quantity)
-        descFromEndLine = descFromEndLine.replace(/^\d+\s+/, "").trim();
-        if (descFromEndLine) {
-          descLines.push(descFromEndLine);
-        }
-      }
-
-      // Join all description lines with space
-      let fullDesc = descLines.join(" ").trim();
-
       // Normalize whitespace
       fullDesc = fullDesc.replace(/\s+/g, " ").trim();
 
-      // Clean up punctuation artifacts
+      // Clean up OCR artifacts and punctuation
       fullDesc = fullDesc.replace(/^\s*[\-:|;/]+\s*/, "").trim();
       fullDesc = fullDesc.replace(/\s*[\-:|;/]+\s*$/, "").trim();
 
-      // Remove common service category prefixes
-      const serviceCategories = [
-        "private lessons",
-        "instrument repairs",
-        "recording services",
-        "lessons",
-      ];
-      for (const category of serviceCategories) {
-        const categoryRegex = new RegExp(`^${category}\\s+`, "i");
-        if (categoryRegex.test(fullDesc)) {
-          fullDesc = fullDesc.replace(categoryRegex, "").trim();
-          break;
-        }
-      }
-
-      // Determine quantity and unit price
+      // Determine quantity and price
       let qty = 1;
       let price = 0;
-
-      const isLaborOrService =
-        /Labor|Service|Setup|Repair|Work|Tuning|Cleaning|Inspection|Adjusted|Changed|Cleaned|Hydrated|Polished|Resized|Fixed|Replaced/i.test(
-          fullDesc,
-        );
 
       if (plainNumberMatches.length > 0) {
         const candidateQty = plainNumberMatches[0];
@@ -1118,7 +1110,7 @@ export const extractInvoiceData = async (
           qty = candidateQty;
           price = unitPrice;
         } else {
-          qty = Math.max(1, Math.round(totalPrice / unitPrice));
+          qty = Math.max(1, calcQty);
           price = unitPrice;
         }
       } else {
@@ -1134,23 +1126,21 @@ export const extractInvoiceData = async (
       }
 
       addLog(
-        `Materials: Row ${rowIdx} - qty=${qty}, price=$${price.toFixed(2)}, desc='${fullDesc.substring(0, 80)}'`,
+        `Materials: Parsed line ${itemLineIdx} - qty=${qty}, price=$${price.toFixed(2)}, desc='${fullDesc.substring(0, 70)}'`,
       );
 
-      // Validate and add
-      if (price > 0 && fullDesc && fullDesc.length > 2) {
-        const finalQty = qty > 0 ? qty : 1;
+      if (price > 0) {
         materials.push({
           description: fullDesc,
-          quantity: finalQty,
+          quantity: qty > 0 ? qty : 1,
           unitCost: price,
         });
         addLog(
-          `✅ Materials: ADDED - ${fullDesc.substring(0, 60)}... × ${finalQty} @ $${price.toFixed(2)}`,
+          `✅ Materials: ADDED - ${fullDesc.substring(0, 70)}... × ${qty} @ $${price.toFixed(2)}`,
         );
       } else {
         addLog(
-          `❌ Materials: SKIPPED Row ${rowIdx} - qty=${qty}, price=${price.toFixed(2)}, desc='${fullDesc.substring(0, 60)}' (len=${fullDesc.length})`,
+          `❌ Materials: SKIPPED - Invalid price $${price.toFixed(2)}`,
         );
       }
     }
