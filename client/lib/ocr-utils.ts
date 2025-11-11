@@ -960,7 +960,7 @@ export const extractInvoiceData = async (
       addLog(`No repair description found`);
     }
 
-    // MATERIALS - extract from table format
+    // MATERIALS - extract from table format with multi-line description support
     const materials: Array<{
       description: string;
       quantity: number;
@@ -969,51 +969,49 @@ export const extractInvoiceData = async (
 
     addLog(`Materials: Starting extraction from ${lines.length} lines`);
 
+    // Find all lines that contain prices - these mark the end of table rows
+    const rowEndIndices: number[] = [];
     for (let idx = 0; idx < lines.length; idx++) {
-      const line = lines[idx];
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.length < 3) {
-        continue;
+      const trimmed = lines[idx].trim();
+      // Look for lines with price patterns ($ followed by digits)
+      if (trimmed.match(/\$[\d.]+/)) {
+        rowEndIndices.push(idx);
       }
+    }
+
+    addLog(`Materials: Found ${rowEndIndices.length} lines with prices`);
+
+    // Process each row (marked by price lines)
+    for (let rowIdx = 0; rowIdx < rowEndIndices.length; rowIdx++) {
+      const endLineIdx = rowEndIndices[rowIdx];
+      const endLine = lines[endLineIdx].trim();
 
       // Skip headers and metadata rows
       if (
-        /^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention|Subtotal|Item)/i.test(
-          trimmed,
+        /^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax|Invoice|Date|Service|Address|Number|Attention|Item)/i.test(
+          endLine,
         )
       ) {
-        addLog(`Materials: Skipping header line ${idx}: "${trimmed}"`);
+        addLog(
+          `Materials: Skipping header line ${endLineIdx}: "${endLine.substring(0, 60)}"`,
+        );
         continue;
       }
 
-      // Must contain at least one price pattern ($X.XX)
-      if (!trimmed.match(/\$[\d.]+/)) {
-        if (idx < 50) {
-          // Only log first 50 lines without prices to avoid spam
-          addLog(`Materials: Line ${idx} has no price, skipping: "${trimmed}"`);
-        }
-        continue;
-      }
-
-      addLog(`Materials: Processing line ${idx}: "${trimmed}"`);
-
-      // Extract dollar amounts (prices) - look for $X.XX patterns
+      // Extract dollar amounts from the row-end line
       const priceMatches: number[] = [];
       const dollarPattern = /\$[\d.]+/g;
       let match;
-      while ((match = dollarPattern.exec(trimmed)) !== null) {
+      while ((match = dollarPattern.exec(endLine)) !== null) {
         const value = parseFloat(match[0].substring(1));
         priceMatches.push(value);
       }
 
-      // Also extract plain whole numbers between 1-999 (potential quantity)
+      // Extract plain numbers (potential quantity)
       const plainNumberMatches: number[] = [];
-      // Split line and check each token
-      const tokens = trimmed.split(/\s+/);
+      const tokens = endLine.split(/\s+/);
       for (const token of tokens) {
-        // Skip tokens with $ signs
         if (token.includes("$")) continue;
-        // Look for plain integer numbers
         if (/^\d+$/.test(token)) {
           const num = parseInt(token, 10);
           if (num > 0 && num < 1000) {
@@ -1023,35 +1021,93 @@ export const extractInvoiceData = async (
       }
 
       addLog(
-        `Materials: Found ${priceMatches.length} prices and ${plainNumberMatches.length} plain numbers`,
+        `Materials: Row ${rowIdx} at line ${endLineIdx}: Found ${priceMatches.length} prices, ${plainNumberMatches.length} numbers`,
       );
 
-      // Check if this is a labor/service item (single price is OK for these)
-      const isLaborOrService =
-        /Labor|Service|Setup|Repair|Work|Tuning|Cleaning|Inspection/i.test(
-          trimmed,
-        );
-
-      // Need at least 2 prices normally, but allow 1 price for labor/service items
-      if (
-        priceMatches.length < 1 ||
-        (priceMatches.length < 2 && !isLaborOrService)
-      ) {
+      // Need at least 1 price to be a valid row
+      if (priceMatches.length < 1) {
         addLog(
-          `Materials: Skipped - only ${priceMatches.length} price(s) found${isLaborOrService ? " (but is labor/service)" : ""}`,
+          `Materials: Row ${rowIdx} skipped - no prices found`,
         );
         continue;
+      }
+
+      // Determine the start of this row's description
+      // Look backwards from the price line to find all consecutive non-empty lines
+      let descStartIdx = endLineIdx;
+      for (let i = endLineIdx - 1; i >= 0; i--) {
+        const prevLine = lines[i].trim();
+
+        // Stop if we hit an empty line
+        if (!prevLine || prevLine.length < 2) break;
+
+        // Stop if we hit a line that looks like it belongs to a previous row
+        // (has prices or looks like a header)
+        if (/^\s*\$[\d.]+|^(Description|Quantity|Unit|Price|Cost|Total|Subtotal|Tax)/i.test(prevLine)) {
+          break;
+        }
+
+        descStartIdx = i;
+      }
+
+      // Collect all description lines from start to end
+      const descLines: string[] = [];
+      for (let i = descStartIdx; i < endLineIdx; i++) {
+        const line = lines[i].trim();
+        if (line && line.length > 0) {
+          descLines.push(line);
+        }
+      }
+
+      // Get the price line content for description cleanup
+      let descFromEndLine = endLine;
+      descFromEndLine = descFromEndLine.replace(/\$[\d.]+/g, "").trim();
+
+      // Only add the price line content if it has meaningful text (not just numbers)
+      if (descFromEndLine && descFromEndLine.match(/[a-zA-Z]/i)) {
+        // Remove leading plain numbers (quantity)
+        descFromEndLine = descFromEndLine.replace(/^\d+\s+/, "").trim();
+        if (descFromEndLine) {
+          descLines.push(descFromEndLine);
+        }
+      }
+
+      // Join all description lines with space
+      let fullDesc = descLines.join(" ").trim();
+
+      // Normalize whitespace
+      fullDesc = fullDesc.replace(/\s+/g, " ").trim();
+
+      // Clean up punctuation artifacts
+      fullDesc = fullDesc.replace(/^\s*[\-:|;/]+\s*/, "").trim();
+      fullDesc = fullDesc.replace(/\s*[\-:|;/]+\s*$/, "").trim();
+
+      // Remove common service category prefixes
+      const serviceCategories = [
+        "private lessons",
+        "instrument repairs",
+        "recording services",
+        "lessons",
+      ];
+      for (const category of serviceCategories) {
+        const categoryRegex = new RegExp(`^${category}\\s+`, "i");
+        if (categoryRegex.test(fullDesc)) {
+          fullDesc = fullDesc.replace(categoryRegex, "").trim();
+          break;
+        }
       }
 
       // Determine quantity and unit price
       let qty = 1;
       let price = 0;
 
+      const isLaborOrService =
+        /Labor|Service|Setup|Repair|Work|Tuning|Cleaning|Inspection|Adjusted|Changed|Cleaned|Hydrated|Polished|Resized|Fixed|Replaced/i.test(
+          fullDesc,
+        );
+
       if (plainNumberMatches.length > 0) {
-        // If we have a plain number between 1-999, likely the quantity
         const candidateQty = plainNumberMatches[0];
-        // Verify it makes sense: total should equal qty * unitPrice
-        // Try each price as unit price
         const unitPrice =
           priceMatches[priceMatches.length - 2] || priceMatches[0];
         const totalPrice =
@@ -1062,82 +1118,39 @@ export const extractInvoiceData = async (
           qty = candidateQty;
           price = unitPrice;
         } else {
-          // Candidate qty doesn't match, might be part of description
-          // Default to qty=1 and use the calculated quantity instead
           qty = Math.max(1, Math.round(totalPrice / unitPrice));
           price = unitPrice;
         }
       } else {
-        // No explicit plain number
-        // If we have 2+ prices, calculate qty from them
         if (priceMatches.length >= 2) {
           const unitPrice = priceMatches[priceMatches.length - 2];
           const totalPrice = priceMatches[priceMatches.length - 1];
           qty = Math.max(1, Math.round(totalPrice / unitPrice));
           price = unitPrice;
         } else if (priceMatches.length === 1) {
-          // Only 1 price - for labor/service items, qty=1 and price is the total
           qty = 1;
           price = priceMatches[0];
         }
       }
 
-      // Extract description: remove only prices and quantity from the line
-      let desc = trimmed;
-
-      // Remove all dollar amounts first
-      desc = desc.replace(/\$[\d.]+/g, "").trim();
-
-      // For labor/service items, remove leading quantity numbers (e.g., "10 Tech Labor" -> "Tech Labor")
-      if (isLaborOrService) {
-        desc = desc.replace(/^\d+\s+/, "").trim();
-      }
-
-      // Remove quantity and other numbers from the end of the line (right side)
-      desc = desc.replace(/\s+\d+\s*$/, "").trim();
-      desc = desc.replace(/\s+$/, "").trim();
-
-      // Remove common service category prefixes that shouldn't be in the description
-      const serviceCategories = [
-        "private lessons",
-        "instrument repairs",
-        "recording services",
-        "lessons",
-      ];
-      for (const category of serviceCategories) {
-        const categoryRegex = new RegExp(`^${category}\\s+`, "i");
-        if (categoryRegex.test(desc)) {
-          desc = desc.replace(categoryRegex, "").trim();
-          break;
-        }
-      }
-
-      // Clean up punctuation at boundaries
-      desc = desc.replace(/^\s*[\-:|;/]+\s*/, "").trim();
-      desc = desc.replace(/\s*[\-:|;/]+\s*$/, "").trim();
-
-      // Normalize whitespace
-      desc = desc.replace(/\s+/g, " ").trim();
-
       addLog(
-        `Materials: Parsed - qty=${qty}, price=$${price.toFixed(2)}, desc='${desc}'`,
+        `Materials: Row ${rowIdx} - qty=${qty}, price=$${price.toFixed(2)}, desc='${fullDesc.substring(0, 80)}'`,
       );
 
       // Validate and add
-      if (price > 0 && desc && desc.length > 2) {
-        // For labor items, qty might be 0 if not explicitly in the line - default to 1
+      if (price > 0 && fullDesc && fullDesc.length > 2) {
         const finalQty = qty > 0 ? qty : 1;
         materials.push({
-          description: desc,
+          description: fullDesc,
           quantity: finalQty,
           unitCost: price,
         });
         addLog(
-          `✅ Materials: ADDED - ${desc} × ${finalQty} @ $${price.toFixed(2)}`,
+          `✅ Materials: ADDED - ${fullDesc.substring(0, 60)}... × ${finalQty} @ $${price.toFixed(2)}`,
         );
       } else {
         addLog(
-          `❌ Materials: SKIPPED - qty=${qty}, price=${price.toFixed(2)}, desc='${desc}' (len=${desc.length}), isLabor=${isLaborOrService}`,
+          `❌ Materials: SKIPPED Row ${rowIdx} - qty=${qty}, price=${price.toFixed(2)}, desc='${fullDesc.substring(0, 60)}' (len=${fullDesc.length})`,
         );
       }
     }
