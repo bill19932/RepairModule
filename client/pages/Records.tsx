@@ -51,7 +51,7 @@ export default function Records() {
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
 
-    return invoices.filter((inv) => {
+    let results = invoices.filter((inv) => {
       if (ownerFilter === "dmc" && inv.isGeorgesMusic) return false;
       if (ownerFilter === "georges" && !inv.isGeorgesMusic) return false;
 
@@ -87,7 +87,52 @@ export default function Records() {
       // match all terms typed (split by whitespace)
       return q.split(/\s+/).every((term) => hay.includes(term));
     });
-  }, [invoices, searchQuery, dateFrom, dateTo, ownerFilter]);
+
+    // Apply sorting
+    if (sortKey) {
+      results.sort((a, b) => {
+        let aVal: any;
+        let bVal: any;
+
+        if (sortKey === "invoice") {
+          aVal = a.invoiceNumber;
+          bVal = b.invoiceNumber;
+        } else if (sortKey === "dateReceived") {
+          aVal = new Date(a.dateReceived);
+          bVal = new Date(b.dateReceived);
+        } else if (sortKey === "customer") {
+          aVal = a.customerName;
+          bVal = b.customerName;
+        } else if (sortKey === "total") {
+          const aServicesTotal = a.materials.reduce(
+            (sum, mat) => sum + mat.quantity * mat.unitCost,
+            0,
+          );
+          const bServicesTotal = b.materials.reduce(
+            (sum, mat) => sum + mat.quantity * mat.unitCost,
+            0,
+          );
+          aVal = a.isGeorgesMusic ? aServicesTotal * 1.54 * 1.06 : aServicesTotal * 1.06;
+          bVal = b.isGeorgesMusic ? bServicesTotal * 1.54 * 1.06 : bServicesTotal * 1.06;
+        } else if (sortKey === "amountReceived") {
+          aVal = a.amountReceived !== undefined ? a.amountReceived : -1;
+          bVal = b.amountReceived !== undefined ? b.amountReceived : -1;
+        }
+
+        if (typeof aVal === "string") {
+          aVal = aVal.toLowerCase();
+          bVal = bVal.toLowerCase();
+          return sortDirection === "asc"
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        } else {
+          return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+        }
+      });
+    }
+
+    return results;
+  }, [invoices, searchQuery, dateFrom, dateTo, ownerFilter, sortKey, sortDirection]);
 
   const toggleSelect = (invoiceNumber: string) => {
     setSelected((prev) =>
