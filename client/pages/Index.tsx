@@ -303,6 +303,160 @@ export default function Index() {
     }
   };
 
+  const extractMaterialsFromRegions = async (
+    imageFile: File,
+    selections: Array<{ x: number; y: number; width: number; height: number }>,
+  ): Promise<RepairMaterial[]> => {
+    if (!imageFile || selections.length === 0) return [];
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    const imageUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(imageFile);
+    });
+
+    img.src = imageUrl;
+
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+    });
+
+    const extractedMaterials: RepairMaterial[] = [];
+
+    for (let i = 0; i < selections.length; i++) {
+      const selection = selections[i];
+
+      const canvas = document.createElement("canvas");
+      canvas.width = selection.width;
+      canvas.height = selection.height;
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) continue;
+
+      ctx.drawImage(
+        img,
+        selection.x,
+        selection.y,
+        selection.width,
+        selection.height,
+        0,
+        0,
+        selection.width,
+        selection.height,
+      );
+
+      const croppedDataUrl = canvas.toDataURL("image/png");
+
+      try {
+        const logProgress = (m: any) => {
+          if (m && m.status === "recognizing") {
+            try {
+              console.log(
+                "OCR progress (region " + (i + 1) + "):",
+                Math.round((m.progress || 0) * 100) + "%",
+              );
+            } catch (e) {
+              // ignore
+            }
+          }
+        };
+
+        const globalT =
+          typeof window !== "undefined" ? (window as any).Tesseract : undefined;
+        let ocrResult;
+
+        if (globalT && typeof globalT.recognize === "function") {
+          ocrResult = await globalT.recognize(croppedDataUrl, "eng", {
+            logger: logProgress,
+          });
+        } else {
+          try {
+            const Tesseract = await import("tesseract.js");
+            ocrResult = await Tesseract.default.recognize(
+              croppedDataUrl,
+              "eng",
+              { logger: logProgress },
+            );
+          } catch (workerErr) {
+            const { recognize } = await import("tesseract.js");
+            ocrResult = await recognize(croppedDataUrl, "eng", {
+              logger: logProgress,
+            });
+          }
+        }
+
+        const text =
+          (ocrResult?.data?.text || (ocrResult as any).text || "").trim();
+
+        if (text) {
+          let quantity = 1;
+          let unitCost = 0;
+          let description = text;
+
+          const priceMatch = text.match(/\$[\d.]+/g);
+          if (priceMatch && priceMatch.length > 0) {
+            unitCost = parseFloat(priceMatch[priceMatch.length - 1].substring(1));
+            description = description.replace(/\$[\d.]+/g, "").trim();
+          }
+
+          const qtyMatch = description.match(/^\s*(\d+)\s+/);
+          if (qtyMatch) {
+            quantity = parseInt(qtyMatch[1], 10);
+            description = description.replace(/^\s*\d+\s+/, "").trim();
+          }
+
+          const allNumbers = description.match(/\s(\d+)\s*$/);
+          if (allNumbers && !qtyMatch) {
+            const num = parseInt(allNumbers[1], 10);
+            if (num > 0 && num < 1000) {
+              quantity = num;
+              description = description.replace(/\s\d+\s*$/, "").trim();
+            }
+          }
+
+          description = description
+            .replace(/^\s*[\-:|;/]+\s*/, "")
+            .replace(/\s*[\-:|;/]+\s*$/, "")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          if (description) {
+            extractedMaterials.push({
+              description,
+              quantity: quantity > 0 ? quantity : 1,
+              unitCost,
+            });
+
+            console.log(
+              "Region " +
+                (i + 1) +
+                " extracted: qty=" +
+                quantity +
+                ", price=$" +
+                unitCost.toFixed(2) +
+                ", desc=" +
+                description.substring(0, 80),
+            );
+          }
+        }
+      } catch (err) {
+        console.error("Failed to OCR region " + (i + 1) + ":", err);
+        alert.show(
+          "Failed to extract text from item " + (i + 1) + ". Please try again.",
+          "error",
+        );
+      }
+    }
+
+    return extractedMaterials;
+  };
+
   const processRegionSelections = async (
     selections: Array<{ x: number; y: number; width: number; height: number }>,
   ) => {
@@ -311,159 +465,10 @@ export default function Index() {
     setIsProcessingRegions(true);
 
     try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-
-      const imageUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          resolve(dataUrl);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(currentImageFile);
-      });
-
-      img.src = imageUrl;
-
-      await new Promise<void>((resolve) => {
-        img.onload = () => resolve();
-      });
-
-      const extractedMaterials: RepairMaterial[] = [];
-
-      for (let i = 0; i < selections.length; i++) {
-        const selection = selections[i];
-
-        const canvas = document.createElement("canvas");
-        canvas.width = selection.width;
-        canvas.height = selection.height;
-        const ctx = canvas.getContext("2d");
-
-        if (!ctx) continue;
-
-        ctx.drawImage(
-          img,
-          selection.x,
-          selection.y,
-          selection.width,
-          selection.height,
-          0,
-          0,
-          selection.width,
-          selection.height,
-        );
-
-        const croppedDataUrl = canvas.toDataURL("image/png");
-
-        try {
-          const logProgress = (m: any) => {
-            if (m && m.status === "recognizing") {
-              try {
-                console.log(
-                  "OCR progress (region " + (i + 1) + "):",
-                  Math.round((m.progress || 0) * 100) + "%",
-                );
-              } catch (e) {
-                // ignore
-              }
-            }
-          };
-
-          const globalT =
-            typeof window !== "undefined" ? (window as any).Tesseract : undefined;
-          let ocrResult;
-
-          if (globalT && typeof globalT.recognize === "function") {
-            ocrResult = await globalT.recognize(croppedDataUrl, "eng", {
-              logger: logProgress,
-            });
-          } else {
-            try {
-              const Tesseract = await import("tesseract.js");
-              ocrResult = await Tesseract.default.recognize(
-                croppedDataUrl,
-                "eng",
-                { logger: logProgress },
-              );
-            } catch (workerErr) {
-              const { recognize } = await import("tesseract.js");
-              ocrResult = await recognize(croppedDataUrl, "eng", {
-                logger: logProgress,
-              });
-            }
-          }
-
-          const text =
-            (ocrResult?.data?.text || (ocrResult as any).text || "").trim();
-
-          if (text) {
-            // Parse quantity and price from the text
-            let quantity = 1;
-            let unitCost = 0;
-            let description = text;
-
-            // Look for price pattern: $XX.XX or $X.XX
-            const priceMatch = text.match(/\$[\d.]+/g);
-            if (priceMatch && priceMatch.length > 0) {
-              // Use the last price found (usually the unit cost)
-              unitCost = parseFloat(priceMatch[priceMatch.length - 1].substring(1));
-              // Remove prices from description
-              description = description.replace(/\$[\d.]+/g, "").trim();
-            }
-
-            // Look for quantity: a number at the start or before the price
-            // Common patterns: "1 $80.00", "Qty: 1", "1", etc.
-            const qtyMatch = description.match(/^\s*(\d+)\s+/);
-            if (qtyMatch) {
-              quantity = parseInt(qtyMatch[1], 10);
-              description = description.replace(/^\s*\d+\s+/, "").trim();
-            }
-
-            // Also check for plain numbers that might be quantity
-            const allNumbers = description.match(/\s(\d+)\s*$/);
-            if (allNumbers && !qtyMatch) {
-              const num = parseInt(allNumbers[1], 10);
-              if (num > 0 && num < 1000) {
-                quantity = num;
-                description = description.replace(/\s\d+\s*$/, "").trim();
-              }
-            }
-
-            // Clean up description
-            description = description
-              .replace(/^\s*[\-:|;/]+\s*/, "")
-              .replace(/\s*[\-:|;/]+\s*$/, "")
-              .replace(/\s+/g, " ")
-              .trim();
-
-            if (description) {
-              extractedMaterials.push({
-                description,
-                quantity: quantity > 0 ? quantity : 1,
-                unitCost,
-              });
-
-              console.log(
-                "Region " +
-                  (i + 1) +
-                  " extracted: qty=" +
-                  quantity +
-                  ", price=$" +
-                  unitCost.toFixed(2) +
-                  ", desc=" +
-                  description.substring(0, 80),
-              );
-            }
-          }
-        } catch (err) {
-          console.error("Failed to OCR region " + (i + 1) + ":", err);
-          alert.show(
-            "Failed to extract text from item " + (i + 1) + ". Please try again.",
-            "error",
-          );
-        }
-      }
+      const extractedMaterials = await extractMaterialsFromRegions(
+        currentImageFile,
+        selections,
+      );
 
       if (extractedMaterials.length > 0) {
         setMaterials(extractedMaterials);
@@ -478,6 +483,42 @@ export default function Index() {
       setCurrentImageFile(null);
     } catch (err) {
       console.error("Error processing region selections:", err);
+      alert.show("Failed to process selections. Please try again.", "error");
+    } finally {
+      setIsProcessingRegions(false);
+    }
+  };
+
+  const processBatchRegionSelections = async (
+    repairId: string,
+    selections: Array<{ x: number; y: number; width: number; height: number }>,
+  ) => {
+    const repair = batchRepairs.find((r) => r.id === repairId);
+    if (!repair) return;
+
+    setIsProcessingRegions(true);
+
+    try {
+      const extractedMaterials = await extractMaterialsFromRegions(
+        repair.imageFile,
+        selections,
+      );
+
+      if (extractedMaterials.length > 0) {
+        setBatchRepairs((prev) =>
+          prev.map((r) =>
+            r.id === repairId ? { ...r, materials: extractedMaterials } : r,
+          ),
+        );
+        alert.show(
+          "Extracted " + extractedMaterials.length + " item(s) successfully!",
+          "success",
+        );
+      }
+
+      setBatchImageSelectionMode(null);
+    } catch (err) {
+      console.error("Error processing batch region selections:", err);
       alert.show("Failed to process selections. Please try again.", "error");
     } finally {
       setIsProcessingRegions(false);
