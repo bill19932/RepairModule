@@ -150,6 +150,24 @@ export default function Records() {
     }
   };
 
+  const handleHeaderClick = (
+    key: "invoice" | "dateReceived" | "customer" | "total" | "amountReceived",
+  ) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const renderSortArrow = (
+    key: "invoice" | "dateReceived" | "customer" | "total" | "amountReceived",
+  ) => {
+    if (sortKey !== key) return " ↕";
+    return sortDirection === "asc" ? " ↑" : " ↓";
+  };
+
   const handleDelete = (invoiceNumber: string) => {
     const updated = getAllInvoicesFromLocalStorage().filter(
       (inv) => inv.invoiceNumber !== invoiceNumber,
