@@ -1217,30 +1217,45 @@ export default function Index() {
 
                   {inImageSelectionMode && imageDataUrl && (
                     <div className="bg-green-50 border-2 border-green-500 p-6 rounded space-y-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-green-900 mb-2">
-                          📍 Select Service/Material Items
-                        </h3>
-                        <p className="text-sm text-green-800 mb-4">
-                          Draw boxes around each service or material item on the invoice.
-                        </p>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-bold text-green-900 mb-2">
+                            📍 Select Service/Material Items
+                          </h3>
+                          <p className="text-sm text-green-800 mb-4">
+                            Draw boxes around each service or material item on the invoice.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setImageSelectorCollapsed((s) => !s)}
+                            className="text-sm text-green-600 hover:text-green-800 font-semibold"
+                          >
+                            {imageSelectorCollapsed ? '▸ Expand' : '▾ Collapse'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInImageSelectionMode(false);
+                              setImageDataUrl("");
+                              setCurrentImageFile(null);
+                            }}
+                            className="text-sm text-green-600 hover:text-green-800 font-semibold"
+                          >
+                            ✕ Close
+                          </button>
+                        </div>
                       </div>
-                      <ImageSelector
-                        imageUrl={imageDataUrl}
-                        onSelectionsComplete={processRegionSelections}
-                        isProcessing={isProcessingRegions}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInImageSelectionMode(false);
-                          setImageDataUrl("");
-                          setCurrentImageFile(null);
-                        }}
-                        className="text-sm text-green-600 hover:text-green-800 font-semibold"
-                      >
-                        ✕ Cancel Selection
-                      </button>
+
+                      {!imageSelectorCollapsed && (
+                        <ImageSelector
+                          imageUrl={imageDataUrl}
+                          onSelectionsComplete={processRegionSelections}
+                          isProcessing={isProcessingRegions}
+                        />
+                      )}
+
                     </div>
                   )}
 
