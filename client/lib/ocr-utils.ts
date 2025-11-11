@@ -769,8 +769,8 @@ export const extractInvoiceData = async (
     // ADDRESS - extract from "Address:" label and ensure it has PA suffix
     let address = undefined;
 
-    // Pattern 1: "Address: ..." format (primary method for old repair forms)
-    const addressLabelMatch = text.match(/Address\s*:\s*([^\n$£#]+)/i);
+    // Pattern 1: "Address: ..." format (primary method for DMC invoice forms)
+    const addressLabelMatch = text.match(/Address\s*:\s*(.+?)(?:\n|$)/i);
     if (addressLabelMatch) {
       address = addressLabelMatch[1]
         .trim()
@@ -779,13 +779,9 @@ export const extractInvoiceData = async (
         .replace(/Total.*/, "") // Remove "Total" lines
         .trim();
 
-      // Reject if it looks like a summary line (contains numbers and $, or looks like table data)
-      if (address && /\$|[\[\]]|\d{2,}.*\$/.test(address)) {
-        address = undefined;
-      }
-
-      // Clean OCR artifacts from address (e.g., "oR a." from "Wallingford")
-      if (address) {
+      // Only reject if address is empty after cleaning
+      if (address && address.length > 0) {
+        // Clean OCR artifacts from address (e.g., "oR a." from "Wallingford")
         address = address
           .replace(/\boR\s+a\b\.?/gi, "Wallingford") // Common OCR error for Wallingford
           .replace(/\bbrrokhaven\b/gi, "Brookhaven") // Fix double-r OCR error
@@ -800,11 +796,13 @@ export const extractInvoiceData = async (
           /\b(RD|AVE|ST|DR|LN|CT|PL|BLVD|HWY|PKY|PKWY|TERR|TERRACE|BLK|BLOCK)\b/gi,
           (m) => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase(),
         );
-      }
 
-      // If address doesn't already contain PA/Pennsylvania, add it
-      if (address && !/(PA|Pennsylvania|\b19[0-9]{3}\b)/.test(address)) {
-        address = address + ", PA";
+        // If address doesn't already contain PA/Pennsylvania, add it
+        if (address && !/(PA|Pennsylvania|\b19[0-9]{3}\b)/.test(address)) {
+          address = address + ", PA";
+        }
+      } else {
+        address = undefined;
       }
     }
 
