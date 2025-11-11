@@ -93,8 +93,6 @@ export default function Index() {
 
   const alert = useAlert();
 
-  const alert = useAlert();
-
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
