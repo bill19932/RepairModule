@@ -719,28 +719,25 @@ export default function Index() {
         setInstruments(extracted.instruments);
       }
 
-      if (extracted.materials && extracted.materials.length > 0) {
-        console.log("[OCR HANDLER] Setting materials:", extracted.materials);
-        setMaterials(extracted.materials);
-      } else {
-        console.log(
-          "[OCR HANDLER] No materials extracted:",
-          extracted.materials,
-        );
-      }
-
       if (extracted.customerAddress) {
         await calculateDeliveryFee(extracted.customerAddress);
       }
 
-      setOcrProgress(100);
-      setTimeout(() => {
+      // Convert file to data URL for image selector
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setImageDataUrl(dataUrl);
+        setCurrentImageFile(file);
+        setInImageSelectionMode(true);
+        setOcrProgress(100);
         alert.show(
-          "Invoice data extracted successfully! Please review and adjust as needed.",
+          "Basic info extracted! Now draw boxes around each service/material item to extract their text.",
           "success",
         );
         setOcrProgress(0);
-      }, 500);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
       console.error("OCR Error:", errorMsg);
