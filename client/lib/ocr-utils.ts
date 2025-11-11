@@ -420,10 +420,11 @@ export const extractInvoiceData = async (
     const isOldFormat = isOldRepairFormat(text);
     extracted.isOldRepairFormat = isOldFormat;
 
-    // Detect if this is a George's Music form by presence of header or known address
+    // Detect if this is a George's Music form by presence of header, "George's Total", or known address
     const isGeorges =
       /George'?s\s+Music/i.test(text) ||
       /Georges\s+Music/i.test(text) ||
+      /George'?s\s+Total/i.test(text) ||
       (/Springfield\s*,?\s*PA/i.test(text) && /Georges?\s*Music/i.test(text));
     if (isGeorges) {
       extracted.isGeorgesMusic = true;
