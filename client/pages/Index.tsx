@@ -19,6 +19,7 @@ import {
   Search,
 } from "lucide-react";
 import { AlertDialog, useAlert } from "@/components/AlertDialog";
+import { ImageSelector } from "@/components/ImageSelector";
 import { useEffect, useState } from "react";
 
 const BILL_PHONE_NUMBERS = [
