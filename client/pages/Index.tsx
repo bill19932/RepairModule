@@ -145,7 +145,7 @@ export default function Index() {
           fileName: file.name,
           extracted,
           formData: newFormData,
-          materials: extracted.materials || [],
+          materials: [],
           instruments: extracted.instruments || [{ type: "", description: "" }],
           deliveryMiles: null,
           deliveryFee: 0,
