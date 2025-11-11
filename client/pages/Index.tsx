@@ -89,7 +89,8 @@ export default function Index() {
   const [batchImageSelectionMode, setBatchImageSelectionMode] = useState<
     string | null
   >(null);
-  const [batchImageSelectorCollapsed, setBatchImageSelectorCollapsed] = useState<Record<string, boolean>>({});
+  const [batchImageSelectorCollapsed, setBatchImageSelectorCollapsed] =
+    useState<Record<string, boolean>>({});
 
   const alert = useAlert();
 
@@ -393,8 +394,11 @@ export default function Index() {
           }
         }
 
-        const text =
-          (ocrResult?.data?.text || (ocrResult as any).text || "").trim();
+        const text = (
+          ocrResult?.data?.text ||
+          (ocrResult as any).text ||
+          ""
+        ).trim();
 
         if (text) {
           let quantity = 1;
@@ -403,7 +407,9 @@ export default function Index() {
 
           const priceMatch = text.match(/\$[\d.]+/g);
           if (priceMatch && priceMatch.length > 0) {
-            unitCost = parseFloat(priceMatch[priceMatch.length - 1].substring(1));
+            unitCost = parseFloat(
+              priceMatch[priceMatch.length - 1].substring(1),
+            );
             description = description.replace(/\$[\d.]+/g, "").trim();
           }
 
@@ -773,7 +779,6 @@ export default function Index() {
     try {
       const extracted = await extractInvoiceData(file);
       setOcrProgress(80);
-
 
       let phone = extracted.customerPhone || "";
       let email = (extracted.customerEmail || "").toString().trim();
@@ -1212,7 +1217,6 @@ export default function Index() {
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-
                   {inImageSelectionMode && imageDataUrl && (
                     <div className="bg-green-50 border-2 border-green-500 p-6 rounded space-y-4">
                       <div className="flex items-start justify-between">
@@ -1221,7 +1225,8 @@ export default function Index() {
                             📍 Select Service/Material Items
                           </h3>
                           <p className="text-sm text-green-800 mb-4">
-                            Draw boxes around each service or material item on the invoice.
+                            Draw boxes around each service or material item on
+                            the invoice.
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -1230,7 +1235,7 @@ export default function Index() {
                             onClick={() => setImageSelectorCollapsed((s) => !s)}
                             className="text-sm text-green-600 hover:text-green-800 font-semibold"
                           >
-                            {imageSelectorCollapsed ? '▸ Expand' : '▾ Collapse'}
+                            {imageSelectorCollapsed ? "▸ Expand" : "▾ Collapse"}
                           </button>
                           <button
                             type="button"
@@ -1253,7 +1258,6 @@ export default function Index() {
                           isProcessing={isProcessingRegions}
                         />
                       )}
-
                     </div>
                   )}
 
@@ -1336,23 +1340,28 @@ export default function Index() {
                                           📍 Select Service/Material Items
                                         </h3>
                                         <p className="text-sm text-green-800 mb-4">
-                                          Draw boxes around each service or material item on the invoice.
+                                          Draw boxes around each service or
+                                          material item on the invoice.
                                         </p>
                                       </div>
                                       <div className="flex items-center gap-3">
                                         <button
                                           type="button"
                                           onClick={() =>
-                                            setBatchImageSelectorCollapsed((prev) => ({
-                                              ...prev,
-                                              [repair.id]: !prev[repair.id],
-                                            }))
+                                            setBatchImageSelectorCollapsed(
+                                              (prev) => ({
+                                                ...prev,
+                                                [repair.id]: !prev[repair.id],
+                                              }),
+                                            )
                                           }
                                           className="text-sm text-green-600 hover:text-green-800 font-semibold"
                                         >
-                                          {batchImageSelectorCollapsed[repair.id]
-                                            ? '▸ Expand'
-                                            : '▾ Collapse'}
+                                          {batchImageSelectorCollapsed[
+                                            repair.id
+                                          ]
+                                            ? "▸ Expand"
+                                            : "▾ Collapse"}
                                         </button>
                                         <button
                                           type="button"
@@ -1366,7 +1375,9 @@ export default function Index() {
                                       </div>
                                     </div>
 
-                                    {!batchImageSelectorCollapsed[repair.id] && (
+                                    {!batchImageSelectorCollapsed[
+                                      repair.id
+                                    ] && (
                                       <ImageSelector
                                         imageUrl={repair.imageDataUrl}
                                         onSelectionsComplete={(selections) =>
@@ -1378,7 +1389,6 @@ export default function Index() {
                                         isProcessing={isProcessingRegions}
                                       />
                                     )}
-
                                   </div>
                                 )}
 
