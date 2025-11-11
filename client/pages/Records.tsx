@@ -24,6 +24,15 @@ export default function Records() {
   const [amountReceivedEdits, setAmountReceivedEdits] = useState<{
     [key: string]: number | undefined;
   }>({});
+  const [sortKey, setSortKey] = useState<
+    | "invoice"
+    | "dateReceived"
+    | "customer"
+    | "total"
+    | "amountReceived"
+    | null
+  >(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     const load = () => setInvoices(getAllInvoicesFromLocalStorage());
