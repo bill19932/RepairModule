@@ -476,10 +476,6 @@ export default function Index() {
           "success",
         );
       }
-
-      setInImageSelectionMode(false);
-      setImageDataUrl("");
-      setCurrentImageFile(null);
     } catch (err) {
       console.error("Error processing region selections:", err);
       alert.show("Failed to process selections. Please try again.", "error");
