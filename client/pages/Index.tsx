@@ -471,9 +471,9 @@ export default function Index() {
       );
 
       if (extractedMaterials.length > 0) {
-        setMaterials(extractedMaterials);
+        setMaterials((prev) => [...prev, ...extractedMaterials]);
         alert.show(
-          "Extracted " + extractedMaterials.length + " item(s) successfully!",
+          "Added " + extractedMaterials.length + " item(s) to materials!",
           "success",
         );
       }
