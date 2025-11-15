@@ -120,8 +120,11 @@ export function ImageSelector({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * canvas.width;
-    const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
+    // Get coordinates in scaled canvas space, then convert to image space
+    const scaledX = e.clientX - rect.left;
+    const scaledY = e.clientY - rect.top;
+    const x = scaledX / scale;
+    const y = scaledY / scale;
 
     setIsDrawing(true);
     setStartX(x);
@@ -136,8 +139,10 @@ export function ImageSelector({
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * canvas.width;
-    const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
+    const scaledX = e.clientX - rect.left;
+    const scaledY = e.clientY - rect.top;
+    const x = scaledX / scale;
+    const y = scaledY / scale;
 
     const width = Math.abs(x - startX);
     const height = Math.abs(y - startY);
@@ -153,7 +158,7 @@ export function ImageSelector({
     };
 
     setCurrentBox(updatedBox);
-    redrawCanvas(image, selections, updatedBox);
+    redrawCanvas(image, selections, updatedBox, scale);
   };
 
   const handleMouseUp = () => {
@@ -164,7 +169,7 @@ export function ImageSelector({
     // Only add box if it has significant size
     if (currentBox.width > 10 && currentBox.height > 10) {
       setSelections([...selections, currentBox]);
-      redrawCanvas(image, [...selections, currentBox], null);
+      redrawCanvas(image, [...selections, currentBox], null, scale);
     }
 
     setCurrentBox(null);
