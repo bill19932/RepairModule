@@ -63,6 +63,7 @@ export function ImageSelector({
     img: HTMLImageElement,
     boxes: SelectionBox[],
     currentDraw: SelectionBox | null,
+    displayScale: number = scale,
   ) => {
     const canvas = canvasRef.current;
     if (!canvas || !img) return;
@@ -70,9 +71,15 @@ export function ImageSelector({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size to match image
-    canvas.width = img.width;
-    canvas.height = img.height;
+    // Set canvas size to scaled dimensions for display
+    const displayWidth = Math.round(img.width * displayScale);
+    const displayHeight = Math.round(img.height * displayScale);
+
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+
+    // Scale context for drawing
+    ctx.scale(displayScale, displayScale);
 
     // Draw image
     ctx.drawImage(img, 0, 0);
