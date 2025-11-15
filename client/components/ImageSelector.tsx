@@ -191,8 +191,7 @@ export function ImageSelector({
     <div className="space-y-4">
       <div
         ref={containerRef}
-        className="border-2 border-gray-300 rounded overflow-hidden bg-gray-50 inline-block max-w-full"
-        style={{ maxWidth: "100%", maxHeight: "600px" }}
+        className="border-2 border-gray-300 rounded overflow-hidden bg-gray-50 inline-block"
       >
         <canvas
           ref={canvasRef}
@@ -200,12 +199,7 @@ export function ImageSelector({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          className="cursor-crosshair max-w-full max-h-full block"
-          style={{
-            maxWidth: "100%",
-            height: "auto",
-            display: "block",
-          }}
+          className="cursor-crosshair block"
         />
       </div>
 
