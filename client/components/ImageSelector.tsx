@@ -31,13 +31,29 @@ export function ImageSelector({
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [scale, setScale] = useState(1);
 
+  // Calculate scale factor for canvas display
+  const calculateScale = (img: HTMLImageElement): number => {
+    const container = containerRef.current;
+    if (!container) return 1;
+
+    const maxWidth = 800; // Max display width
+    const maxHeight = 600; // Max display height
+
+    const scaleX = maxWidth / img.width;
+    const scaleY = maxHeight / img.height;
+
+    return Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+  };
+
   // Load image
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
+      const calculatedScale = calculateScale(img);
+      setScale(calculatedScale);
       setImage(img);
-      redrawCanvas(img, selections, null);
+      redrawCanvas(img, selections, null, calculatedScale);
     };
     img.src = imageUrl;
   }, [imageUrl]);
