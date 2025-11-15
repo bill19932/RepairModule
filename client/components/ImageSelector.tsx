@@ -179,7 +179,7 @@ export function ImageSelector({
     const updated = selections.filter((s) => s.id !== id);
     setSelections(updated);
     if (image) {
-      redrawCanvas(image, updated, null);
+      redrawCanvas(image, updated, null, scale);
     }
   };
 
