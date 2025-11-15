@@ -69,15 +69,23 @@ export function ImageSelector({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size to scaled dimensions for display
+    // Get device pixel ratio for sharp rendering
+    const dpr = window.devicePixelRatio || 1;
+
+    // Calculate display dimensions
     const displayWidth = Math.round(img.width * displayScale);
     const displayHeight = Math.round(img.height * displayScale);
 
-    canvas.width = displayWidth;
-    canvas.height = displayHeight;
+    // Set canvas internal resolution (accounts for device pixel ratio)
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
 
-    // Scale context for drawing
-    ctx.scale(displayScale, displayScale);
+    // Set canvas CSS display size
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+
+    // Scale context to account for DPR and display scale
+    ctx.scale(displayScale * dpr, displayScale * dpr);
 
     // Draw image
     ctx.drawImage(img, 0, 0);
