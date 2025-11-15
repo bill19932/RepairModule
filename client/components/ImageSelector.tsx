@@ -33,11 +33,9 @@ export function ImageSelector({
 
   // Calculate scale factor for canvas display
   const calculateScale = (img: HTMLImageElement): number => {
-    const container = containerRef.current;
-    if (!container) return 1;
-
-    const maxWidth = 800; // Max display width
-    const maxHeight = 600; // Max display height
+    const dpr = window.devicePixelRatio || 1;
+    const maxWidth = 1200; // Max display width - allow larger images
+    const maxHeight = 900; // Max display height
 
     const scaleX = maxWidth / img.width;
     const scaleY = maxHeight / img.height;
