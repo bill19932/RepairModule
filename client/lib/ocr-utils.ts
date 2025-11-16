@@ -624,7 +624,6 @@ export const extractInvoiceData = async (
         // Some OCR outputs include lines like 'SF8855' above name — skip those that include digits or are short
         if (isLikelyName(t)) {
           customerName = t.replace(/[|\[\]]+/g, "").trim();
-          customerName = cleanHandwritingArtifacts(customerName);
           addLog(`Selected customer name from marker: "${customerName}"`);
           break;
         }
