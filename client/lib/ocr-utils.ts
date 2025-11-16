@@ -561,25 +561,6 @@ export const extractInvoiceData = async (
     // CUSTOMER NAME - robust extraction from CUSTOMER INFORMATION
     let customerName: string | undefined;
 
-    // Helper function to clean common handwriting OCR artifacts
-    const cleanHandwritingArtifacts = (text: string): string => {
-      return text
-        // Replace common OCR confusions with handwriting
-        .replace(/\b0(?=[A-Z])/g, "O") // 0 -> O at word start
-        .replace(/\b1(?=[a-z])/g, "l") // 1 -> l in middle
-        .replace(/\bl{2,}/g, "ll") // Multiple l's
-        .replace(/\bi{2,}/g, "ii") // Multiple i's
-        .replace(/\brn\b/g, "m") // rn -> m (common handwriting issue)
-        .replace(/\bvv\b/g, "w") // vv -> w
-        .replace(/\bc(?=[aeiou])/g, "e") // c -> e before vowels sometimes
-        .replace(/\bGe(?=[a-z]{2,})/g, "Ge") // Keep Ge as is
-        .replace(/\bUREA\b/g, "AREA") // UREA -> AREA (common form)
-        .replace(/\b(?:Geil|Geils|Geils)\b/i, "REGGIE") // Known misread
-        .replace(/\bPam\b/gi, "Paul") // Pam -> Paul (handwriting confusion)
-        .replace(/\b(?:oR|0R)\b/g, "OR") // Normalize OR
-        .trim();
-    };
-
     // Pattern 1: 'Attention:' label (works for both formats)
     const attentionMatch = text.match(/Attention\s*:\s*([^\n\r]+?)(?:\n|$)/i);
     if (attentionMatch) {
@@ -587,7 +568,6 @@ export const extractInvoiceData = async (
         .trim()
         .replace(/[|\\]+/g, "")
         .trim();
-      customerName = cleanHandwritingArtifacts(customerName);
     }
 
     // Pattern 2: look after CUSTOMER INFORMATION marker and pick first plausible name line
