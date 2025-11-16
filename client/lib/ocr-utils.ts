@@ -667,7 +667,6 @@ export const extractInvoiceData = async (
             .join(" ")
             .replace(/[|\[\]]+/g, "")
             .trim();
-          customerName = cleanHandwritingArtifacts(customerName);
           addLog(`Fallback: Selected name from search: "${customerName}"`);
           break;
         }
@@ -1149,7 +1148,7 @@ export const extractInvoiceData = async (
           unitCost: price,
         });
         addLog(
-          `✅ Materials: ADDED - ${fullDesc.substring(0, 70)}... × ${qty} @ $${price.toFixed(2)}`,
+          `�� Materials: ADDED - ${fullDesc.substring(0, 70)}... × ${qty} @ $${price.toFixed(2)}`,
         );
       } else {
         addLog(
