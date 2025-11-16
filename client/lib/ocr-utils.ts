@@ -951,8 +951,6 @@ export const extractInvoiceData = async (
     }
 
     if (repairDescription) {
-      // Apply handwriting artifact cleanup to repair description
-      repairDescription = cleanHandwritingArtifacts(repairDescription);
       extracted.repairDescription = repairDescription;
       console.log("[OCR] Repair description:", repairDescription);
       addLog(
