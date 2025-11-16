@@ -826,6 +826,7 @@ export const extractInvoiceData = async (
         .replace(/\s*:\s*$/g, "") // Remove trailing colons
         .replace(/\s+/g, " ")
         .trim();
+      cleanName = cleanHandwritingArtifacts(cleanName);
       if (cleanName) extracted.customerName = cleanName;
     }
 
