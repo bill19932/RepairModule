@@ -1348,7 +1348,7 @@ export const extractInvoiceData = async (
 
       // Only use if it's not just "RETURN ORDER" or empty
       if (desc.length > 2 && !/^RETURN\s+ORDER$/i.test(desc)) {
-        instrumentDescription = desc;
+        instrumentDescription = cleanHandwritingArtifacts(desc);
         addLog(`Instrument description: ${instrumentDescription}`);
       }
 
