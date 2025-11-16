@@ -941,6 +941,7 @@ export const extractInvoiceData = async (
           .replace(/\s+ree\b/gi, "") // Remove "ree" artifact (often from city names)
           .replace(/\s+,/g, ",") // Fix spacing before commas
           .replace(/,+/g, ",") // Remove duplicate commas
+          .replace(/\b0(?=[A-Z])/g, "O") // 0 -> O for addresses (common handwriting confusion)
           .trim();
         // Capitalize first letter of each word and street abbreviations
         address = address.replace(/\b([a-z])/g, (m) => m.toUpperCase());
