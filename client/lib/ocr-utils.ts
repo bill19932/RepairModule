@@ -809,6 +809,7 @@ export const extractInvoiceData = async (
             .join(" ")
             .replace(/[|\[\]]+/g, "")
             .trim();
+          customerName = cleanHandwritingArtifacts(customerName);
           addLog(`Fallback: Selected name from search: "${customerName}"`);
           break;
         }
