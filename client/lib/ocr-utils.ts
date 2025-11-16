@@ -36,7 +36,6 @@ const readFileAsDataURL = (file: File): Promise<string> => {
   });
 };
 
-
 // Convert HEIC/HEIF images to JPEG
 const convertHeicToJpeg = async (file: File): Promise<File> => {
   if (!file.type.includes("heic") && !file.type.includes("heif")) {
@@ -1008,9 +1007,7 @@ export const extractInvoiceData = async (
       }
 
       if (priceMatches.length < 1) {
-        addLog(
-          `Materials: Line ${itemLineIdx} skipped - no prices found`,
-        );
+        addLog(`Materials: Line ${itemLineIdx} skipped - no prices found`);
         continue;
       }
 
@@ -1139,9 +1136,7 @@ export const extractInvoiceData = async (
           `✅ Materials: ADDED - ${fullDesc.substring(0, 70)}... × ${qty} @ $${price.toFixed(2)}`,
         );
       } else {
-        addLog(
-          `❌ Materials: SKIPPED - Invalid price $${price.toFixed(2)}`,
-        );
+        addLog(`❌ Materials: SKIPPED - Invalid price $${price.toFixed(2)}`);
       }
     }
 
