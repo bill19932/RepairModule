@@ -683,7 +683,6 @@ export const extractInvoiceData = async (
         .replace(/\s*:\s*$/g, "") // Remove trailing colons
         .replace(/\s+/g, " ")
         .trim();
-      cleanName = cleanHandwritingArtifacts(cleanName);
       if (cleanName) extracted.customerName = cleanName;
     }
 
@@ -1148,7 +1147,7 @@ export const extractInvoiceData = async (
           unitCost: price,
         });
         addLog(
-          `�� Materials: ADDED - ${fullDesc.substring(0, 70)}... × ${qty} @ $${price.toFixed(2)}`,
+          `✅ Materials: ADDED - ${fullDesc.substring(0, 70)}... × ${qty} @ $${price.toFixed(2)}`,
         );
       } else {
         addLog(
