@@ -363,29 +363,23 @@ export const extractInvoiceData = async (
         }
       };
 
-      // Tesseract configuration optimized for handwritten and mixed text
-      const tesseractConfig = {
-        logger: logProgress,
-        tessedit_pageseg_mode: 6, // PSM 6: Assume a single uniform block of text (better for handwriting)
-      };
-
       // Try to use global Tesseract first (CDN). If not available, use the npm package.
       const globalT =
         typeof window !== "undefined" ? (window as any).Tesseract : undefined;
       if (globalT && typeof globalT.recognize === "function") {
-        console.log("Using global Tesseract with handwriting optimization");
-        ocrResult = await globalT.recognize(enhancedDataUrl, "eng", {
+        console.log("Using global Tesseract");
+        ocrResult = await globalT.recognize(normalizedDataUrl, "eng", {
           logger: logProgress,
         });
       } else {
-        console.log("Using tesseract.js npm package with handwriting optimization");
+        console.log("Using tesseract.js npm package");
         try {
           const Tesseract = await import("tesseract.js");
           // Call recognize directly on the default export
           ocrResult = await Tesseract.default.recognize(
-            enhancedDataUrl,
+            normalizedDataUrl,
             "eng",
-            tesseractConfig,
+            { logger: logProgress },
           );
         } catch (workerErr) {
           console.warn(
@@ -394,7 +388,9 @@ export const extractInvoiceData = async (
           );
           // Fallback: try the named export
           const { recognize } = await import("tesseract.js");
-          ocrResult = await recognize(enhancedDataUrl, "eng", tesseractConfig);
+          ocrResult = await recognize(normalizedDataUrl, "eng", {
+            logger: logProgress,
+          });
         }
       }
 
