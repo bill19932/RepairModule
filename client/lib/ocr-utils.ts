@@ -450,6 +450,19 @@ export const extractInvoiceData = async (
       img.src = dataUrl;
     });
 
+    // Enhance image for better handwriting recognition
+    let enhancedDataUrl = normalizedDataUrl;
+    try {
+      enhancedDataUrl = await enhanceImageForHandwriting(normalizedDataUrl);
+      console.log("Image enhancement completed for handwriting OCR");
+    } catch (err) {
+      console.warn(
+        "Image enhancement failed, proceeding with original:",
+        err,
+      );
+      enhancedDataUrl = normalizedDataUrl;
+    }
+
     let ocrResult;
     try {
       console.log("Starting OCR with image size:", imageFile.size, "bytes");
