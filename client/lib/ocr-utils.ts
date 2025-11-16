@@ -730,16 +730,8 @@ export const extractInvoiceData = async (
     let phone: string | undefined;
 
     // Pattern 1: "Number: XXXXXXXXXX" format
-    // Also handle cases where O (letter O) is misread as 0 (digit zero) in handwritten numbers
-    const numberLabelMatch = text.match(
-      /Number\s*:\s*([\dO]{7,})/i,
-    );
-    if (numberLabelMatch) {
-      phone = numberLabelMatch[1]
-        .replace(/O/g, "0") // Replace letter O with digit 0
-        .replace(/l/g, "1") // Replace lowercase L with 1
-        .replace(/I/g, "1"); // Replace uppercase I with 1
-    }
+    const numberLabelMatch = text.match(/Number\s*:\s*(\d{7,})/i);
+    if (numberLabelMatch) phone = numberLabelMatch[1];
 
     // Pattern 2: "Phone Primary" or "Phone-Primary" with dashes or spaces
     if (!phone) {
