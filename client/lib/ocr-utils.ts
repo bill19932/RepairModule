@@ -737,42 +737,59 @@ export const extractInvoiceData = async (
     // PHONE - look specifically for Number: or Phone: labels
     let phone: string | undefined;
 
-    // Pattern 1: "Number: XXXXXXXXXX" format
-    const numberLabelMatch = text.match(/Number\s*:\s*(\d{7,})/i);
-    if (numberLabelMatch) phone = numberLabelMatch[1];
+    // Pattern 1: "Number: XXXXXXXXXX" format (7+ digits, handles missing digits)
+    const numberLabelMatch = text.match(/Number\s*:\s*(\d{7,}(?:[\s-.]?\d{1,4})*)/i);
+    if (numberLabelMatch) {
+      phone = numberLabelMatch[1].replace(/[\s-]/g, "");
+      addLog(`Found phone from Number label: ${phone}`);
+    }
 
     // Pattern 2: "Phone Primary" or "Phone-Primary" with dashes or spaces
     if (!phone) {
       const primaryPhoneMatch = customerSection.match(
-        /Phone[-\s]*Primary\s+(\d{3}[-.]?\d{3}[-.]?\d{4})/i,
+        /Phone[-\s]*Primary\s*[:=]?\s*(\d{3}[-.]?\d{3}[-.]?\d{4}|\d{10})/i,
       );
-      if (primaryPhoneMatch) phone = primaryPhoneMatch[1];
+      if (primaryPhoneMatch) {
+        phone = primaryPhoneMatch[1].replace(/[-.\s]/g, "");
+        addLog(`Found phone from Phone Primary label: ${phone}`);
+      }
     }
 
+    // Pattern 3: Generic "Phone:" or "Number:" with formatted number
     if (!phone) {
       const phoneMatch = customerSection.match(
-        /(?:Phone|Number)\s*[:\s]*(\d{3}[-.]?\d{3}[-.]?\d{4})/i,
+        /(?:Phone|Number)\s*[:\s=]+\s*(\d{3}[-.]?\d{3}[-.]?\d{4}|\d{10})/i,
       );
-      if (phoneMatch) phone = phoneMatch[1];
+      if (phoneMatch) {
+        phone = phoneMatch[1].replace(/[-.\s]/g, "");
+        addLog(`Found phone from Phone/Number label: ${phone}`);
+      }
     }
 
+    // Pattern 4: Loose pattern - any 10 digits or 7 digits in customer section
     if (!phone) {
-      const numberMatch = customerSection.match(
-        /(?:^|\n)(\d{3}[-.]?\d{3}[-.]?\d{4})/,
-      );
-      if (numberMatch) phone = numberMatch[1];
-    }
-
-    if (phone) {
-      addLog(`Found phone: ${phone}`);
+      const looseMatch = customerSection.match(/(\d{10}|\d{3}[-.]?\d{3}[-.]?\d{4})/);
+      if (looseMatch) {
+        const cleanedPhone = looseMatch[1].replace(/[-.\s]/g, "");
+        // Only accept if it's a valid phone length
+        if (cleanedPhone.length === 10) {
+          phone = cleanedPhone;
+          addLog(`Found phone from loose pattern: ${phone}`);
+        }
+      }
     }
 
     if (phone) {
       const cleanPhone = phone.replace(/[-.\s]/g, "");
       if (cleanPhone.match(/^\d{10}$/)) {
         phone = `(${cleanPhone.slice(0, 3)}) ${cleanPhone.slice(3, 6)}-${cleanPhone.slice(6)}`;
+        extracted.customerPhone = phone;
+        addLog(`Formatted phone: ${phone}`);
+      } else if (cleanPhone.length >= 7) {
+        // If it's at least 7 digits, keep it as-is
+        extracted.customerPhone = cleanPhone;
+        addLog(`Kept phone as-is (partial): ${cleanPhone}`);
       }
-      extracted.customerPhone = phone;
     }
 
     // ADDRESS - extract from "Address:" label and ensure it has PA suffix
