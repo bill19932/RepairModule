@@ -629,43 +629,52 @@ export const extractInvoiceData = async (
       }
     }
 
-    // Fallback: try to find a likely name near the bottom of the page (before Phone/Email labels)
+    // Fallback: try to find a likely name near the top or in customer section
     if (!customerName) {
-      // search for lines that look like names in customer section or nearby areas
-      const searchLines =
-        customerInfoIdx > 0
-          ? lines.slice(
-              Math.max(0, customerInfoIdx),
-              Math.min(customerInfoIdx + 15, lines.length),
-            )
-          : lines.slice(Math.max(0, lines.length - 12));
+      // Search in multiple locations: top of page, customer section, and end of page
+      const searchAreas: string[] = [];
 
-      for (const l of searchLines) {
+      // Top section (before Trouble Reported or before CUSTOMER INFORMATION)
+      if (customerInfoIdx > 0) {
+        searchAreas.push(...lines.slice(0, Math.min(customerInfoIdx + 5, lines.length)));
+      } else if (troubleReportedIdx > 0) {
+        searchAreas.push(...lines.slice(0, Math.min(troubleReportedIdx, lines.length)));
+      } else {
+        searchAreas.push(...lines.slice(0, Math.min(20, lines.length)));
+      }
+
+      // Also search the customer section area
+      if (customerInfoIdx > 0) {
+        searchAreas.push(...lines.slice(customerInfoIdx, Math.min(customerInfoIdx + 15, lines.length)));
+      } else {
+        // If no customer marker found, search the end of the page
+        searchAreas.push(...lines.slice(Math.max(0, lines.length - 15)));
+      }
+
+      for (const l of searchAreas) {
         const t = l.trim();
         if (!t) continue;
-        // Reject obvious UI element lines
+        // Reject obvious UI element lines (but be less strict about keywords)
         if (
-          /Signature|Picked|Customer|Follow|Completed|Third|rE|———|Email|Phone|Primary|Second/.test(
+          /Signature|Picked|Follow|Completed|Email|Phone|Number|Date|Service|Address|Invoice|Total|Amount|Instrument/i.test(
             t,
           )
         ) {
-          addLog(`Fallback: Skipping UI element line: "${t}"`);
           continue;
         }
-        // Check if line has meaningful name-like pattern (at least 2 words, all alphabetic)
+        // Check if line has meaningful name-like pattern (at least 2 words, all alphabetic, or single long word)
         const parts = t.split(/\s+/).filter(Boolean);
         const meaningfulParts = parts.filter(
           (p) => p.length >= 2 && /^[A-Za-z'\-]+$/.test(p),
         );
         if (
-          t.length > 4 &&
           /^[A-Za-z\s'\-]+$/.test(t) &&
-          meaningfulParts.length >= 2
+          (meaningfulParts.length >= 2 || t.length >= 6) // Allow single long names or multi-word names
         ) {
-          customerName = meaningfulParts
-            .join(" ")
-            .replace(/[|\[\]]+/g, "")
-            .trim();
+          customerName = meaningfulParts.length > 0
+            ? meaningfulParts.join(" ")
+            : t;
+          customerName = customerName.replace(/[|\[\]]+/g, "").trim();
           addLog(`Fallback: Selected name from search: "${customerName}"`);
           break;
         }
