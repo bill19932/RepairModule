@@ -33,6 +33,10 @@ export default function Records() {
     | null
   >(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [editingRow, setEditingRow] = useState<string | null>(null);
+  const [rowEdits, setRowEdits] = useState<{
+    [invoiceNumber: string]: Partial<RepairInvoice>;
+  }>({});
 
   useEffect(() => {
     const load = () => setInvoices(getAllInvoicesFromLocalStorage());
