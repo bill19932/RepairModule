@@ -447,68 +447,189 @@ export default function Records() {
                       ? amountReceivedEdits[inv.invoiceNumber]
                       : inv.amountReceived;
 
+                  const isEditing = editingRow === inv.invoiceNumber;
+                  const currentEdits = rowEdits[inv.invoiceNumber] || inv;
+
                   return (
                     <tr
                       key={`${inv.invoiceNumber}-${inv.dateReceived}`}
-                      className={`border-b border-border hover:bg-gray-50 transition-colors ${inv.isGeorgesMusic ? "bg-blue-50" : ""}`}
+                      className={`border-b border-border hover:bg-gray-50 transition-colors ${inv.isGeorgesMusic ? "bg-blue-50" : ""} ${isEditing ? "bg-yellow-50" : ""}`}
                     >
                       <td className="py-1.5 px-2">
                         <input
                           type="checkbox"
                           checked={selected.includes(inv.invoiceNumber)}
                           onChange={() => toggleSelect(inv.invoiceNumber)}
+                          disabled={isEditing}
                         />
                       </td>
                       <td className="py-1.5 px-2 font-semibold text-primary whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            const html =
-                              inv.invoiceHtml || generateInvoicePDF(inv);
-                            const w = window.open("", "_blank");
-                            if (w) {
-                              w.document.open();
-                              w.document.write(html);
-                              w.document.close();
-                            } else {
-                              alert.show(
-                                "Unable to open invoice preview. Please allow popups.",
-                                "error",
-                              );
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={currentEdits.invoiceNumber}
+                            onChange={(e) =>
+                              updateFieldEdit(
+                                inv.invoiceNumber,
+                                "invoiceNumber",
+                                e.target.value,
+                              )
                             }
-                          }}
-                          className="underline text-primary font-semibold"
-                        >
-                          {inv.invoiceNumber}
-                        </button>
+                            className="input-modern text-xs w-24 h-7 font-semibold"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => startEditing(inv.invoiceNumber, inv)}
+                            className="underline text-primary font-semibold hover:opacity-70"
+                          >
+                            {inv.invoiceNumber}
+                          </button>
+                        )}
                       </td>
                       <td className="py-1.5 px-2 text-muted-foreground whitespace-nowrap">
-                        {new Date(inv.dateReceived).toLocaleDateString(
-                          "en-US",
-                          { month: "2-digit", day: "2-digit", year: "2-digit" },
+                        {isEditing ? (
+                          <input
+                            type="date"
+                            value={currentEdits.dateReceived}
+                            onChange={(e) =>
+                              updateFieldEdit(
+                                inv.invoiceNumber,
+                                "dateReceived",
+                                e.target.value,
+                              )
+                            }
+                            className="input-modern text-xs h-7"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => startEditing(inv.invoiceNumber, inv)}
+                            className="hover:text-primary cursor-pointer"
+                          >
+                            {new Date(inv.dateReceived).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "2-digit",
+                                day: "2-digit",
+                                year: "2-digit",
+                              },
+                            )}
+                          </button>
                         )}
                       </td>
                       <td className="py-1.5 px-2 text-foreground whitespace-nowrap">
-                        {inv.customerName}
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={currentEdits.customerName}
+                            onChange={(e) =>
+                              updateFieldEdit(
+                                inv.invoiceNumber,
+                                "customerName",
+                                e.target.value,
+                              )
+                            }
+                            className="input-modern text-xs w-32 h-7"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => startEditing(inv.invoiceNumber, inv)}
+                            className="hover:text-primary cursor-pointer"
+                          >
+                            {inv.customerName}
+                          </button>
+                        )}
                       </td>
                       <td className="py-1.5 px-2 text-foreground">
-                        {inv.instruments
-                          .map(
-                            (i) =>
-                              `${i.type}${i.description ? " (" + i.description + ")" : ""}`,
-                          )
-                          .join(", ")}
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={currentEdits.instruments
+                              .map(
+                                (i) =>
+                                  `${i.type}${i.description ? " (" + i.description + ")" : ""}`,
+                              )
+                              .join(", ")}
+                            onChange={(e) => {
+                              const parts = e.target.value.split(",").map((p) => {
+                                const m = p.trim().match(/^([^(]+)(?:\(([^)]+)\))?$/);
+                                return {
+                                  type: m ? m[1].trim() : "Guitar",
+                                  description: m ? m[2] || "" : "",
+                                };
+                              });
+                              updateFieldEdit(
+                                inv.invoiceNumber,
+                                "instruments",
+                                parts,
+                              );
+                            }}
+                            className="input-modern text-xs w-40 h-7"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => startEditing(inv.invoiceNumber, inv)}
+                            className="hover:text-primary cursor-pointer text-left"
+                          >
+                            {inv.instruments
+                              .map(
+                                (i) =>
+                                  `${i.type}${i.description ? " (" + i.description + ")" : ""}`,
+                              )
+                              .join(", ")}
+                          </button>
+                        )}
                       </td>
                       <td className="py-1.5 px-2 text-foreground">
-                        {inv.repairDescription.substring(0, 30)}
-                        {inv.repairDescription.length > 30 ? "..." : ""}
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={currentEdits.repairDescription}
+                            onChange={(e) =>
+                              updateFieldEdit(
+                                inv.invoiceNumber,
+                                "repairDescription",
+                                e.target.value,
+                              )
+                            }
+                            className="input-modern text-xs w-48 h-7"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => startEditing(inv.invoiceNumber, inv)}
+                            className="hover:text-primary cursor-pointer text-left"
+                          >
+                            {inv.repairDescription.substring(0, 30)}
+                            {inv.repairDescription.length > 30 ? "..." : ""}
+                          </button>
+                        )}
                       </td>
                       <td className="py-1.5 px-2 text-center font-semibold whitespace-nowrap">
-                        {inv.isGeorgesMusic ? (
-                          <span className="bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded text-xs">
-                            GM
-                          </span>
+                        {isEditing ? (
+                          <input
+                            type="checkbox"
+                            checked={currentEdits.isGeorgesMusic}
+                            onChange={(e) =>
+                              updateFieldEdit(
+                                inv.invoiceNumber,
+                                "isGeorgesMusic",
+                                e.target.checked,
+                              )
+                            }
+                            className="w-4 h-4 cursor-pointer"
+                          />
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <button
+                            onClick={() => startEditing(inv.invoiceNumber, inv)}
+                            className="hover:opacity-70"
+                          >
+                            {inv.isGeorgesMusic ? (
+                              <span className="bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded text-xs">
+                                GM
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </button>
                         )}
                       </td>
                       <td className="py-1.5 px-2 text-right font-bold text-primary whitespace-nowrap">
@@ -532,15 +653,33 @@ export default function Records() {
                           }
                           placeholder={`$${dmcTotal.toFixed(2)}`}
                           className="input-modern text-xs w-full text-right h-7"
+                          disabled={isEditing}
                         />
                       </td>
                       <td className="py-1.5 px-2 text-center">
-                        <button
-                          onClick={() => handleDelete(inv.invoiceNumber)}
-                          className="text-destructive hover:text-destructive/80 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {isEditing ? (
+                          <div className="flex gap-1 justify-center">
+                            <button
+                              onClick={() => saveRowEdits(inv.invoiceNumber)}
+                              className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-semibold"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={cancelRowEdits}
+                              className="bg-gray-400 hover:bg-gray-500 text-white px-2 py-1 rounded text-xs font-semibold"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleDelete(inv.invoiceNumber)}
+                            className="text-destructive hover:text-destructive/80 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
