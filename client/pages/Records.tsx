@@ -226,6 +226,55 @@ export default function Records() {
     setInvoices(updated);
   };
 
+  const startEditing = (invoiceNumber: string, invoice: RepairInvoice) => {
+    setEditingRow(invoiceNumber);
+    setRowEdits((prev) => ({
+      ...prev,
+      [invoiceNumber]: { ...invoice },
+    }));
+  };
+
+  const updateFieldEdit = (
+    invoiceNumber: string,
+    field: string,
+    value: any,
+  ) => {
+    setRowEdits((prev) => ({
+      ...prev,
+      [invoiceNumber]: {
+        ...prev[invoiceNumber],
+        [field]: value,
+      },
+    }));
+  };
+
+  const saveRowEdits = (invoiceNumber: string) => {
+    const edits = rowEdits[invoiceNumber];
+    if (!edits) return;
+
+    const updated = getAllInvoicesFromLocalStorage().map((inv) =>
+      inv.invoiceNumber === invoiceNumber ? { ...inv, ...edits } : inv,
+    );
+    localStorage.setItem("delco-invoices", JSON.stringify(updated));
+    setInvoices(updated);
+    setEditingRow(null);
+    setRowEdits((prev) => {
+      const newEdits = { ...prev };
+      delete newEdits[invoiceNumber];
+      return newEdits;
+    });
+    alert.show("Changes saved.", "success");
+  };
+
+  const cancelRowEdits = () => {
+    setEditingRow(null);
+    setRowEdits((prev) => {
+      const newEdits = { ...prev };
+      if (editingRow) delete newEdits[editingRow];
+      return newEdits;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200">
