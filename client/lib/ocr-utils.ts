@@ -805,6 +805,8 @@ export const extractInvoiceData = async (
         .replace(/Total.*/, "") // Remove "Total" lines
         .trim();
 
+      addLog(`Found address from label: "${address}"`);
+
       // Only reject if address is empty after cleaning
       if (address && address.length > 0) {
         // Clean OCR artifacts from address (e.g., "oR a." from "Wallingford")
@@ -827,17 +829,35 @@ export const extractInvoiceData = async (
         if (address && !/(PA|Pennsylvania|\b19[0-9]{3}\b)/.test(address)) {
           address = address + ", PA";
         }
+        addLog(`Cleaned address: "${address}"`);
       } else {
         address = undefined;
       }
     }
 
-    // Pattern 2: Generic address extraction from customer section (avoid table/summary data)
+    // Pattern 2: Look for patterns like "street address city, state" without explicit label
+    if (!address) {
+      const addressLinePattern = /^(\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl|Terrace|Terr)[\w\s',.-]*)$/im;
+      const topLines = lines.slice(0, Math.min(customerInfoIdx > 0 ? customerInfoIdx : 30, lines.length));
+
+      for (const line of topLines) {
+        const trimmed = line.trim();
+        if (addressLinePattern.test(trimmed)) {
+          address = trimmed;
+          addLog(`Found address from pattern: "${address}"`);
+          break;
+        }
+      }
+    }
+
+    // Pattern 3: Generic address extraction from customer section (avoid table/summary data)
     if (!address) {
       let cleanCustomerSection = customerSection
         .replace(/Total.*$/gm, "") // Remove Total lines
         .replace(/\$.*$/gm, ""); // Remove dollar amount lines
       address = extractAddressFromText(cleanCustomerSection);
+
+      addLog(`Address from generic extraction: "${address}"`);
 
       // Clean OCR artifacts from extracted address
       if (address) {
@@ -852,8 +872,10 @@ export const extractInvoiceData = async (
     }
 
     if (address) {
-      addLog(`Extracted address: ${address}`);
+      addLog(`Final extracted address: "${address}"`);
       extracted.customerAddress = address;
+    } else {
+      addLog(`No address found`);
     }
 
     // REPAIR DESCRIPTION - try "Service:" label first, then fall back to trouble section
