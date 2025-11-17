@@ -837,14 +837,22 @@ export const extractInvoiceData = async (
 
     // Pattern 2: Look for patterns like "street address city, state" without explicit label
     if (!address) {
-      const addressLinePattern = /^(\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl|Terrace|Terr)[\w\s',.-]*)$/im;
-      const topLines = lines.slice(0, Math.min(customerInfoIdx > 0 ? customerInfoIdx : 30, lines.length));
+      const addressLinePattern = /^\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl|Terrace|Terr)/i;
+      const topLines = lines.slice(0, Math.min(customerInfoIdx > 0 ? customerInfoIdx + 10 : 30, lines.length));
 
       for (const line of topLines) {
         const trimmed = line.trim();
-        if (addressLinePattern.test(trimmed)) {
+        if (addressLinePattern.test(trimmed) && !trimmed.includes("Woodland") && !trimmed.includes("George")) {
           address = trimmed;
           addLog(`Found address from pattern: "${address}"`);
+          // Look for city/state in next lines
+          const idx = lines.indexOf(line);
+          if (idx >= 0 && idx + 1 < lines.length) {
+            const nextLine = lines[idx + 1].trim();
+            if (nextLine && /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:\s+PA|\s+Pennsylvania)?/.test(nextLine)) {
+              address += ", " + nextLine;
+            }
+          }
           break;
         }
       }
