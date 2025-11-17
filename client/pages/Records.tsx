@@ -25,12 +25,7 @@ export default function Records() {
     [key: string]: number | undefined;
   }>({});
   const [sortKey, setSortKey] = useState<
-    | "invoice"
-    | "dateReceived"
-    | "customer"
-    | "total"
-    | "amountReceived"
-    | null
+    "invoice" | "dateReceived" | "customer" | "total" | "amountReceived" | null
   >(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [editingRow, setEditingRow] = useState<string | null>(null);
@@ -116,8 +111,12 @@ export default function Records() {
             (sum, mat) => sum + mat.quantity * mat.unitCost,
             0,
           );
-          aVal = a.isGeorgesMusic ? aServicesTotal * 1.54 * 1.06 : aServicesTotal * 1.06;
-          bVal = b.isGeorgesMusic ? bServicesTotal * 1.54 * 1.06 : bServicesTotal * 1.06;
+          aVal = a.isGeorgesMusic
+            ? aServicesTotal * 1.54 * 1.06
+            : aServicesTotal * 1.06;
+          bVal = b.isGeorgesMusic
+            ? bServicesTotal * 1.54 * 1.06
+            : bServicesTotal * 1.06;
         } else if (sortKey === "amountReceived") {
           aVal = a.amountReceived !== undefined ? a.amountReceived : -1;
           bVal = b.amountReceived !== undefined ? b.amountReceived : -1;
@@ -136,7 +135,15 @@ export default function Records() {
     }
 
     return results;
-  }, [invoices, searchQuery, dateFrom, dateTo, ownerFilter, sortKey, sortDirection]);
+  }, [
+    invoices,
+    searchQuery,
+    dateFrom,
+    dateTo,
+    ownerFilter,
+    sortKey,
+    sortDirection,
+  ]);
 
   const toggleSelect = (invoiceNumber: string) => {
     setSelected((prev) =>
@@ -550,13 +557,17 @@ export default function Records() {
                               )
                               .join(", ")}
                             onChange={(e) => {
-                              const parts = e.target.value.split(",").map((p) => {
-                                const m = p.trim().match(/^([^(]+)(?:\(([^)]+)\))?$/);
-                                return {
-                                  type: m ? m[1].trim() : "Guitar",
-                                  description: m ? m[2] || "" : "",
-                                };
-                              });
+                              const parts = e.target.value
+                                .split(",")
+                                .map((p) => {
+                                  const m = p
+                                    .trim()
+                                    .match(/^([^(]+)(?:\(([^)]+)\))?$/);
+                                  return {
+                                    type: m ? m[1].trim() : "Guitar",
+                                    description: m ? m[2] || "" : "",
+                                  };
+                                });
                               updateFieldEdit(
                                 inv.invoiceNumber,
                                 "instruments",

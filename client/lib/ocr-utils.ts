@@ -636,16 +636,25 @@ export const extractInvoiceData = async (
 
       // Top section (before Trouble Reported or before CUSTOMER INFORMATION)
       if (customerInfoIdx > 0) {
-        searchAreas.push(...lines.slice(0, Math.min(customerInfoIdx + 5, lines.length)));
+        searchAreas.push(
+          ...lines.slice(0, Math.min(customerInfoIdx + 5, lines.length)),
+        );
       } else if (troubleReportedIdx > 0) {
-        searchAreas.push(...lines.slice(0, Math.min(troubleReportedIdx, lines.length)));
+        searchAreas.push(
+          ...lines.slice(0, Math.min(troubleReportedIdx, lines.length)),
+        );
       } else {
         searchAreas.push(...lines.slice(0, Math.min(20, lines.length)));
       }
 
       // Also search the customer section area
       if (customerInfoIdx > 0) {
-        searchAreas.push(...lines.slice(customerInfoIdx, Math.min(customerInfoIdx + 15, lines.length)));
+        searchAreas.push(
+          ...lines.slice(
+            customerInfoIdx,
+            Math.min(customerInfoIdx + 15, lines.length),
+          ),
+        );
       } else {
         // If no customer marker found, search the end of the page
         searchAreas.push(...lines.slice(Math.max(0, lines.length - 15)));
@@ -671,9 +680,8 @@ export const extractInvoiceData = async (
           /^[A-Za-z\s'\-]+$/.test(t) &&
           (meaningfulParts.length >= 2 || t.length >= 6) // Allow single long names or multi-word names
         ) {
-          customerName = meaningfulParts.length > 0
-            ? meaningfulParts.join(" ")
-            : t;
+          customerName =
+            meaningfulParts.length > 0 ? meaningfulParts.join(" ") : t;
           customerName = customerName.replace(/[|\[\]]+/g, "").trim();
           addLog(`Fallback: Selected name from search: "${customerName}"`);
           break;
@@ -738,7 +746,9 @@ export const extractInvoiceData = async (
     let phone: string | undefined;
 
     // Pattern 1: "Number: XXXXXXXXXX" format (7+ digits, handles missing digits)
-    const numberLabelMatch = text.match(/Number\s*:\s*(\d{7,}(?:[\s-.]?\d{1,4})*)/i);
+    const numberLabelMatch = text.match(
+      /Number\s*:\s*(\d{7,}(?:[\s-.]?\d{1,4})*)/i,
+    );
     if (numberLabelMatch) {
       phone = numberLabelMatch[1].replace(/[\s-]/g, "");
       addLog(`Found phone from Number label: ${phone}`);
@@ -768,7 +778,9 @@ export const extractInvoiceData = async (
 
     // Pattern 4: Loose pattern - any 10 digits or 7 digits in customer section
     if (!phone) {
-      const looseMatch = customerSection.match(/(\d{10}|\d{3}[-.]?\d{3}[-.]?\d{4})/);
+      const looseMatch = customerSection.match(
+        /(\d{10}|\d{3}[-.]?\d{3}[-.]?\d{4})/,
+      );
       if (looseMatch) {
         const cleanedPhone = looseMatch[1].replace(/[-.\s]/g, "");
         // Only accept if it's a valid phone length
@@ -837,19 +849,32 @@ export const extractInvoiceData = async (
 
     // Pattern 2: Look for patterns like "street address city, state" without explicit label
     if (!address) {
-      const addressLinePattern = /^\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl|Terrace|Terr)/i;
-      const topLines = lines.slice(0, Math.min(customerInfoIdx > 0 ? customerInfoIdx + 10 : 30, lines.length));
+      const addressLinePattern =
+        /^\d{1,5}\s+[\w\s&,.'-]+(?:Lane|Ln|Street|St|Ave|Avenue|Road|Rd|Drive|Dr|Way|Blvd|Boulevard|Court|Ct|Place|Pl|Terrace|Terr)/i;
+      const topLines = lines.slice(
+        0,
+        Math.min(customerInfoIdx > 0 ? customerInfoIdx + 10 : 30, lines.length),
+      );
 
       for (const line of topLines) {
         const trimmed = line.trim();
-        if (addressLinePattern.test(trimmed) && !trimmed.includes("Woodland") && !trimmed.includes("George")) {
+        if (
+          addressLinePattern.test(trimmed) &&
+          !trimmed.includes("Woodland") &&
+          !trimmed.includes("George")
+        ) {
           address = trimmed;
           addLog(`Found address from pattern: "${address}"`);
           // Look for city/state in next lines
           const idx = lines.indexOf(line);
           if (idx >= 0 && idx + 1 < lines.length) {
             const nextLine = lines[idx + 1].trim();
-            if (nextLine && /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:\s+PA|\s+Pennsylvania)?/.test(nextLine)) {
+            if (
+              nextLine &&
+              /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:\s+PA|\s+Pennsylvania)?/.test(
+                nextLine,
+              )
+            ) {
               address += ", " + nextLine;
             }
           }
